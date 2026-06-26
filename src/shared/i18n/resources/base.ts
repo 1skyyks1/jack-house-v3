@@ -1,0 +1,253 @@
+export const zhBase = {
+  common: {
+    about: "关于",
+    admin: "后台",
+    forum: "论坛",
+    home: "首页",
+    language: "语言",
+    login: "登录",
+    logout: "退出登录",
+    editProfile: "修改个人信息",
+    notFound: "页面不存在",
+    pack: "图包",
+    post: "帖子",
+    profile: "个人资料",
+    theme: "主题",
+    member: "用户",
+    menu: "菜单",
+    unknownUser: "未知用户",
+    notConnected: "未绑定",
+    notProvided: "未填写",
+    copy: "复制",
+    copied: "已复制",
+    copyFailed: "复制失败",
+    noTitle: "暂无标题",
+    untitled: "未命名",
+    unknownError: "未知错误",
+    pageStatus: "第 {{page}} / {{total}} 页",
+    totalCount: "共 {{count}} 项",
+  },
+  shell: {
+    tagline: "4Key Jack House V3",
+  },
+  home: {
+    heroEyebrow: "社区入口",
+    heroTitle: "Jack House",
+    heroDescription: "面向 4K Jack 玩家的内容、图包与交流中心。",
+    heroMeta: "Forum · Packs · Tourney",
+    forumCta: "进入论坛",
+    packCta: "浏览图包",
+    tourneyCta: "赛事入口",
+    latestEyebrow: "Latest",
+    latestTitle: "最新内容",
+    latestDescription: "按帖子类型查看社区最近更新。",
+    latestPanelDescription: "首屏保留社区门面感，下方继续作为内容看板承接论坛更新。",
+    heroVisualFallback: "Jack House 入口图",
+    emptyPosts: "暂无内容",
+    loadFailed: "暂时无法加载最新内容",
+    visualCardEyebrow: "Scene",
+    sections: {
+      normal: "普通帖子",
+      request: "征稿",
+      event: "活动",
+      announcement: "公告",
+    },
+    visuals: {
+      community: {
+        title: "Jack House",
+        description: "面向叠键玩家的社区讨论与内容入口。",
+      },
+      packs: {
+        title: "Jack Maps",
+        description: "搜索、整理并发现你想要的叠图与图包。",
+      },
+      tourney: {
+        title: "Tourney",
+        description: "保留赛事入口语义，延续旧站首页的第三块视觉。",
+      },
+    },
+  },
+  about: {
+    eyebrow: "社区入口",
+    title: "关于叠屋",
+    description: "这里汇总了 Jack House 的社区介绍、群组入口和常用跳转，方便你快速找到适合自己的交流空间。",
+    intro: "关于叠屋...",
+    introDescription: "沿用旧站介绍内容，并保留社区入口页的核心信息结构。",
+    connectTitle: "快速进入",
+    connectDescription: "从这里直达论坛、图包和社区群组入口。",
+    qq: "QQ 群",
+    qqDescription: "加入 QQ 群，获取社区日常交流、活动通知和分群入口。",
+    dc: "Discord 服务器",
+    dcDescription: "加入 Discord 服务器，与海外和跨平台玩家保持同步交流。",
+    forumCta: "进入论坛",
+    packCta: "浏览图包",
+    discoverHint: "如果你是第一次来到这里，可以先从论坛和图包区开始熟悉叠屋的内容生态。",
+    footerPrefix: "© 2025 JackHouse. All rights reserved. Developed by ",
+    footerSuffix: "。",
+    p: "<p><strong>叠屋</strong>，创建于 <em>2022 年 6 月 1 日</em>，是一个面向叠键玩家的社区。</p><p>截至 <em>2025 年 8 月</em>，已经有近 <em>4,000</em> 名成员，其中大部分来自中国。</p><p>你可以在这里搜索各种各样的叠包，参与 4K 社区中稀有的叠键比赛，还可以和来自世界各地的叠键玩家交流。</p><p><strong>没有任何准入门槛，无论你是否强叠，我们都欢迎你加入。</strong></p>",
+    communities: {
+      qq: {
+        first: {
+          description: "叠屋1群",
+        },
+        second: {
+          description: "叠屋2群",
+        },
+        shop: {
+          description: "叠屋周边群",
+        },
+        jhc: {
+          description: "om叠屋杯",
+        },
+        mjhc: {
+          description: "Malody叠屋杯",
+        },
+        delta: {
+          title: "叠屋三角洲",
+          description: "三角洲分群",
+        },
+        codm: {
+          description: "CODM群&战队",
+        },
+        mc: {
+          description: "我的世界分群",
+        },
+      },
+      discord: {
+        jhc: {
+          description: "osu!mania",
+        },
+        mjhc: {
+          description: "Malody JHC",
+        },
+      },
+    },
+  },
+} as const
+
+export const enBase = {
+  common: {
+    about: "About",
+    admin: "Admin",
+    forum: "Forum",
+    home: "Home",
+    language: "Language",
+    login: "Login",
+    logout: "Sign out",
+    editProfile: "Edit profile",
+    notFound: "Page not found",
+    pack: "Packs",
+    post: "Post",
+    profile: "Profile",
+    theme: "Theme",
+    member: "Member",
+    menu: "Menu",
+    unknownUser: "Unknown",
+    notConnected: "Not connected",
+    notProvided: "Not provided",
+    copy: "Copy",
+    copied: "Copied",
+    copyFailed: "Unable to copy",
+    noTitle: "No title",
+    untitled: "Untitled",
+    unknownError: "Unknown error",
+    pageStatus: "Page {{page}} / {{total}}",
+    totalCount: "{{count}} total",
+  },
+  shell: {
+    tagline: "4Key Jack House V3",
+  },
+  home: {
+    heroEyebrow: "Community hub",
+    heroTitle: "Jack House",
+    heroDescription: "A content, map pack, and discussion hub for 4K Jack players.",
+    heroMeta: "Forum · Packs · Tourney",
+    forumCta: "Open forum",
+    packCta: "Browse packs",
+    tourneyCta: "Open tourney",
+    latestEyebrow: "Latest",
+    latestTitle: "Latest updates",
+    latestDescription: "Recent community posts grouped by type.",
+    latestPanelDescription: "The first screen acts like a community poster, while the lower block keeps the content dashboard feel.",
+    heroVisualFallback: "Jack House entry visual",
+    emptyPosts: "No posts yet",
+    loadFailed: "Latest updates are unavailable",
+    visualCardEyebrow: "Scene",
+    sections: {
+      normal: "Posts",
+      request: "Requests",
+      event: "Events",
+      announcement: "Announcements",
+    },
+    visuals: {
+      community: {
+        title: "Jack House",
+        description: "The main community entry for discussion, posts, and daily activity.",
+      },
+      packs: {
+        title: "Jack Maps",
+        description: "Search, organize, and discover the jack maps and packs you want.",
+      },
+      tourney: {
+        title: "Tourney",
+        description: "Keeps the third visual slot from the old homepage and points to the event side.",
+      },
+    },
+  },
+  about: {
+    eyebrow: "Community hub",
+    title: "About Jack House",
+    description: "This page gathers the original Jack House introduction, community groups, and the quickest entry points for new and returning members.",
+    intro: "About Jack House...",
+    introDescription: "Keeps the old site introduction while rebuilding the page with the V3 layout and components.",
+    connectTitle: "Quick access",
+    connectDescription: "Jump straight to the forum, packs, and community spaces from one place.",
+    qq: "QQ Groups",
+    qqDescription: "Join QQ groups for the main Chinese-speaking community, side groups, and event hubs.",
+    dc: "Discord Servers",
+    dcDescription: "Join Discord servers to stay connected with international and cross-platform players.",
+    forumCta: "Open forum",
+    packCta: "Browse packs",
+    discoverHint: "If you are new here, starting from the forum and pack sections is the fastest way to understand the community.",
+    footerPrefix: "© 2025 JackHouse. All rights reserved. Developed by ",
+    footerSuffix: ".",
+    p: "<p><strong>4Key Jack House</strong>, founded on <em>June 1, 2022</em>, is a community for jack players.</p><p>By <em>August 2025</em>, it has grown to nearly <em>4,000</em> members, with most of them coming from China.</p><p>You can search for all kinds of jack packs here, take part in rare jack-focused competitions in the 4K community, and connect with jack players from around the world.</p><p><strong>There are no entrance requirements. Whether you are a jack main or not, you are welcome here.</strong></p>",
+    communities: {
+      qq: {
+        first: {
+          description: "First Group",
+        },
+        second: {
+          description: "Second Group",
+        },
+        shop: {
+          description: "Jack House merch",
+        },
+        jhc: {
+          description: "osu!mania Jack House Cup",
+        },
+        mjhc: {
+          description: "Malody Jack House Cup",
+        },
+        delta: {
+          title: "Delta Jack House",
+          description: "Delta Force branch group",
+        },
+        codm: {
+          description: "CODM group and team",
+        },
+        mc: {
+          description: "Minecraft branch group",
+        },
+      },
+      discord: {
+        jhc: {
+          description: "osu!mania",
+        },
+        mjhc: {
+          description: "Malody JHC",
+        },
+      },
+    },
+  },
+} as const

@@ -1,0 +1,116 @@
+import type { GetPackListParams, PackSort, PackTag, PackTypeFilter } from "@/entities/pack"
+import { i18n } from "@/shared/i18n/client"
+
+export const PACK_LIST_PAGE_SIZE = 12
+export const packTypeFilters: PackTypeFilter[] = [-1, 0, 1, 2, 3]
+export const sortFilters: PackSort[] = [0, 1, 2]
+
+export type PackFilterTagGroup = {
+  label: string
+  tags: PackTag[]
+}
+
+export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPackListParams {
+  return {
+    loved: searchParams.get("loved") === "1",
+    page: parsePositiveInteger(searchParams.get("page"), 1),
+    pageSize: PACK_LIST_PAGE_SIZE,
+    ranked: searchParams.get("ranked") === "1",
+    searchKeys: searchParams.get("q") ?? "",
+    sort: parseSort(searchParams.get("sort")),
+    tags: parseNumberList(searchParams.get("tags")),
+    type: parsePackType(searchParams.get("type")),
+  }
+}
+
+export function getDefaultFilters(): GetPackListParams {
+  return {
+    loved: false,
+    page: 1,
+    pageSize: PACK_LIST_PAGE_SIZE,
+    ranked: false,
+    searchKeys: "",
+    sort: 0,
+    tags: [],
+    type: -1,
+  }
+}
+
+export function serializeFilters(filters: GetPackListParams) {
+  const params = new URLSearchParams()
+
+  if (filters.page > 1) params.set("page", String(filters.page))
+  if (filters.searchKeys) params.set("q", filters.searchKeys)
+  if (filters.type !== -1) params.set("type", String(filters.type))
+  if (filters.ranked) params.set("ranked", "1")
+  if (filters.loved) params.set("loved", "1")
+  if (filters.sort !== 0) params.set("sort", String(filters.sort))
+  if (filters.tags.length > 0) params.set("tags", filters.tags.join(","))
+
+  return params
+}
+
+export function hasActiveAdvancedFilters(filters: GetPackListParams) {
+  return filters.type !== -1 || Boolean(filters.ranked) || Boolean(filters.loved) || filters.sort !== 0 || filters.tags.length > 0
+}
+
+export function getActiveFilterCount(filters: GetPackListParams) {
+  let count = 0
+  if (filters.type !== -1) count += 1
+  if (filters.ranked) count += 1
+  if (filters.loved) count += 1
+  if (filters.sort !== 0) count += 1
+  count += filters.tags.length
+  return count
+}
+
+export function getPackFilterTagGroups(tags: PackTag[], packType: PackTypeFilter): PackFilterTagGroup[] {
+  const groups: PackFilterTagGroup[] = [
+    { label: i18n.t("pack.tagGroups.pattern"), tags: tags.slice(0, 7) },
+    { label: i18n.t("pack.tagGroups.bpm"), tags: tags.slice(7, 19) },
+    { label: i18n.t("pack.tagGroups.difficulty"), tags: tags.slice(19) },
+  ].filter((group) => group.tags.length > 0)
+
+  if (packType === 1) return []
+  if (packType === 2) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.difficulty"))
+  if (packType === 3) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.pattern"))
+
+  return groups
+}
+
+export function filterTagIdsByType(tagIds: number[], tags: PackTag[], packType: PackTypeFilter) {
+  if (packType === -1 || tags.length === 0) return tagIds
+
+  const visibleTagIds = new Set(getPackFilterTagGroups(tags, packType).flatMap((group) => group.tags.map((tag) => tag.tag_id)))
+  return tagIds.filter((tagId) => visibleTagIds.has(tagId))
+}
+
+function parsePositiveInteger(value: string | null, fallback: number) {
+  const numberValue = Number(value)
+  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : fallback
+}
+
+function parsePackType(value: string | null): PackTypeFilter {
+  if (value === "0" || value === "1" || value === "2" || value === "3") {
+    return Number(value) as PackTypeFilter
+  }
+
+  return -1
+}
+
+function parseSort(value: string | null): PackSort {
+  if (value === "1" || value === "2") {
+    return Number(value) as PackSort
+  }
+
+  return 0
+}
+
+function parseNumberList(value: string | null) {
+  if (!value) return []
+
+  return value
+    .split(",")
+    .map((item) => Number(item))
+    .filter((item) => Number.isInteger(item) && item > 0)
+}

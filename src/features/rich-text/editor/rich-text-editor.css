@@ -1,0 +1,16 @@
+@reference "../../../index.css";
+
+@layer components {
+  .rich-text-editor-content {
+    @apply cursor-text px-4 py-3 outline-none;
+  }
+
+  .rich-text-editor-content .tiptap {
+    @apply min-h-[inherit] outline-none;
+  }
+
+  .rich-text-editor-content .is-editor-empty:first-child::before {
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+    content: attr(data-placeholder);
+  }
+}

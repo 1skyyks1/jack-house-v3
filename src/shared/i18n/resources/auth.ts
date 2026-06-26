@@ -1,0 +1,51 @@
+export const zhAuth = {
+  auth: {
+    brand: "Jack House",
+    login: "登录",
+    register: "注册",
+    createAccount: "创建账户",
+    thirdPartyLogin: "其他登录方式",
+    loginWithOsu: "使用 osu! 登录",
+    continueWithOsu: "使用 osu! 继续",
+    loggingIn: "登录中...",
+    loginSuccess: "登录成功",
+    identifierLabel: "用户名或邮箱",
+    identifierPlaceholder: "输入用户名或邮箱",
+    passwordLabel: "密码",
+    passwordPlaceholder: "输入密码",
+    registerHint: "新账号目前通过 osu! 授权创建，暂不支持邮箱注册。",
+    oauthFailed: "OAuth 登录失败",
+    completingLogin: "正在完成登录",
+    syncingSession: "正在同步会话并跳转...",
+    validation: {
+      identifierRequired: "请输入用户名或邮箱",
+      passwordRequired: "请输入密码",
+    },
+  },
+} as const
+
+export const enAuth = {
+  auth: {
+    brand: "Jack House",
+    login: "Login",
+    register: "Register",
+    createAccount: "Create account",
+    thirdPartyLogin: "Third-party login",
+    loginWithOsu: "Login with osu!",
+    continueWithOsu: "Continue with osu!",
+    loggingIn: "Logging in...",
+    loginSuccess: "Login successful",
+    identifierLabel: "Username or email",
+    identifierPlaceholder: "Enter username or email",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter password",
+    registerHint: "New accounts are currently created through osu! authorization. Email registration is not available yet.",
+    oauthFailed: "OAuth login failed",
+    completingLogin: "Completing login",
+    syncingSession: "Syncing your session and redirecting...",
+    validation: {
+      identifierRequired: "Username or email is required",
+      passwordRequired: "Password is required",
+    },
+  },
+} as const
