@@ -42,7 +42,6 @@ async function fetchCsrfToken() {
     .get<CsrfResponse>(`${API_BASE_URL}/auth/csrf`, {
       headers: {
         "Accept-Language": i18n.language,
-        "Cache-Control": "no-store",
       },
       withCredentials: true,
     })
