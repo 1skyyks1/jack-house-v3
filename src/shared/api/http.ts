@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosHeaders } from "axios"
 import { useAuthStore } from "@/features/auth/model/authStore"
 import { i18n } from "@/shared/i18n/client"
 import { getBackendMessage } from "./contracts/unwrap"
@@ -42,6 +42,7 @@ async function fetchCsrfToken() {
     .get<CsrfResponse>(`${API_BASE_URL}/auth/csrf`, {
       headers: {
         "Accept-Language": i18n.language,
+        "Cache-Control": "no-store",
       },
       withCredentials: true,
     })
@@ -58,7 +59,8 @@ async function fetchCsrfToken() {
 }
 
 http.interceptors.request.use(async (config) => {
-  config.headers["Accept-Language"] = i18n.language
+  const headers = AxiosHeaders.from(config.headers)
+  headers.set("Accept-Language", i18n.language)
 
   let csrfToken = getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf")
   if (!csrfToken && isUnsafeMethod(config.method)) {
@@ -66,9 +68,10 @@ http.interceptors.request.use(async (config) => {
   }
 
   if (csrfToken) {
-    config.headers["X-CSRF-Token"] = decodeURIComponent(csrfToken)
+    headers.set("X-CSRF-Token", decodeURIComponent(csrfToken))
   }
 
+  config.headers = headers
   return config
 })
 
