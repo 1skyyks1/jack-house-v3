@@ -4,6 +4,7 @@ import {
   deleteUser,
   getUserById,
   getUserList,
+  searchUsers,
   updateUser,
   type CreateUserRequest,
   type GetUserListParams,
@@ -14,12 +15,21 @@ export const userQueryKeys = {
   detail: (userId: string) => ["user", "detail", userId] as const,
   list: (params: GetUserListParams) => ["user", "list", params] as const,
   root: ["user"] as const,
+  search: (params: GetUserListParams) => ["user", "search", params] as const,
 }
 
 export function useUserListQuery(params: GetUserListParams) {
   return useQuery({
     queryFn: () => getUserList(params),
     queryKey: userQueryKeys.list(params),
+  })
+}
+
+export function useUserSearchQuery(params: GetUserListParams, enabled = true) {
+  return useQuery({
+    enabled,
+    queryFn: () => searchUsers(params),
+    queryKey: userQueryKeys.search(params),
   })
 }
 

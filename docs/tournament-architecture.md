@@ -25,7 +25,7 @@ flowchart LR
   end
 
   subgraph Backend["jack-house-web/backend"]
-    Express["Express routes<br/>/tournament 或旧 /t"]
+    Express["Express routes<br/>/t"]
     Services["Tournament services<br/>权限 / 状态机 / 事务 / 审计"]
     Models["Sequelize models<br/>models/tournament/*"]
   end
@@ -492,7 +492,7 @@ sequenceDiagram
   participant Audit as auditService
 
   User->>Web: 打开 /t/:tid/teams
-  Web->>API: GET /tournament/:tid/teams
+  Web->>API: GET /t/:tid/teams
   API->>TeamSvc: listTeams(tid)
   TeamSvc->>DB: 读取 team + player 快照
   DB-->>Web: 队伍大厅数据
@@ -538,7 +538,7 @@ sequenceDiagram
   ContentSvc->>DB: 保存 source_markdown + content_html
   ContentSvc-->>Admin: 保存成功
 
-  Public->>API: GET /tournament/:tid/sections
+  Public->>API: GET /t/:tid/sections
   API->>ContentSvc: getPublicSections(tid)
   ContentSvc->>DB: 只读展示字段
   DB-->>Public: content_html

@@ -11,7 +11,7 @@ import {
   type TournamentStaff,
   type TournamentStaffRole,
 } from "@/entities/tournament"
-import { useUserListQuery } from "@/entities/user"
+import { useUserSearchQuery } from "@/entities/user"
 import { AdminPage } from "@/features/admin-shell"
 import {
   AlertDialog,
@@ -54,7 +54,7 @@ export function AdminTournamentStaffPage() {
   const [search, setSearch] = useState("")
   const [role, setRole] = useState<TournamentStaffRole>("referee")
   const [userId, setUserId] = useState("")
-  const usersQuery = useUserListQuery({ page: 1, pageSize: 20, search })
+  const usersQuery = useUserSearchQuery({ page: 1, pageSize: 20, search }, search.trim().length >= 2)
 
   const staff = staffQuery.data ?? emptyStaff
   const groupedStaff = useMemo(() => {

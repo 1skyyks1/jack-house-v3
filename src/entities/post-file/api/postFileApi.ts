@@ -1,7 +1,7 @@
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
 import { http } from "@/shared/api/http"
-import type { PostFile, PostFileStatus } from "../model/types"
+import type { PostFile, PostFileStatus, PublicPostFileListItem } from "../model/types"
 
 export type GetAdminPostFilesParams = {
   keyword?: string
@@ -45,7 +45,7 @@ export async function getMyPostFiles(postId: string): Promise<PostFile[]> {
   return unwrapData<PostFile[]>(response)
 }
 
-export async function getPostFilesByUserId(params: GetUserPostFilesParams): Promise<PaginatedEnvelope<PostFile>> {
+export async function getPostFilesByUserId(params: GetUserPostFilesParams): Promise<PaginatedEnvelope<PublicPostFileListItem>> {
   const response = await http.get(`/postFile/user/${params.userId}`, {
     params: {
       page: params.page,
@@ -53,7 +53,7 @@ export async function getPostFilesByUserId(params: GetUserPostFilesParams): Prom
     },
   })
 
-  return unwrapPagination<PostFile>(response)
+  return unwrapPagination<PublicPostFileListItem>(response)
 }
 
 export async function uploadPostFile(postId: string, file: File): Promise<PostFile> {

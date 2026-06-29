@@ -487,55 +487,65 @@ sql/*
 
 ## 5. API 方案
 
-路径沿用旧后端 `/tournament`，前端页面使用 `/t`。
+后端赛事 API 根路径为 `/t`，前端页面路由也使用 `/t`。
 
 ### Public
 
-- `GET /tournament`
-- `GET /tournament/:tid`
-- `GET /tournament/:tid/sections`
-- `GET /tournament/:tid/teams`
-- `GET /tournament/:tid/staff`
-- `GET /tournament/:tid/qualifier`
-- `GET /tournament/:tid/bracket`
-- `GET /tournament/:tid/match/:matchId`
+- `GET /t`
+- `GET /t/:tid`
+- `GET /t/:tid/sections`
+- `GET /t/:tid/teams`
+- `GET /t/:tid/staff`
+- `GET /t/:tid/qualifier/mappool`
+- `GET /t/:tid/qualifier/scores`
+- `GET /t/:tid/qualifier/ranking`
+- `GET /t/:tid/rounds`
+- `GET /t/:tid/bracket`
+- `GET /t/:tid/round/:roundId/mappool`
+- `GET /t/:tid/match/:matchId`
 
 ### Team
 
-- `POST /tournament/:tid/teams`
-- `POST /tournament/:tid/teams/:teamId/join`
-- `POST /tournament/:tid/teams/join-by-code`
-- `POST /tournament/:tid/teams/:teamId/leave`
-- `POST /tournament/:tid/teams/:teamId/kick`
-- `POST /tournament/:tid/teams/:teamId/reset-invite`
-- `POST /tournament/:tid/teams/:teamId/submit`
-- `PATCH /tournament/:tid/players/:playerId`
+- `POST /t/:tid/team`
+- `POST /t/:tid/team/join`
+- `DELETE /t/:tid/team/leave`
+- `PUT /t/:tid/team/:teamId/info`
+- `POST /t/:tid/team/:teamId/transfer-captain`
+- `POST /t/:tid/team/:teamId/reset-invite`
+- `POST /t/:tid/team/:teamId/submit`
+- `DELETE /t/:tid/team/:teamId/player/:playerId`
 
 ### Admin And Content
 
-- `POST /tournament`
-- `PUT /tournament/:tid`
-- `DELETE /tournament/:tid`
-- `POST /tournament/:tid/staff`
-- `DELETE /tournament/:tid/staff/:staffId`
-- `POST /tournament/:tid/sections`
-- `PUT /tournament/:tid/sections/:sectionId`
-- `DELETE /tournament/:tid/sections/:sectionId`
-- `GET /tournament/:tid/audit-logs`
+- `POST /t`
+- `PUT /t/:tid`
+- `DELETE /t/:tid`
+- `PUT /t/:tid/team/:teamId`
+- `POST /t/:tid/team/approve-all`
+- `PUT /t/:tid/player/:playerId`
+- `POST /t/:tid/staff`
+- `DELETE /t/:tid/staff/:staffId`
+- `GET /t/:tid/sections/manage`
+- `POST /t/:tid/sections/preview`
+- `POST /t/:tid/sections`
+- `PUT /t/:tid/sections/:sectionId`
+- `DELETE /t/:tid/sections/:sectionId`
+- `GET /t/:tid/audit-logs`
+- `POST /t/:tid/import/teams`
 
 ### Qualifier
 
-- `GET /tournament/:tid/qualifier/mappool`
-- `POST /tournament/:tid/qualifier/mappool`
-- `PUT /tournament/:tid/qualifier/mappool/:mapId`
-- `DELETE /tournament/:tid/qualifier/mappool/:mapId`
-- `GET /tournament/:tid/qualifier/scores`
-- `GET /tournament/:tid/qualifier/imports`
-- `POST /tournament/:tid/qualifier/fetch-scores`
-- `POST /tournament/:tid/qualifier/calculate-ranking`
-- `GET /tournament/:tid/qualifier/ranking`
-- `PUT /tournament/:tid/qualifier/scores/:scoreId`
-- `POST /tournament/:tid/qualifier/lock`
+- `GET /t/:tid/qualifier/mappool`
+- `POST /t/:tid/qualifier/mappool`
+- `PUT /t/:tid/qualifier/mappool/:mapId`
+- `DELETE /t/:tid/qualifier/mappool/:mapId`
+- `GET /t/:tid/qualifier/scores`
+- `GET /t/:tid/qualifier/imports`
+- `POST /t/:tid/qualifier/fetch-scores`
+- `POST /t/:tid/qualifier/calculate-ranking`
+- `GET /t/:tid/qualifier/ranking`
+- `PUT /t/:tid/qualifier/scores/:scoreId`
+- `POST /t/:tid/qualifier/lock`
 
 导入 payload：
 
@@ -548,14 +558,23 @@ sql/*
 
 ### Bracket And Match
 
-- `POST /tournament/:tid/bracket/generate`
-- `GET /tournament/:tid/bracket`
-- `PUT /tournament/:tid/match/:matchId`
-- `POST /tournament/:tid/match/:matchId/fetch-scores`
-- `GET /tournament/:tid/referee/:matchId`
-- `POST /tournament/:tid/referee/:matchId/action`
-- `PUT /tournament/:tid/referee/:matchId/action/:actionId`
-- `POST /tournament/:tid/referee/:matchId/game-score`
+- `POST /t/:tid/round`
+- `PUT /t/:tid/round/:roundId`
+- `DELETE /t/:tid/round/:roundId`
+- `POST /t/:tid/round/:roundId/mappool`
+- `DELETE /t/:tid/round/mappool/:mapId`
+- `GET /t/:tid/bracket`
+- `POST /t/:tid/bracket/generate`
+- `POST /t/:tid/match`
+- `PUT /t/:tid/match/:matchId`
+- `POST /t/:tid/match/:matchId/fetch-scores`
+- `GET /t/:tid/referee/:matchId`
+- `POST /t/:tid/referee/:matchId/roll`
+- `POST /t/:tid/referee/:matchId/action`
+- `PUT /t/:tid/referee/:matchId/action/:actionId`
+- `POST /t/:tid/referee/:matchId/timeout`
+- `PUT /t/:tid/referee/:matchId/game/:gameId`
+- `DELETE /t/:tid/referee/:matchId/undo`
 
 WBD/FF payload：
 
@@ -809,7 +828,7 @@ SQL 草案：
 - 锁榜后后端会禁止资格赛图池变更、成绩导入、手动修分和重算排名。
 - `bracketService` 已支持固定 32 强双败预生成和结果推进，生成正赛前要求资格赛已锁榜。
 - `refereeActionService` 已支持 protect/ban/pick 创建和修改，并做冲突检查。
-- `GET /tournament/:tid/match/:matchId` 已增加 match 归属赛事校验。
+- `GET /t/:tid/match/:matchId` 已增加 match 归属赛事校验。
 - 前端 `entities/tournament` API/types/query 已建立。
 - 用户侧已实现 `/t`、`/t/:tid`、`/t/:tid/teams`、`/t/:tid/qualifier`、`/t/:tid/bracket`、`/t/:tid/match/:matchId`、`/t/:tid/referee/:matchId`。
 - `/t/:tid/match/:matchId` 已展示双方队伍、player、比分、状态、MP 外链、roll、WBD/FF note 和已打图记录。
@@ -834,10 +853,10 @@ SQL 草案：
 - 前端 `entities/tournament` 已补 round、round mappool、bracket generate、match create/update/fetch-scores、referee data/action/roll/timeout/game-score query 与 mutation。
 - 后台已实现 `/admin/tournaments/:tid/audit` 审计日志页，支持 entity/action/operator/entity id 过滤、分页、old/new JSON 摘要展示。
 - 前端 `entities/tournament` 已补 audit log list query。
-- 后端已新增 `POST /tournament/:tid/import/teams` 历史赛事队伍/选手补录接口，host 可提交 JSON 批次；接口会按 `user_id -> osu_uid -> 占位 User` 解析选手，创建 team/player 快照，写入 `[historical-import:<batch_id>]` remark，并记录 `historical_import` audit。支持 `dry_run` 预检，预检事务回滚不落库。
+- 后端已新增 `POST /t/:tid/import/teams` 历史赛事队伍/选手补录接口，host 可提交 JSON 批次；接口会按 `user_id -> osu_uid -> 占位 User` 解析选手，创建 team/player 快照，写入 `[historical-import:<batch_id>]` remark，并记录 `historical_import` audit。支持 `dry_run` 预检，预检事务回滚不落库。
 - 后台已新增 `/admin/tournaments/:tid/import` 历史补录页面，支持粘贴 JSON、dry-run 预检、正式导入和结果摘要展示；赛事列表已增加 Import 入口。
 - `tournamentService` 已抽离赛事列表、详情、创建、更新、删除；创建赛事会在同一事务中创建 creator host 并写 `tournament/create` audit，更新/删除赛事也会写 audit。
-- 后台内容页已新增编辑中 Markdown 预览，调用后端 `POST /tournament/:tid/sections/preview` 复用 `markdown-it` + `sanitize-html` 管线；公开内容接口只返回 `content_html` 等展示字段，不再泄露 `source_markdown`，后台编辑改走 host 管理接口 `/sections/manage`。
+- 后台内容页已新增编辑中 Markdown 预览，调用后端 `POST /t/:tid/sections/preview` 复用 `markdown-it` + `sanitize-html` 管线；公开内容接口只返回 `content_html` 等展示字段，不再泄露 `source_markdown`，后台编辑改走 host 管理接口 `/sections/manage`。
 - `/t/:tid/bracket` 已新增移动端纵向折叠轮次视图，桌面端保留横向 bracket 浏览。
 - `/t/:tid/teams` 已补报名未开始/开放/已结束提示，报名期外会禁用创建、加入和当前队伍成员操作入口；空状态会根据报名状态给出不同提示。
 - audit 覆盖已复核并补齐：裁判 roll、timeout、单局比分手动修正、正赛 MP 拉分现在都会记录 `TAuditLog`；`sections/preview` 和不支持的 undo 不产生持久写入，不写 audit。

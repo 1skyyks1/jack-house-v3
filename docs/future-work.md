@@ -28,11 +28,28 @@
 
 ## 建议优先级
 
-1. 赛事系统产品切分：这是后续最重要的大型任务；旧后端已有半成品模型和路由，但需要先确定官网耦合、用户/玩家/staff 关系、权限、状态机和阶段流程。
+1. 赛事系统联调验收：首期前后端已接入，后续重点是真实内容、真实权限、真实比赛流程和边界数据验收。
 2. 上传与存储策略：先确认哪些文件可以公开、大小和流量预期、是否需要删除/替换/审计，再决定 GitHub、MinIO 或 S3/R2。
-3. 富文本媒体能力：图片上传、表格、附件链接要依赖上传策略，不能独立拍脑袋实现。
-4. 认证专项：从 `localStorage.token` 迁到 httpOnly cookie，需要后端配合 Set-Cookie、logout、CORS credentials、CSRF。
+3. 富文本媒体能力：图片上传和表格编辑已接入；后续附件链接、真实内容验收和长期 JSON/HTML 存储策略仍要结合上传策略推进。
+4. 认证专项：V3 已切到 httpOnly cookie，不再使用 `localStorage.token` 或 URL token；后端默认保留旧前端 Bearer 兼容，可通过 `AUTH_LEGACY_BEARER_ENABLED=false` 关闭。部署时仍需填写正式域名下 SameSite/Secure/CORS 配置。邮箱注册接口当前只预留，不作为 V3 UI 功能。
 5. 体验优化：移动端导航、列表密度、loading/empty/error、代码分包、图片资源治理。
+
+## 已完成的后端安全收口
+
+- `jack-house-web/backend` 已为 `POST /user` 增加 `ADMIN` 鉴权，普通用户不能通过该接口创建账号。
+- `PUT /user/:user_id` 已按字段白名单拆分：管理员可维护用户管理字段；本人只能更新 `password`、`qq`、`discord`。
+- `GET /user/:user_id` 已拆分公开/私有字段：公开个人页不返回 `email` 等管理字段；本人或 `ADMIN` 带有效登录态访问时才返回完整非密码字段。
+- 完整 `GET /user` 列表已限制为 `ORG/ADMIN`，并限制最大 `pageSize=50`；赛事 staff 选人用登录后轻量 `/user/search`，最大 `pageSize=20`。
+- 旧 controller 中直接 `require("../../config/roles")` 的位置已统一改为解构 `ROLES`，避免 `ROLES.ADMIN` 判定失效。
+- `homeImgController`、`postFileController` 和富文本上传已改为调用 `services/storage`，默认兼容当前 MinIO；GitHub repo provider 可接入 `1skyyks1/jack-house-img`，默认返回 jsDelivr URL。
+- `post_file`、`home_img`、`badge` 和 `event_stage` 已补存储元数据字段；投稿上传已增加默认 20MB 限制、扩展名白名单、可选 MIME 白名单和 SHA-256 checksum 持久化；投稿文件不压缩、不转格式，上传对象名为短 hash 前缀 + 原扩展名。当前 `.env` 指向的数据库已执行 `npm run migrate:storage-metadata`。
+- 投稿上传已增加默认 100MB 单用户单征稿总大小限制；活动 stage 背景图已拆成专用上传器，默认 1MB。
+- 后端公开展示图片已接入 `sharp` 优化并默认转 WebP，覆盖富文本图片、活动 stage 背景图、徽章和旧 homeImg；V3 首页写死 GitHub raw URL，不经过后端，需要离线压缩源文件。
+- 活动 stage 更新接口已按字段白名单收口，并统一使用 `stage.*` 响应文案。
+- httpOnly cookie 认证已接入：后端登录、注册和 osu OAuth callback 写 cookie，cookie 写请求已有双提交 CSRF 校验，V3 请求已开启 `withCredentials`，并且不再读取/写入 `localStorage.token` 或发送 Bearer 头；后端默认保留旧前端 Bearer 兼容，旧前端下线后可设置 `AUTH_LEGACY_BEARER_ENABLED=false`；生产环境已要求显式配置 `CORS_ORIGIN`/`FRONTEND_URL`，且 `AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。
+- 富文本图片上传已接入：后端 `/upload/rich-text/image` 默认使用 `RICHTEXT` storage scope，V3 编辑器可通过工具栏、粘贴图片和拖拽图片上传并插入图片；配置 `RICHTEXT_STORAGE_PROVIDER=github` 和 `RICHTEXT_STORAGE_BUCKET` 后可经后端写入 GitHub 仓库。后端已新增 `rich_text_asset` / `rich_text_asset_reference`，上传记录资产，帖子正文、活动说明和赛事章节保存时同步引用；`npm run cleanup:rich-text-assets` 可清理超过保留期的未引用资产，`npm run backfill:rich-text-assets` 可 dry-run/回填历史内容。后续还需要在生产环境接入定时调度，并按 dry-run 结果决定是否 apply 历史回填。
+- 富文本表格编辑已接入：V3 编辑器可插入表格、追加行/列和删除表格，后端 sanitizer 已允许基础 table 标签。
+- 旧帖子/公告、活动描述和赛事内容保存时已接入后端富文本 sanitizer。
 
 ## 每个新功能开始前
 

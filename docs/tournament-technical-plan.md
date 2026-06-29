@@ -569,41 +569,51 @@ SQL 草案：
 
 ## 6. API 方案
 
-路径沿用旧 `/tournament`，前端页面使用 `/t`。
+后端赛事 API 根路径为 `/t`，前端页面路由也使用 `/t`。
 
 ### 公开接口
 
-- `GET /tournament`
-- `GET /tournament/:tid`
-- `GET /tournament/:tid/sections`
-- `GET /tournament/:tid/teams`
-- `GET /tournament/:tid/staff`
-- `GET /tournament/:tid/qualifier`
-- `GET /tournament/:tid/bracket`
-- `GET /tournament/:tid/matches/:matchId`
+- `GET /t`
+- `GET /t/:tid`
+- `GET /t/:tid/sections`
+- `GET /t/:tid/teams`
+- `GET /t/:tid/staff`
+- `GET /t/:tid/qualifier/mappool`
+- `GET /t/:tid/qualifier/scores`
+- `GET /t/:tid/qualifier/ranking`
+- `GET /t/:tid/rounds`
+- `GET /t/:tid/bracket`
+- `GET /t/:tid/round/:roundId/mappool`
+- `GET /t/:tid/match/:matchId`
 
 ### 报名与队伍
 
-- `POST /tournament/:tid/teams`
-- `POST /tournament/:tid/teams/:teamId/join`
-- `POST /tournament/:tid/teams/join-by-code`
-- `POST /tournament/:tid/teams/:teamId/leave`
-- `POST /tournament/:tid/teams/:teamId/kick`
-- `POST /tournament/:tid/teams/:teamId/reset-invite`
-- `POST /tournament/:tid/teams/:teamId/submit`
-- `PATCH /tournament/:tid/players/:playerId`
+- `POST /t/:tid/team`
+- `POST /t/:tid/team/join`
+- `DELETE /t/:tid/team/leave`
+- `PUT /t/:tid/team/:teamId/info`
+- `POST /t/:tid/team/:teamId/transfer-captain`
+- `POST /t/:tid/team/:teamId/reset-invite`
+- `POST /t/:tid/team/:teamId/submit`
+- `DELETE /t/:tid/team/:teamId/player/:playerId`
 
 ### 后台配置
 
-- `POST /tournament`
-- `PATCH /tournament/:tid`
-- `DELETE /tournament/:tid`
-- `POST /tournament/:tid/staff`
-- `DELETE /tournament/:tid/staff/:staffId`
-- `POST /tournament/:tid/sections`
-- `PATCH /tournament/:tid/sections/:sectionId`
-- `DELETE /tournament/:tid/sections/:sectionId`
-- `GET /tournament/:tid/audit-logs`
+- `POST /t`
+- `PUT /t/:tid`
+- `DELETE /t/:tid`
+- `PUT /t/:tid/team/:teamId`
+- `POST /t/:tid/team/approve-all`
+- `PUT /t/:tid/player/:playerId`
+- `POST /t/:tid/staff`
+- `DELETE /t/:tid/staff/:staffId`
+- `GET /t/:tid/sections/manage`
+- `POST /t/:tid/sections/preview`
+- `POST /t/:tid/sections`
+- `PUT /t/:tid/sections/:sectionId`
+- `DELETE /t/:tid/sections/:sectionId`
+- `GET /t/:tid/audit-logs`
+- `POST /t/:tid/import/teams`
 
 权限：
 
@@ -615,17 +625,17 @@ SQL 草案：
 
 ### 资格赛
 
-- `GET /tournament/:tid/qualifier/mappool`
-- `POST /tournament/:tid/qualifier/mappool`
-- `PUT /tournament/:tid/qualifier/mappool/:mapId`
-- `DELETE /tournament/:tid/qualifier/mappool/:mapId`
-- `GET /tournament/:tid/qualifier/scores`
-- `GET /tournament/:tid/qualifier/imports`
-- `POST /tournament/:tid/qualifier/fetch-scores`
-- `POST /tournament/:tid/qualifier/calculate-ranking`
-- `GET /tournament/:tid/qualifier/ranking`
-- `PUT /tournament/:tid/qualifier/scores/:scoreId`
-- `POST /tournament/:tid/qualifier/lock`
+- `GET /t/:tid/qualifier/mappool`
+- `POST /t/:tid/qualifier/mappool`
+- `PUT /t/:tid/qualifier/mappool/:mapId`
+- `DELETE /t/:tid/qualifier/mappool/:mapId`
+- `GET /t/:tid/qualifier/scores`
+- `GET /t/:tid/qualifier/imports`
+- `POST /t/:tid/qualifier/fetch-scores`
+- `POST /t/:tid/qualifier/calculate-ranking`
+- `GET /t/:tid/qualifier/ranking`
+- `PUT /t/:tid/qualifier/scores/:scoreId`
+- `POST /t/:tid/qualifier/lock`
 
 导入 payload：
 
@@ -646,14 +656,23 @@ SQL 草案：
 
 ### 正赛
 
-- `POST /tournament/:tid/bracket/generate`
-- `GET /tournament/:tid/bracket`
-- `PATCH /tournament/:tid/matches/:matchId/schedule`
-- `PATCH /tournament/:tid/matches/:matchId/mp`
-- `POST /tournament/:tid/matches/:matchId/import-score`
-- `PATCH /tournament/:tid/matches/:matchId/result`
-- `POST /tournament/:tid/matches/:matchId/actions`
-- `PATCH /tournament/:tid/matches/:matchId/actions/:actionId`
+- `POST /t/:tid/round`
+- `PUT /t/:tid/round/:roundId`
+- `DELETE /t/:tid/round/:roundId`
+- `POST /t/:tid/round/:roundId/mappool`
+- `DELETE /t/:tid/round/mappool/:mapId`
+- `GET /t/:tid/bracket`
+- `POST /t/:tid/bracket/generate`
+- `POST /t/:tid/match`
+- `PUT /t/:tid/match/:matchId`
+- `POST /t/:tid/match/:matchId/fetch-scores`
+- `GET /t/:tid/referee/:matchId`
+- `POST /t/:tid/referee/:matchId/roll`
+- `POST /t/:tid/referee/:matchId/action`
+- `PUT /t/:tid/referee/:matchId/action/:actionId`
+- `POST /t/:tid/referee/:matchId/timeout`
+- `PUT /t/:tid/referee/:matchId/game/:gameId`
+- `DELETE /t/:tid/referee/:matchId/undo`
 
 WBD payload：
 
@@ -894,7 +913,7 @@ API 封装要求：
 
 当前实现：
 
-- 后端已新增 `POST /tournament/:tid/import/teams`，需要 host 权限。
+- 后端已新增 `POST /t/:tid/import/teams`，需要 host 权限。
 - payload 以 `batch_id` + `teams[]` 为根；team 支持 `name/display_name/avatar/status/qual_rank/qual_score/qual_mp_id/locked_at`；player 支持 `user_id/osu_uid/user_name/avatar/is_captain/review_status/contact/timezone/remark`。
 - `dry_run: true` 会执行完整校验和解析，并在事务中回滚，不写入数据库。
 - 非站内选手会创建 `password/email/qq/discord` 为空的占位 `User`，写入 `user_name/osu_uid/avatar`。
@@ -986,12 +1005,12 @@ API 封装要求：
 - 已接入主要关键写操作 audit：内容块、创建队伍、加入队伍、退出队伍、队伍提交、队长踢人、host 踢人 override、重置邀请码、队伍状态更新、批量通过、host 更新 player、staff 添加/移除、资格赛、bracket、match 和裁判 action。
 - host/admin 已可通过踢人接口做队伍成员 override 修正；普通队长仍受报名期和锁定限制；后台 teams 页已接入队伍信息 host 修正入口，host 可在报名期外或队伍锁定后修正 `name/display_name/avatar/is_open`。
 - 已新增 `qualifierService`，收口资格赛 MP 导入、导入日志、重复成绩跳过、来源字段写入、每图最高分排名、手动修分和资格赛锁榜；资格赛导入支持指定 team，也支持同一 MP 中多队同时打图时按 score `user_id` 自动归属到本届 player/team。
-- 已新增资格赛 import log 查询接口：`GET /tournament/:tid/qualifier/imports`。
-- 已新增资格赛成绩手动修正接口：`PUT /tournament/:tid/qualifier/scores/:scoreId`，并写入 audit。
-- 已新增资格赛锁榜接口：`POST /tournament/:tid/qualifier/lock`，锁榜后禁止资格赛图池变更、成绩导入、手动修分和重算排名。
+- 已新增资格赛 import log 查询接口：`GET /t/:tid/qualifier/imports`。
+- 已新增资格赛成绩手动修正接口：`PUT /t/:tid/qualifier/scores/:scoreId`，并写入 audit。
+- 已新增资格赛锁榜接口：`POST /t/:tid/qualifier/lock`，锁榜后禁止资格赛图池变更、成绩导入、手动修分和重算排名。
 - `TMatch` 已补 bracket 位置和来源字段：`bracket_group`、`round_no`、`slot_no`、`source_match_*`、`hidden_until_match_id`。
 - 已新增 `bracketService`，支持固定 32 强双败 bracket 预生成，生成前要求资格赛排名已锁定。
-- `POST /tournament/:tid/bracket/generate` 已改为生成 15 个 round / 63 场 match：WB 31、LB 30、GF 1、Reset Final 1。
+- `POST /t/:tid/bracket/generate` 已改为生成 15 个 round / 63 场 match：WB 31、LB 30、GF 1、Reset Final 1。
 - 正赛首轮种子已按确认规则生成：`#1 vs #32`、`#2 vs #31`、依次类推。
 - 生成 bracket 时会过滤无正赛资格队伍：队伍至少需要一名 player 不是 `review_failed`。
 - 已新增 bracket 自动推进：match 完成后会按 `source_match_*` 将 winner/loser 填入后续场次。
@@ -1001,7 +1020,7 @@ API 封装要求：
 - 已新增 `TMatchAction` 模型、关联和 SQL 草案，用于独立保存 protect/ban/pick 时间线。
 - 已新增 `refereeActionService`，支持 protect/ban/pick 创建与修改，并阻止已保护图被 ban、已 ban 图被 pick、重复 pick 等冲突。
 - 裁判工作台 `recordAction` 已改为写入 `TMatchAction`，并保留旧 payload `action_type: 0/1/2`、`action_by: 1/2` 兼容。
-- 已新增修改裁判操作接口：`PUT /tournament/:tid/referee/:matchId/action/:actionId`。
+- 已新增修改裁判操作接口：`PUT /t/:tid/referee/:matchId/action/:actionId`。
 - 旧 undo 接口已改为返回“不支持撤销，请直接修改对应操作”。
 - 前端已新增 `entities/tournament` API/types/query 模块。
 - 用户侧已启用 `/t`、`/t/:tid`、`/t/:tid/bracket` 三个基础页面，不再全部落到暂停页。
@@ -1013,7 +1032,7 @@ API 封装要求：
 - 公开队伍列表后端已排除 `invite_code` 字段，避免私密队伍邀请码泄露；队长重置邀请码时由专用接口返回新 code。
 - 用户侧已新增 `/t/:tid/qualifier` 资格赛基础页面，展示资格赛图池和公开排名，不展示两轮原始成绩。
 - 用户侧已新增 `/t/:tid/match/:matchId` 比赛详情页，展示双方队伍、player、比分、状态、MP 外链、roll、WBD/FF note 和已打图记录。
-- `GET /tournament/:tid/match/:matchId` 已增加 match 归属赛事校验，避免跨赛事读取任意 match。
+- `GET /t/:tid/match/:matchId` 已增加 match 归属赛事校验，避免跨赛事读取任意 match。
 - 后台已新增 `/admin/tournaments` 赛事列表入口，使用现有 AdminPage/AdminTable。
 - 后台已新增 `/admin/tournaments/new` 基础创建页，可创建 tournament 本体；创建者 host 仍由后端创建接口负责写入。
 - 后台已新增 `/admin/tournaments/:tid/settings` 基础设置页，并抽出 `TournamentSettingsForm` 复用创建/编辑字段和校验。
@@ -1037,7 +1056,7 @@ API 封装要求：
 - 后台已新增 `/admin/tournaments/:tid/import` 历史补录页面，支持 JSON 示例、dry-run 预检、正式导入和结果摘要；赛事列表已增加 Import 入口。
 - 前端 `entities/tournament` 已补 historical import request/result types、API 和 mutation。
 - 后端已新增 `tournamentService`，收口赛事列表、详情、创建、更新、删除；创建赛事和 creator host 写入处于同一事务，赛事 create/update/delete 已写 audit。
-- 后台内容页已新增 Markdown 编辑中预览；后端新增 `POST /tournament/:tid/sections/preview`，公开 sections 接口不再返回 `source_markdown`。
+- 后台内容页已新增 Markdown 编辑中预览；后端新增 `POST /t/:tid/sections/preview`，公开 sections 接口不再返回 `source_markdown`。
 - audit 覆盖已复核并补齐：裁判 roll、timeout、单局比分手动修正、正赛 MP 拉分都会记录审计；预览和不支持的 undo 不写持久数据，因此不写 audit。
 - 前端赛事后台设置表单已将 schema/default/转换逻辑拆到 `TournamentSettingsFormModel`，避免 Fast Refresh 混合导出；资格赛和 staff 后台页的派生数组依赖已稳定。`pnpm exec tsc -b`、`pnpm run lint`、`pnpm run build` 已通过，lint 当前 0 warning，build 仅剩 Vite 大 chunk 提示。
 - 前端已新增赛事后台专用路由守卫：全站 admin 可进入所有赛事后台页，具体 tournament 的 staff 可进入该届 `/admin/tournaments/:tid/*` 管理页；新建赛事入口仍只对全站 tournament 权限开放。赛事详情页会为全站 admin 或本届 staff 展示 Manage 入口，避免普通赛事 staff 被全站 admin 权限守卫挡在后台外。
@@ -1056,4 +1075,4 @@ API 封装要求：
 
 - sanitizer 白名单是否需要根据真实规则文档继续放宽或收紧；当前已有保存清洗和前端二次清洗。
 - 投稿文件和富文本图片最终使用 GitHub、MinIO、S3/R2 中哪种 provider。
-- 旧活动后台仍有非赛事遗留问题：`eventStageController.updateStage` 的 `desc` 未定义，后续做活动联调时再处理。
+- 旧活动后台仍需真实 UI 联调；`eventStageController.updateStage` 的历史 `desc` 未定义问题已在后端收口。

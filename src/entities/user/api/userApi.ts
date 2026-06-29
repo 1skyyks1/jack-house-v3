@@ -9,6 +9,8 @@ export type GetUserListParams = {
   search?: string
 }
 
+export type UserSearchItem = Pick<UserProfile, "avatar" | "osu_uid" | "user_id" | "user_name">
+
 export type CreateUserRequest = Pick<UserProfile, "avatar" | "role" | "status" | "user_name"> & {
   password: string
 }
@@ -28,6 +30,18 @@ export async function getUserList(params: GetUserListParams): Promise<PaginatedE
   })
 
   return unwrapPagination<UserProfile>(response)
+}
+
+export async function searchUsers(params: GetUserListParams): Promise<PaginatedEnvelope<UserSearchItem>> {
+  const response = await http.get("/user/search", {
+    params: {
+      page: params.page,
+      pageSize: params.pageSize,
+      search: params.search || undefined,
+    },
+  })
+
+  return unwrapPagination<UserSearchItem>(response)
 }
 
 export async function getUserById(userId: string): Promise<UserProfile> {

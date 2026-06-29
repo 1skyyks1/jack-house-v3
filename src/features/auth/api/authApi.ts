@@ -16,7 +16,6 @@ export type RegisterRequest = {
 
 export type AuthSessionResponse = {
   message?: string
-  token: string
   userId: number
 }
 
@@ -28,6 +27,10 @@ export async function login(request: LoginRequest): Promise<AuthSessionResponse>
 export async function register(request: RegisterRequest): Promise<AuthSessionResponse> {
   const response = await http.post("/auth/register", request)
   return unwrapData<AuthSessionResponse>(response)
+}
+
+export async function logoutSession(): Promise<void> {
+  await http.post("/auth/logout")
 }
 
 export async function getCurrentUser(): Promise<UserProfile> {

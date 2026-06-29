@@ -42,10 +42,11 @@
 
 ## 认证
 
-- 当前阶段兼容旧 `Authorization: Bearer <token>`。
+- V3 认证统一使用 httpOnly cookie，不发送 Bearer 头；后端通过 `AUTH_LEGACY_BEARER_ENABLED` 控制是否继续接受旧前端 Bearer token，默认保持兼容。
 - 当前注册入口只开放 osu OAuth；email/password 注册表单先不在 V3 UI 暴露。
-- JWT 从 localStorage 迁移到 httpOnly cookie 是独立认证专项，不阻塞第一批页面。
-- cookie 专项需要后端配合：Set-Cookie、logout、CORS credentials、CSRF 策略。
+- `POST /auth/register` 保留为旧后端预留接口；邮箱注册当前不作为 V3 缺陷处理。
+- V3 已从 `localStorage.token` 切到 httpOnly cookie，cookie 写请求使用双提交 CSRF token；正式部署必须显式配置 `CORS_ORIGIN` 或 `FRONTEND_URL`。同站部署可继续使用 `AUTH_COOKIE_SAME_SITE=lax`；本地 V3 调线上后端或前后端跨站部署时，应使用 `AUTH_COOKIE_SAME_SITE=none` 和 `AUTH_COOKIE_SECURE=true`，并把实际前端 origin 写入 `CORS_ORIGIN`。
+- `AUTH_LEGACY_BEARER_ENABLED=true` 时，后端登录响应和 osu OAuth redirect 仍返回/携带 JWT 兼容旧前端；V3 忽略这些 token。只部署 V3 后可设为 `false`。
 
 ## 富文本
 
@@ -54,16 +55,17 @@
 - 展示层统一使用 `RichTextRenderer` + DOMPurify。
 - 目录统一使用 `RichTextToc`，页面不再各自接 tocbot。
 - 发帖页预览必须走 `RichTextRenderer`，不能绕过 sanitizer。
+- 图片和表格首期继续存 HTML；图片通过后端 `/upload/rich-text/image` 上传，前端支持按钮、粘贴和拖拽图片文件，表格允许基础 `table/thead/tbody/tr/th/td` 结构。是否长期双写 Tiptap JSON 仍未决。
 
 ## 范围排除
 
-- 赛事系统在迁移 MVP 阶段未实现；后续作为独立产品/规则重设计，规划见 `tournament-system.md`。
 - 不迁移旧 `/admin/homeImgs`；V3 首页不保留后台配置首页图。
 - 公告 type 3 独立在 `/admin/announcement` 管理，不通过 `/forum/editor/:id?` 暴露。
 
 ## 赛事系统
 
-- 赛事系统是迁移 MVP 之后最高优先级的大型任务，先做详细设计，再进入代码实现。
+- 赛事系统已作为迁移 MVP 之后的独立产品线接入 V3；继续按 `tournament-implementation-spec.md`、`tournament-technical-plan.md` 和 `tournament-architecture.md` 联调与验收。
+- 后端赛事 API 根路径为 `/t`，前端公开页面路由也使用 `/t`；不要再新增 `/tournament` API 调用。
 - 赛事系统与旧 `event` 活动系统保持领域隔离，只复用 UI、用户链接、排行榜展示、富文本和上传等基础能力。
 - 赛事按“届”建模，JHC2026 和 JHC2027 即使属于同一系列，也作为两个独立 tournament。
 - `acronym` 可作为公开 URL，如 `/t/JHC2026`；host 修改后旧 acronym 失效。
@@ -114,10 +116,9 @@
 
 ## 上传与存储
 
-- GitHub 只先作为公开静态图片和小规模实验性存储候选，不直接把用户投稿文件写入普通 Git 仓库。
-- 浏览器端不能持有 GitHub token；所有 GitHub 上传都必须经后端代理。
-- 投稿文件优先通过后端 storage provider 抽象兼容 MinIO，再评估 GitHub Release assets 或 S3/R2。
-- 富文本图片上传接入前，先确认存储 provider、MIME 白名单、大小限制和 sanitizer 白名单。
+- GitHub 仓库 `1skyyks1/jack-house-img` 作为当前公开图片与投稿文件的候选存储仓库；浏览器端不持有 token，所有上传经后端代理。
+- 投稿文件通过后端 storage provider 抽象兼容 MinIO/GitHub；投稿文件不压缩、不转格式，完整 SHA-256 入库，对象文件名使用短 hash 前缀 + 原扩展名。GitHub 方案上线前必须确认投稿文件全部可公开、规模可控；如果后续需要私有下载、权限、统计或大流量，再切回 MinIO/S3/R2。
+- 富文本图片上传和表格编辑已接入；上传成功后记录 `rich_text_asset`，帖子正文、活动说明和赛事章节保存时同步 `rich_text_asset_reference`。编辑器删除图片不会立即删除远端对象，先在保存后移除引用并把无引用资产标记为 `orphaned`；后端清理脚本和历史回填脚本都默认 dry-run，生产显式启用后再写入或物理清理。
 
 ## 页面策略
 

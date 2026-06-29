@@ -16,6 +16,8 @@ export type PostFile = {
   user_name?: string
 }
 
+export type PublicPostFileListItem = Pick<PostFile, "file_id" | "file_name" | "post_id" | "size" | "status" | "uploaded_time" | "user_id">
+
 export function getPostFileStatusLabel(status: PostFileStatus) {
   switch (status) {
     case 0:

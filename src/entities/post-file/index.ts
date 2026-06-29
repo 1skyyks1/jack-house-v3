@@ -20,5 +20,5 @@ export {
   useUserPostFileListQuery,
 } from "./api/postFileQueries"
 export { formatFileSize, getPostFileStatusLabel } from "./model/types"
-export type { PostFile, PostFileStatus } from "./model/types"
+export type { PostFile, PostFileStatus, PublicPostFileListItem } from "./model/types"
 export type { GetAdminPostFilesParams, GetUserPostFilesParams, ReviewPostFileRequest, UpdatePostFileRequest } from "./api/postFileApi"

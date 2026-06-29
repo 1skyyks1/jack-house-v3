@@ -42,7 +42,7 @@ export function AuthDialog() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const handleSuccess = (session: { message?: string; token: string; userId: number }) => {
+  const handleSuccess = (session: { message?: string; userId: number }) => {
     setSession(session)
     void queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser })
     void queryClient.invalidateQueries({ queryKey: authQueryKeys.permissions })
@@ -92,7 +92,7 @@ export function AuthDialog() {
 }
 
 type AuthFormProps = {
-  onSuccess: (session: { message?: string; token: string; userId: number }) => void
+  onSuccess: (session: { message?: string; userId: number }) => void
 }
 
 type LoginFormProps = AuthFormProps & {

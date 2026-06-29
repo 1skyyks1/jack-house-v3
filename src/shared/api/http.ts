@@ -9,14 +9,24 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0
 export const http = axios.create({
   baseURL: API_BASE_URL,
   timeout: 12_000,
+  withCredentials: true,
 })
+
+function getCookie(name: string) {
+  const prefix = `${name}=`
+  return document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix))
+    ?.slice(prefix.length)
+}
 
 http.interceptors.request.use((config) => {
   config.headers["Accept-Language"] = i18n.language
 
-  const token = window.localStorage.getItem("token")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const csrfToken = getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf")
+  if (csrfToken) {
+    config.headers["X-CSRF-Token"] = decodeURIComponent(csrfToken)
   }
 
   return config

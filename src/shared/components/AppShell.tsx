@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { AuthDialog, authQueryKeys, useAuthStore, useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
+import { logoutSession } from "@/features/auth/api/authApi"
 import { hasAdminPermission } from "@/features/admin-permissions"
 import jackHouseDarkLogo from "@/assets/pic/jackHouseDark.webp"
 import jackHouseLightLogo from "@/assets/pic/jackHouseLight.webp"
@@ -83,6 +84,7 @@ export function AppShell() {
   }, [isHomeRoute, location.pathname])
 
   const handleLogout = () => {
+    void logoutSession().catch(() => undefined)
     logout()
     queryClient.removeQueries({ queryKey: authQueryKeys.currentUser })
     queryClient.removeQueries({ queryKey: authQueryKeys.permissions })
@@ -202,7 +204,7 @@ export function AppShell() {
                     <Button
                       type="button"
                       className={cn(
-                        "size-9 rounded-full p-1",
+                        "size-10 rounded-full p-1",
                         useOverlayHeader
                           ? "text-foreground/72 hover:bg-background/55 hover:text-foreground dark:text-white/72 dark:hover:bg-white/10 dark:hover:text-white"
                           : "text-muted-foreground hover:text-foreground",
@@ -210,7 +212,7 @@ export function AppShell() {
                       size="icon"
                       variant="ghost"
                     >
-                      <Avatar size="sm">
+                      <Avatar>
                         {currentUser?.avatar ? <AvatarImage alt={currentUser.user_name} src={currentUser.avatar} /> : null}
                         <AvatarFallback>{getAvatarFallback(currentUser?.user_name)}</AvatarFallback>
                       </Avatar>

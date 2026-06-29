@@ -14,7 +14,7 @@ export type UserBadge = {
 export type UserProfile = {
   user_id: number
   user_name: string
-  email: string | null
+  email?: string | null
   avatar: string | null
   role: UserRole
   status: UserStatus

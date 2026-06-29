@@ -3,7 +3,6 @@ import { create } from "zustand"
 export type AuthDialogMode = "login" | "register"
 
 type AuthSession = {
-  token: string
   userId: number | string
 }
 
@@ -20,23 +19,38 @@ type AuthStore = {
   setSession: (session: AuthSession) => void
 }
 
+function getCookie(name: string) {
+  const prefix = `${name}=`
+  return document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix))
+    ?.slice(prefix.length)
+}
+
 function getInitialUserId() {
   return window.localStorage.getItem("userId")
 }
 
-function hasInitialToken() {
-  return Boolean(window.localStorage.getItem("token"))
+function hasInitialCookieSession() {
+  return Boolean(getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf"))
 }
+
+function clearLegacyToken() {
+  window.localStorage.removeItem("token")
+}
+
+clearLegacyToken()
 
 export const useAuthStore = create<AuthStore>((set) => ({
   dialogMode: "login",
-  isLogged: hasInitialToken(),
+  isLogged: hasInitialCookieSession(),
   loginRedirect: window.localStorage.getItem("loginRedirect"),
   showLoginDialog: false,
   userId: getInitialUserId(),
   closeLoginDialog: () => set({ showLoginDialog: false }),
   logout: (options) => {
-    window.localStorage.removeItem("token")
+    clearLegacyToken()
     window.localStorage.removeItem("userId")
 
     if (options?.redirectTo) {
@@ -59,9 +73,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ dialogMode: mode, loginRedirect: redirectTo ?? null, showLoginDialog: true })
   },
   setDialogMode: (mode) => set({ dialogMode: mode }),
-  setSession: ({ token, userId }) => {
+  setSession: ({ userId }) => {
     const normalizedUserId = String(userId)
-    window.localStorage.setItem("token", token)
+    clearLegacyToken()
     window.localStorage.setItem("userId", normalizedUserId)
     window.localStorage.removeItem("loginRedirect")
 

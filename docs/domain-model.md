@@ -100,6 +100,8 @@
 
 ## Tournament
 
-- 旧项目存在 Tournament、Team、Match、Staff 等模型。
-- 迁移 MVP 阶段未实现赛事系统；后续作为独立专项推进。
-- 重做前需要重新确认规则、权限、状态机和数据结构，详见 [tournament-system.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/tournament-system.md)。
+- 旧后端模型集中在 `jack-house-web/backend/models/tournament/*`，V3 前端类型集中在 `src/entities/tournament`。
+- 赛事 API 根路径为 `/t`，页面路由为 `/t` 和 `/admin/tournaments/*`。
+- 赛事已接入公开页、组队、资格赛、正赛、裁判工作台和后台管理入口。
+- 关键领域包括 `Tournament`、`TTeam`、`TPlayer`、`TStaff`、`TSection`、`TRound`、`TMappool`、`TQualMappool`、`TQualScore`、`TMatch`、`TMatchAction`、`TAuditLog`。
+- 详细规则、权限、状态机和数据结构见 [tournament-system.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/tournament-system.md)、[tournament-implementation-spec.md](./tournament-implementation-spec.md) 和 [tournament-technical-plan.md](./tournament-technical-plan.md)。

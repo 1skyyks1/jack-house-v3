@@ -2,12 +2,12 @@
 
 `jack-house-v3` 是对旧项目 `jack-house-web` 的前端重构版本。
 
-当前项目以 React + TypeScript + Vite 为基础，优先重构用户侧主站与后台工具台，同时继续兼容旧 Express API、旧 URL 语义、旧认证 token 格式、旧上传协议和现有数据库模型。赛事 `tournament` 子系统已按独立产品线接入 V3 前端，后端继续复用 `jack-house-web/backend`。
+当前项目以 React + TypeScript + Vite 为基础，优先重构用户侧主站与后台工具台，同时继续兼容旧 Express API、旧 URL 语义、旧上传协议和现有数据库模型。V3 使用 httpOnly cookie，后端默认保留旧前端 Bearer token 兼容。赛事 `tournament` 子系统已按独立产品线接入 V3 前端，后端继续复用 `jack-house-web/backend`。
 
 ## 当前范围
 
 - 只重构前端，不重写旧后端。
-- 兼容旧 API 协议、鉴权方式和上传方式。
+- 兼容旧 API 协议、上传方式；认证已切到 cookie，并通过后端开关兼容旧前端 Bearer。
 - 首页不再使用旧后台配置首页图，而是使用静态视觉素材。
 - `tournament` 赛事系统首期前端已接入，包含公开页、报名组队、资格赛、正赛、裁判工作台和后台管理入口。
 - 全站逐步收口到统一 `react-i18next` 资源结构。
@@ -65,5 +65,6 @@ pnpm build
 - [docs/api-contract.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/api-contract.md)：V3 兼容的旧 API 合同
 - [docs/domain-model.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/domain-model.md)：核心领域对象
 - [docs/rich-text-system.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/rich-text-system.md)：富文本约束
+- [docs/deployment-checklist.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/deployment-checklist.md)：当前后端部署与旧前端兼容检查清单
 - [docs/tournament-architecture.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/tournament-architecture.md)：赛事系统架构图
 - [docs/open-questions.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/open-questions.md)：尚未关闭的问题

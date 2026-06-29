@@ -13,12 +13,11 @@ export function OAuthCompletePage() {
   const setSession = useAuthStore((state) => state.setSession)
 
   useEffect(() => {
-    const token = searchParams.get("token")
     const userId = searchParams.get("userId")
     const redirectTo = loginRedirect ?? window.localStorage.getItem("loginRedirect") ?? "/"
 
-    if (token && userId) {
-      setSession({ token, userId })
+    if (userId) {
+      setSession({ userId })
       toast.success(t("auth.loginSuccess"))
       navigate(redirectTo, { replace: true })
       return

@@ -12,8 +12,8 @@ import {
   formatFileSize,
   getPostFileStatusLabel,
   useUserPostFileListQuery,
-  type PostFile,
   type PostFileStatus,
+  type PublicPostFileListItem,
 } from "@/entities/post-file"
 import {
   getUserRoleLabel,
@@ -352,7 +352,7 @@ function UserPostFilesPanel({ onPageChange, postFilesQuery }: UserPostFilesPanel
   )
 }
 
-function UserPostFileRow({ file }: { file: PostFile }) {
+function UserPostFileRow({ file }: { file: PublicPostFileListItem }) {
   return (
     <div className="p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -366,28 +366,14 @@ function UserPostFileRow({ file }: { file: PostFile }) {
             <span>{formatFileSize(file.size)}</span>
           </div>
         </div>
-        <PostFileStatusBadge feedback={file.feedback} status={file.status} />
+        <PostFileStatusBadge status={file.status} />
       </div>
     </div>
   )
 }
 
-function PostFileStatusBadge({ feedback, status }: { feedback: string | null; status: PostFileStatus }) {
-  const badge = <Badge className={getPostFileStatusClassName(status)} variant="outline">{getPostFileStatusLabel(status)}</Badge>
-  const content = feedback?.trim()
-
-  if (!content) return badge
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex cursor-help">{badge}</span>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-sm whitespace-pre-wrap">
-        {content}
-      </TooltipContent>
-    </Tooltip>
-  )
+function PostFileStatusBadge({ status }: { status: PostFileStatus }) {
+  return <Badge className={getPostFileStatusClassName(status)} variant="outline">{getPostFileStatusLabel(status)}</Badge>
 }
 
 function getPostFileStatusClassName(status: PostFileStatus) {
@@ -475,4 +461,3 @@ function UserPostPagination({ onPageChange, page, totalPages }: UserPostPaginati
     </div>
   )
 }
-
