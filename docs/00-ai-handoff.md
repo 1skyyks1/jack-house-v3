@@ -21,7 +21,7 @@
 - `jack-house-v3` 是 `jack-house-web` 的前端重构版。
 - 前端后续开发继续在 `jack-house-v3`。
 - 后端后续开发继续在 `jack-house-web/backend`，不另起新后端仓库。
-- 已迁移页面保持旧 URL、API 语义、上传协议和数据库模型兼容；认证已切到 httpOnly cookie，后端默认保留旧前端 Bearer token 兼容。
+- 已迁移页面保持旧 URL、API 语义、上传协议和数据库模型兼容；认证已切到 httpOnly cookie + CSRF，后端不再接受旧前端 Bearer token。
 - 不做 Vue 到 React 的逐行翻译。
 - 用户侧优先保证社区入口体验，后台侧优先保证工具效率。
 - 旧活动 `event` 链路已迁移；`tournament` 赛事系统已作为独立产品线接入 V3，后端继续复用 `jack-house-web/backend`。
@@ -124,7 +124,7 @@
 2. 赛事系统继续做真实内容联调和整体体验验收；历史补录、Markdown 预览/sanitizer、移动端 bracket、team lobby 状态、audit 覆盖、`tournamentService`、`staffService`、赛事 staff 前端后台入口/路由守卫、队伍后台 host 修正、osu MP 分页拉分和资格赛多队 MP 自动归属已完成代码侧收口；赛事前端已通过 `pnpm exec tsc -b`、`pnpm run lint`、`pnpm run build`，lint 已清零，build 仅剩 Vite 大 chunk 提示；后端 `require('./routes/tournamentRoute')` 可正常加载。
 3. 后端安全收口已完成基础代码改动：`POST /user` 需要 `ADMIN`；`PUT /user/:user_id` 已按 admin/self 字段白名单限制；`GET /user/:user_id` 已拆分公开/私有字段，公开个人页不返回 `email`，本人或 `ADMIN` 带有效登录态访问才返回完整非密码字段；旧 controller 中 `roles`/`ROLES` 导入方式已统一修正；完整 `GET /user` 列表已限制为 `ORG/ADMIN` 且最大 `pageSize=50`，赛事 staff 选人改走登录后轻量 `/user/search` 且最大 `pageSize=20`；`GET /postFile/user/:user_id` 保留给个人页展示投稿列表，但只返回列表字段，不返回下载信息、对象 key、checksum、note 或审批意见。
 4. 上传存储已完成后端 storage service 基础抽象：`HOMEIMG`、`RICHTEXT`、`BADGES`、`EVENT_STAGE_BG`、`POSTFILES` 默认继续走 MinIO，可通过 `*_STORAGE_PROVIDER=github` 和 `*_STORAGE_BUCKET` 接入 `1skyyks1/jack-house-img`；GitHub repo provider owner/repo 默认就是该仓库，但仍需要服务端 `GITHUB_STORAGE_TOKEN`，默认返回 jsDelivr URL；后端已补 `.env.example`、`npm run check:secrets`、幂等迁移脚本 `npm run migrate:storage-metadata` 和 `npm run migrate:rich-text-assets`；`post_file`、`home_img`、`badge`、`event_stage` 已在当前 `.env` 指向的数据库完成存储元数据字段迁移和旧 MinIO 记录回填，复跑迁移脚本 backfill 为 0；投稿文件已加默认 20MB 单文件、100MB 单用户单征稿总大小、扩展名白名单、可选 MIME 白名单和 SHA-256 checksum 持久化，普通用户只能走 `/postFile/upload/:post_id`，`POST /postFile` 仅为 `ORG/ADMIN` 后台登记入口；投稿文件不压缩、不转格式，完整 checksum 入库，上传对象名为短 hash 前缀 + 原扩展名；活动 stage 背景图已拆成专用 1MB 图片上传器；富文本图片上传已接 `/upload/rich-text/image`，上传成功会写入 `rich_text_asset`，帖子正文、活动说明和赛事章节保存时同步 `rich_text_asset_reference`，编辑器删除图片只会在保存后移除引用并把无引用资产标记为 `orphaned`，不会立即物理删除 GitHub/MinIO 对象；后端 `npm run cleanup:rich-text-assets` 默认 dry-run，可在生产显式 `--delete` 后清理超过保留期的 `uploaded/orphaned` 资产；后端 `npm run backfill:rich-text-assets` 默认 dry-run，可在生产显式 `--apply` 后回填历史内容引用；V3 Tiptap 支持按钮、粘贴、拖拽上传，表格编辑也已接入；后端公开展示图片已接 `sharp` 优化并默认转 WebP，V3 首页写死 GitHub raw URL 不经过后端；GitHub provider 已用 `codex-smoke` 跑通过真实上传/删除、富文本图片 WebP 上传/删除和投稿 `.osu` 原扩展名上传/删除；HTTP 接口级 smoke 已通过 `/upload/rich-text/image` 和 `/postFile/upload/:post_id`，确认富文本图片对象名为 16 位 hash + `.webp`，投稿对象名为 16 位 hash + 原扩展名，测试 DB 记录和 GitHub 对象已清理。
-5. 认证专项：httpOnly cookie 基础能力已接入，后端登录/注册/osu OAuth callback 写 cookie，cookie 写请求已有双提交 CSRF 校验，V3 axios 已开启 `withCredentials`，并且 V3 已移除 `localStorage.token` 和 URL token 依赖；后端默认 `AUTH_LEGACY_BEARER_ENABLED=true`，仍兼容旧前端 Bearer、登录响应 token 和 osu redirect token，只部署 V3 后可设为 `false`；生产环境已要求显式配置 `CORS_ORIGIN`/`FRONTEND_URL`，且 `AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。`POST /auth/register` 只作为预留接口记录，V3 UI 暂不开放邮箱注册。
+5. 认证专项：httpOnly cookie 基础能力已接入，后端登录/注册/osu OAuth callback 写 cookie，cookie 写请求已有双提交 CSRF 校验，V3 axios 已开启 `withCredentials`，并且 V3 已移除 `localStorage.token` 和 URL token 依赖；后端不再接受 Bearer，不再在登录响应或 osu redirect 中返回 JWT token；生产环境已要求显式配置 `CORS_ORIGIN`/`FRONTEND_URL`，且 `AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。`POST /auth/register` 只作为预留接口记录，V3 UI 暂不开放邮箱注册。
 
 ## 每次改动后检查
 

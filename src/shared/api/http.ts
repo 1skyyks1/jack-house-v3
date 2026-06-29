@@ -21,10 +21,50 @@ function getCookie(name: string) {
     ?.slice(prefix.length)
 }
 
-http.interceptors.request.use((config) => {
+function isUnsafeMethod(method: string | undefined) {
+  return !["get", "head", "options"].includes((method ?? "get").toLowerCase())
+}
+
+type CsrfResponse = {
+  data?: {
+    csrfToken?: string
+  }
+}
+
+let csrfTokenCache: string | null = null
+let csrfTokenRequest: Promise<string | null> | null = null
+
+async function fetchCsrfToken() {
+  if (csrfTokenCache) return csrfTokenCache
+  if (csrfTokenRequest) return csrfTokenRequest
+
+  csrfTokenRequest = axios
+    .get<CsrfResponse>(`${API_BASE_URL}/auth/csrf`, {
+      headers: {
+        "Accept-Language": i18n.language,
+      },
+      withCredentials: true,
+    })
+    .then((response) => {
+      csrfTokenCache = response.data.data?.csrfToken ?? null
+      return csrfTokenCache
+    })
+    .catch(() => null)
+    .finally(() => {
+      csrfTokenRequest = null
+    })
+
+  return csrfTokenRequest
+}
+
+http.interceptors.request.use(async (config) => {
   config.headers["Accept-Language"] = i18n.language
 
-  const csrfToken = getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf")
+  let csrfToken = getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf")
+  if (!csrfToken && isUnsafeMethod(config.method)) {
+    csrfToken = (await fetchCsrfToken()) ?? undefined
+  }
+
   if (csrfToken) {
     config.headers["X-CSRF-Token"] = decodeURIComponent(csrfToken)
   }
@@ -33,13 +73,24 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    if (response.config.url?.startsWith("/auth/")) {
+      csrfTokenCache = null
+    }
+
+    return response.data
+  },
   (error: unknown) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status
       const backendMessage = getBackendMessage(error.response?.data)
 
+      if (status === 403) {
+        csrfTokenCache = null
+      }
+
       if (status === 401) {
+        csrfTokenCache = null
         useAuthStore.getState().logout({ openLogin: true, redirectTo: window.location.pathname + window.location.search })
       }
 

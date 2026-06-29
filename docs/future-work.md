@@ -31,7 +31,7 @@
 1. 赛事系统联调验收：首期前后端已接入，后续重点是真实内容、真实权限、真实比赛流程和边界数据验收。
 2. 上传与存储策略：先确认哪些文件可以公开、大小和流量预期、是否需要删除/替换/审计，再决定 GitHub、MinIO 或 S3/R2。
 3. 富文本媒体能力：图片上传和表格编辑已接入；后续附件链接、真实内容验收和长期 JSON/HTML 存储策略仍要结合上传策略推进。
-4. 认证专项：V3 已切到 httpOnly cookie，不再使用 `localStorage.token` 或 URL token；后端默认保留旧前端 Bearer 兼容，可通过 `AUTH_LEGACY_BEARER_ENABLED=false` 关闭。部署时仍需填写正式域名下 SameSite/Secure/CORS 配置。邮箱注册接口当前只预留，不作为 V3 UI 功能。
+4. 认证专项：V3 已切到 httpOnly cookie + CSRF，不再使用 `localStorage.token`、Bearer 或 URL token；部署时仍需填写正式域名下 SameSite/Secure/CORS 配置。邮箱注册接口当前只预留，不作为 V3 UI 功能。
 5. 体验优化：移动端导航、列表密度、loading/empty/error、代码分包、图片资源治理。
 
 ## 已完成的后端安全收口
@@ -46,7 +46,7 @@
 - 投稿上传已增加默认 100MB 单用户单征稿总大小限制；活动 stage 背景图已拆成专用上传器，默认 1MB。
 - 后端公开展示图片已接入 `sharp` 优化并默认转 WebP，覆盖富文本图片、活动 stage 背景图、徽章和旧 homeImg；V3 首页写死 GitHub raw URL，不经过后端，需要离线压缩源文件。
 - 活动 stage 更新接口已按字段白名单收口，并统一使用 `stage.*` 响应文案。
-- httpOnly cookie 认证已接入：后端登录、注册和 osu OAuth callback 写 cookie，cookie 写请求已有双提交 CSRF 校验，V3 请求已开启 `withCredentials`，并且不再读取/写入 `localStorage.token` 或发送 Bearer 头；后端默认保留旧前端 Bearer 兼容，旧前端下线后可设置 `AUTH_LEGACY_BEARER_ENABLED=false`；生产环境已要求显式配置 `CORS_ORIGIN`/`FRONTEND_URL`，且 `AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。
+- httpOnly cookie 认证已接入：后端登录、注册和 osu OAuth callback 写 cookie，cookie 写请求已有双提交 CSRF 校验，V3 请求已开启 `withCredentials`，并且不再读取/写入 `localStorage.token`、不发送 Bearer 头；后端不再接受 Bearer，不再在登录响应或 osu redirect 中返回 JWT token；生产环境已要求显式配置 `CORS_ORIGIN`/`FRONTEND_URL`，且 `AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。
 - 富文本图片上传已接入：后端 `/upload/rich-text/image` 默认使用 `RICHTEXT` storage scope，V3 编辑器可通过工具栏、粘贴图片和拖拽图片上传并插入图片；配置 `RICHTEXT_STORAGE_PROVIDER=github` 和 `RICHTEXT_STORAGE_BUCKET` 后可经后端写入 GitHub 仓库。后端已新增 `rich_text_asset` / `rich_text_asset_reference`，上传记录资产，帖子正文、活动说明和赛事章节保存时同步引用；`npm run cleanup:rich-text-assets` 可清理超过保留期的未引用资产，`npm run backfill:rich-text-assets` 可 dry-run/回填历史内容。后续还需要在生产环境接入定时调度，并按 dry-run 结果决定是否 apply 历史回填。
 - 富文本表格编辑已接入：V3 编辑器可插入表格、追加行/列和删除表格，后端 sanitizer 已允许基础 table 标签。
 - 旧帖子/公告、活动描述和赛事内容保存时已接入后端富文本 sanitizer。

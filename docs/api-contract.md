@@ -5,7 +5,7 @@ V3 第一阶段兼容旧 Express API。页面组件不直接消费原始 axios r
 ## 基础约定
 
 - API base：开发环境 `VITE_API_BASE_URL=http://127.0.0.1:3000`。
-- 认证：V3 使用后端 httpOnly cookie，axios 开启 `withCredentials`，不再从 `localStorage.token` 读取 JWT，也不再发送 `Authorization: Bearer`。后端默认通过 `AUTH_LEGACY_BEARER_ENABLED=true` 兼容旧前端 Bearer token；只部署 V3 时可设为 `false` 切到纯 cookie。
+- 认证：V3 使用后端 httpOnly cookie，axios 开启 `withCredentials`，不再从 `localStorage.token` 读取 JWT，也不再发送 `Authorization: Bearer`。后端不再兼容旧前端 Bearer token。
 - CSRF：cookie 认证的写请求需要 `X-CSRF-Token`，V3 会从 `jh_csrf` cookie 自动带上。
 - 生产 CORS/cookie：后端在 `NODE_ENV=production` 时要求显式配置 `CORS_ORIGIN` 或 `FRONTEND_URL`；如果 `AUTH_COOKIE_SAME_SITE=none`，必须同时配置 `AUTH_COOKIE_SECURE=true`。
 - 本地 V3 调线上后端：V3 `.env` 配 `VITE_API_BASE_URL=https://线上后端域名`；线上后端 `CORS_ORIGIN` 必须包含实际浏览器 origin，例如 `https://线上前端域名,http://localhost:5173,http://127.0.0.1:5173`。如果要跨站 cookie 登录，线上后端还需要 `AUTH_COOKIE_SAME_SITE=none` 和 `AUTH_COOKIE_SECURE=true`。origin 不要带路径或尾部 `/`。
@@ -18,14 +18,16 @@ V3 第一阶段兼容旧 Express API。页面组件不直接消费原始 axios r
 - `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/logout`
+- `GET /auth/csrf`
 - `GET /auth/osu`
 - `GET /auth/osu/callback`
 
 V3 注意：
 
-- 登录成功后端会写入 httpOnly cookie；`AUTH_LEGACY_BEARER_ENABLED=true` 时响应仍返回 `token` 兼容旧前端，V3 会忽略该字段。
-- osu OAuth callback 会写入 httpOnly cookie；`AUTH_LEGACY_BEARER_ENABLED=true` 时 URL 仍附带 `token` 兼容旧前端，V3 不读取该参数。
+- 登录成功后端会写入 httpOnly cookie；响应不返回 JWT token。
+- osu OAuth callback 会写入 httpOnly cookie；URL 不附带 JWT token。
 - `/auth/logout` 会清理 cookie；`/oauth/complete` 只根据 `userId`、toast 反馈和登录后跳转完成前端状态同步。
+- `/auth/csrf` 返回当前会话的 CSRF token，用于本地 V3 调线上后端时补 `X-CSRF-Token`；同站部署时 V3 仍可直接从 `jh_csrf` cookie 读取。
 - `POST /auth/register` 作为旧接口和预留能力记录保留；V3 UI 暂不开放 email/password 注册，Register tab 只引导 osu OAuth。
 
 ## User / Permissions

@@ -19,7 +19,7 @@
 - 活动 stage 背景图使用专用上传器，默认 1MB，允许 `jpeg/jpg/png/gif/webp`，并会在校验失败时清理临时文件。
 - 活动 stage 更新接口已按字段白名单收口，并统一使用 `stage.*` 响应文案。
 - httpOnly cookie 认证：后端登录、注册和 osu OAuth callback 已写入 cookie，cookie 写请求已有双提交 CSRF 校验，`/auth/logout` 清理 cookie，V3 axios 已开启 `withCredentials`；生产环境若启用 credentials 但未配置 `CORS_ORIGIN`/`FRONTEND_URL` 会启动失败，`AUTH_COOKIE_SAME_SITE=none` 时强制要求 `AUTH_COOKIE_SECURE=true`。
-- V3 去 token 化：V3 已不再读取/写入 `localStorage.token`，axios 不再发送 `Authorization: Bearer`，OAuth 完成页不再要求 URL token；后端默认 `AUTH_LEGACY_BEARER_ENABLED=true` 兼容旧前端，旧前端下线后可设为 `false` 关闭 Bearer、登录响应 token 和 OAuth URL token。
+- V3 去 token 化：V3 已不再读取/写入 `localStorage.token`，axios 不再发送 `Authorization: Bearer`，OAuth 完成页不再要求 URL token；后端已关闭 Bearer、登录响应 token 和 OAuth URL token。
 - 富文本图片上传：后端已提供 `/upload/rich-text/image`，V3 Tiptap 编辑器已接 Image extension，支持工具栏选择文件、粘贴图片文件和拖拽图片文件，默认走 `RICHTEXT` storage scope。
 - 富文本图片引用追踪基础设施：后端已新增 `rich_text_asset` 和 `rich_text_asset_reference`，上传成功后记录资产，帖子正文、活动说明和赛事章节创建/更新时解析 `<img src>` 并同步 `post_translation`、`event`、`t_section` 引用；不再引用的资产只标记为 `orphaned`，不会由编辑器删除动作立即物理删除远端对象。
 - 富文本图片孤儿清理脚本：后端已新增 `npm run cleanup:rich-text-assets`，默认 dry-run，扫描超过 `RICHTEXT_ASSET_CLEANUP_RETENTION_DAYS` 的 `uploaded/orphaned` 资产；显式传 `--delete` 或设置 `RICHTEXT_ASSET_CLEANUP_DRY_RUN=false` 才会删除远端对象和数据库记录。
@@ -43,7 +43,7 @@
 
 - 根据正式部署域名填写 `AUTH_COOKIE_SAME_SITE`、`AUTH_COOKIE_SECURE` 和 `CORS_ORIGIN` 取值；代码已防止生产环境漏配 CORS origin 和 `SameSite=None` 未启用 Secure。
 - 正式部署时继续验证跨站 cookie、CSRF header 和登出清 cookie 行为。
-- 如果仍部署旧前端，保持 `AUTH_LEGACY_BEARER_ENABLED=true`；确认只部署 V3 后再改为 `false`。
+- 只部署 V3 后，继续验证登录响应不含 JWT token、osu OAuth redirect 不含 URL token、写请求都带 `X-CSRF-Token`。
 
 ## P1: 赛事系统
 

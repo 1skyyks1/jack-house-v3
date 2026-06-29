@@ -2,33 +2,36 @@
 
 本文记录当前推荐的部署检查项，目标环境是：
 
-- 生产环境仍运行旧前端 `jack-house-web/frontend`。
+- 生产环境运行新前端 `jack-house-v3`。
 - 后端使用 `jack-house-web/backend` 当前代码。
-- 本地调试使用新前端 `jack-house-v3` 连接线上后端。
+- 认证只使用 httpOnly cookie + CSRF，不再兼容旧前端 Bearer token。
 
 ## 后端环境变量
 
-旧前端仍依赖 `localStorage.token` 和 `Authorization: Bearer`，因此线上后端必须保留：
+生产进程必须显式设置：
 
 ```env
 NODE_ENV=production
-AUTH_LEGACY_BEARER_ENABLED=true
+CORS_ORIGIN=https://你的新前端域名
+FRONTEND_URL=https://你的新前端域名
 ```
 
-生产环境必须显式配置 CORS origin。`CORS_ORIGIN` 写浏览器地址栏里的 origin，只包含协议、域名和端口，不带路径，不带尾部 `/`：
+如果前后端同站部署，例如 `https://jackhouse.xyz` 调 `https://api.jackhouse.xyz`，可以使用：
 
 ```env
-CORS_ORIGIN=https://旧前端生产域名,http://localhost:5173,http://127.0.0.1:5173
+AUTH_COOKIE_SAME_SITE=lax
+AUTH_COOKIE_SECURE=true
 ```
 
-如果本地 V3 要登录线上后端，线上后端 cookie 必须允许跨站 HTTPS：
+如果还需要本地 V3 调线上后端，需要额外允许本地 origin，并使用跨站 cookie：
 
 ```env
+CORS_ORIGIN=https://你的新前端域名,http://localhost:5173,http://127.0.0.1:5173
 AUTH_COOKIE_SAME_SITE=none
 AUTH_COOKIE_SECURE=true
 ```
 
-如果只是同站生产部署且不需要本地 V3 登录线上后端，可以使用 `AUTH_COOKIE_SAME_SITE=lax`；但当前“旧前端生产 + V3 本地测试”组合建议直接使用 `none + secure`。
+`CORS_ORIGIN` 写浏览器地址栏里的 origin，只包含协议、域名和端口，不带路径，不带尾部 `/`。
 
 ## 存储环境变量
 
@@ -72,8 +75,14 @@ POSTFILES_GITHUB_STORAGE_BASE_PATH=submissions
 npm install
 npm run migrate:storage-metadata
 npm run migrate:rich-text-assets
-npm run check:deploy -- --profile=legacy-v3 --print-summary
+npm run check:deploy -- --print-summary
 npm run check:secrets
+```
+
+如果还需要本地 V3 调线上后端，用：
+
+```bash
+npm run check:deploy -- --require-local-v3 --print-summary
 ```
 
 在 `jack-house-v3`：
@@ -87,20 +96,10 @@ pnpm run build
 
 ## 部署后验证
 
-- 旧前端生产登录成功，响应里仍有 `token`，后续接口继续带 `Authorization: Bearer`。
-- 旧前端退出登录只清本地 token，不依赖 `/auth/logout`。
-- 本地 V3 `.env` 设置 `VITE_API_BASE_URL=https://线上后端域名` 后，可以登录并调用需要 cookie 的接口。
+- V3 登录成功后响应不返回 JWT token，浏览器只通过 httpOnly cookie 保持登录态。
+- osu OAuth callback URL 不包含 `token` 参数，只使用 `userId` 完成前端状态同步。
+- 写请求带 `X-CSRF-Token`；本地 V3 调线上后端时，前端会先通过 `GET /auth/csrf` 读取线上 cookie 里的 CSRF token。
 - 浏览器 Network 中跨域响应包含正确的 `Access-Control-Allow-Origin`，且不是 `*`。
 - 富文本图片上传返回 jsDelivr URL，并能在正文中显示。
 - 投稿上传返回原始 `file_name`，数据库对象名为短 hash 前缀 + 原扩展名，文件内容不被压缩或转格式。
 - 个人页投稿列表只展示文件名、上传时间、大小和状态，不展示下载入口和审批意见。
-
-## 切到纯 V3 后
-
-旧前端下线后，可以把后端改为：
-
-```env
-AUTH_LEGACY_BEARER_ENABLED=false
-```
-
-改完后需要验证登录响应不再返回 `token`，osu OAuth redirect 不再带 URL token，写请求必须带 `X-CSRF-Token`。

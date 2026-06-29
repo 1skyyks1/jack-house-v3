@@ -42,11 +42,11 @@
 
 ## 认证
 
-- V3 认证统一使用 httpOnly cookie，不发送 Bearer 头；后端通过 `AUTH_LEGACY_BEARER_ENABLED` 控制是否继续接受旧前端 Bearer token，默认保持兼容。
+- V3 认证统一使用 httpOnly cookie + CSRF，不发送 Bearer 头；后端不再接受旧前端 Bearer token。
 - 当前注册入口只开放 osu OAuth；email/password 注册表单先不在 V3 UI 暴露。
 - `POST /auth/register` 保留为旧后端预留接口；邮箱注册当前不作为 V3 缺陷处理。
 - V3 已从 `localStorage.token` 切到 httpOnly cookie，cookie 写请求使用双提交 CSRF token；正式部署必须显式配置 `CORS_ORIGIN` 或 `FRONTEND_URL`。同站部署可继续使用 `AUTH_COOKIE_SAME_SITE=lax`；本地 V3 调线上后端或前后端跨站部署时，应使用 `AUTH_COOKIE_SAME_SITE=none` 和 `AUTH_COOKIE_SECURE=true`，并把实际前端 origin 写入 `CORS_ORIGIN`。
-- `AUTH_LEGACY_BEARER_ENABLED=true` 时，后端登录响应和 osu OAuth redirect 仍返回/携带 JWT 兼容旧前端；V3 忽略这些 token。只部署 V3 后可设为 `false`。
+- 后端登录响应和 osu OAuth redirect 不再返回或携带 JWT token。
 
 ## 富文本
 
