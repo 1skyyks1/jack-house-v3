@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import type { MouseEvent } from "react"
 import type { TocItem } from "../model/types"
 import { cn } from "@/lib/utils"
 
@@ -9,6 +10,15 @@ type RichTextTocProps = {
 
 export function RichTextToc({ items, className }: RichTextTocProps) {
   const { t } = useTranslation()
+
+  const scrollToItem = (event: MouseEvent<HTMLAnchorElement>, item: TocItem) => {
+    const target = document.getElementById(item.id)
+    if (!target) return
+
+    event.preventDefault()
+    target.scrollIntoView({ behavior: "smooth", block: "start" })
+    window.history.pushState(null, "", `#${item.id}`)
+  }
 
   if (items.length === 0) {
     return (
@@ -31,6 +41,7 @@ export function RichTextToc({ items, className }: RichTextTocProps) {
                 item.depth >= 4 && "pl-8 text-xs",
               )}
               href={`#${item.id}`}
+              onClick={(event) => scrollToItem(event, item)}
             >
               {item.text}
             </a>

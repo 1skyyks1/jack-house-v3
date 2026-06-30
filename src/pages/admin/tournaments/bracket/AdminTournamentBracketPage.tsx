@@ -36,6 +36,14 @@ import { Field, MapRow, MetricCard, RoundsCard, TeamSelect } from "./components"
 import { defaultMapForm, defaultMatchForm, defaultRoundForm, MAIN_STAGE_MAP_TYPES, type MapFormState, type MatchFormState, type MatchUpdateState, type RoundFormState } from "./model"
 import { groupLabel, teamName } from "./utils"
 
+function parseBeatmapUrl(value: string) {
+  const match = value.match(/beatmapsets\/(\d+)(?:#\w+\/(\d+))?/)
+  return {
+    mapId: match?.[2] ?? "",
+    setId: match?.[1] ?? "",
+  }
+}
+
 export function AdminTournamentBracketPage() {
   const { t } = useTranslation()
   const { tid } = useParams()
@@ -138,6 +146,7 @@ export function AdminTournamentBracketPage() {
       {
         request: {
           artist: mapForm.artist.trim(),
+          beatmap_url: mapForm.beatmap_url.trim() || undefined,
           map_id: Number(mapForm.map_id),
           mapper: mapForm.mapper.trim(),
           title: mapForm.title.trim(),
@@ -152,6 +161,15 @@ export function AdminTournamentBracketPage() {
         },
       },
     )
+  }
+
+  function updateBeatmapUrl(value: string) {
+    const parsed = parseBeatmapUrl(value)
+    setMapForm((state) => ({
+      ...state,
+      beatmap_url: value,
+      map_id: parsed.mapId || state.map_id,
+    }))
   }
 
   function handleCreateMatch(event: FormEvent<HTMLFormElement>) {
@@ -365,6 +383,9 @@ export function AdminTournamentBracketPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </Field>
+                    <Field label={t("tournament.admin.bracket.beatmapUrl")}>
+                      <Input value={mapForm.beatmap_url} onChange={(event) => updateBeatmapUrl(event.target.value)} />
                     </Field>
 	                    <Field label={t("tournament.admin.bracket.beatmapId")}>
                       <Input min={1} required type="number" value={mapForm.map_id} onChange={(event) => setMapForm((state) => ({ ...state, map_id: event.target.value }))} />

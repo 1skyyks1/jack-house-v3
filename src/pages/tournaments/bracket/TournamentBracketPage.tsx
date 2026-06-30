@@ -1,12 +1,12 @@
-import { ArrowLeft, CaretDown, Crown, GitBranch, Trophy } from "@phosphor-icons/react"
+import { CaretDown, Crown, GitBranch, Trophy } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import { useTournamentBracketQuery, useTournamentDetailQuery, type TournamentMatch } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 
 export function TournamentBracketPage() {
   const { t } = useTranslation()
@@ -25,15 +25,12 @@ export function TournamentBracketPage() {
 
   return (
     <main className="flex min-h-[calc(100dvh-4rem)] flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <TournamentBreadcrumb current={t("tournament.common.bracket")} tournament={tournamentQuery.data} tournamentId={tid} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Button asChild className="px-0" variant="link">
-            <Link to={`/t/${tid}`}>
-              <ArrowLeft className="size-4" />
-              {tournamentQuery.data?.acronym ?? t("tournament.common.tournament")}
-            </Link>
-          </Button>
-          <h1 className="font-heading text-3xl font-semibold">{t("tournament.bracket.title", { name: tournamentQuery.data?.name ?? t("tournament.common.tournament") })}</h1>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">{tournamentQuery.data?.acronym ?? t("tournament.common.tournament")}</p>
+          <h1 className="mt-1 font-heading text-3xl font-semibold">{t("tournament.bracket.title", { name: tournamentQuery.data?.name ?? t("tournament.common.tournament") })}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className="gap-1" variant="secondary">

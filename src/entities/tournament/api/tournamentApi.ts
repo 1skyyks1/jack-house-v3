@@ -258,7 +258,9 @@ export async function getTournamentQualImports(tournamentId: string, params?: { 
 }
 
 export async function fetchTournamentQualScores(tournamentId: string, request: FetchTournamentQualScoresRequest): Promise<void> {
-  await http.post(`/t/${tournamentId}/qualifier/fetch-scores`, request)
+  await http.post(`/t/${tournamentId}/qualifier/fetch-scores`, request, {
+    timeout: request.mp_ids && request.mp_ids.length > 1 ? 10 * 60 * 1000 : undefined,
+  })
 }
 
 export async function calculateTournamentQualRanking(tournamentId: string): Promise<void> {

@@ -19,21 +19,8 @@ type AuthStore = {
   setSession: (session: AuthSession) => void
 }
 
-function getCookie(name: string) {
-  const prefix = `${name}=`
-  return document.cookie
-    .split(";")
-    .map((item) => item.trim())
-    .find((item) => item.startsWith(prefix))
-    ?.slice(prefix.length)
-}
-
 function getInitialUserId() {
   return window.localStorage.getItem("userId")
-}
-
-function hasInitialCookieSession() {
-  return Boolean(getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf"))
 }
 
 function clearLegacyToken() {
@@ -44,7 +31,7 @@ clearLegacyToken()
 
 export const useAuthStore = create<AuthStore>((set) => ({
   dialogMode: "login",
-  isLogged: hasInitialCookieSession(),
+  isLogged: false,
   loginRedirect: window.localStorage.getItem("loginRedirect"),
   showLoginDialog: false,
   userId: getInitialUserId(),
@@ -55,6 +42,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
     if (options?.redirectTo) {
       window.localStorage.setItem("loginRedirect", options.redirectTo)
+    } else {
+      window.localStorage.removeItem("loginRedirect")
     }
 
     set({

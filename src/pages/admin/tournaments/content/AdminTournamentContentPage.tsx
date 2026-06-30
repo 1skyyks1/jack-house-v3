@@ -49,10 +49,27 @@ const sectionTypes = ["rules", "description", "prize", "faq"] as const
 
 function createSectionSchema(t: (key: string) => string) {
   return z.object({
-  sort_order: z.number().int().min(0).max(9999),
-  source_markdown: z.string().trim().min(1, t("tournament.admin.content.validationMarkdownRequired")),
-  title: z.string().trim().min(1, t("tournament.admin.content.validationTitleRequired")).max(255, t("tournament.admin.content.validationTitleMax")),
-  type: z.enum(sectionTypes),
+    sort_order: z.number().int().min(0).max(9999),
+    source_markdown_en: z.string(),
+    source_markdown_zh: z.string(),
+    title_en: z.string().trim().max(255, t("tournament.admin.content.validationTitleMax")),
+    title_zh: z.string().trim().max(255, t("tournament.admin.content.validationTitleMax")),
+    type: z.enum(sectionTypes),
+  }).superRefine((values, ctx) => {
+    if (!values.title_zh.trim() && !values.title_en.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: t("tournament.admin.content.validationTitleRequired"),
+        path: ["title_zh"],
+      })
+    }
+    if (!values.source_markdown_zh.trim() && !values.source_markdown_en.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: t("tournament.admin.content.validationMarkdownRequired"),
+        path: ["source_markdown_zh"],
+      })
+    }
   })
 }
 
@@ -60,8 +77,10 @@ type SectionFormValues = z.infer<ReturnType<typeof createSectionSchema>>
 
 const defaultValues: SectionFormValues = {
   sort_order: 0,
-  source_markdown: "",
-  title: "",
+  source_markdown_en: "",
+  source_markdown_zh: "",
+  title_en: "",
+  title_zh: "",
   type: "rules",
 }
 
@@ -73,7 +92,8 @@ export function AdminTournamentContentPage() {
   const createMutation = useCreateTournamentSectionMutation(tid ?? "")
   const updateMutation = useUpdateTournamentSectionMutation(tid ?? "")
   const deleteMutation = useDeleteTournamentSectionMutation(tid ?? "")
-  const previewMutation = usePreviewTournamentMarkdownMutation(tid ?? "")
+  const previewZhMutation = usePreviewTournamentMarkdownMutation(tid ?? "")
+  const previewEnMutation = usePreviewTournamentMarkdownMutation(tid ?? "")
   const [selectedId, setSelectedId] = useState<number | null | undefined>(undefined)
   const [deletingSection, setDeletingSection] = useState<TournamentSection | null>(null)
   const form = useForm<SectionFormValues>({
@@ -86,10 +106,14 @@ export function AdminTournamentContentPage() {
   const isCreating = selectedId === null
   const isMutating = createMutation.isPending || updateMutation.isPending
   const sectionType = useWatch({ control: form.control, name: "type" })
-  const sourceMarkdown = useWatch({ control: form.control, name: "source_markdown" }) ?? ""
-  const deferredMarkdown = useDeferredValue(sourceMarkdown)
-  const previewMarkdown = previewMutation.mutate
-  const previewHtml = deferredMarkdown.trim() ? previewMutation.data?.content_html ?? selectedSection?.content_html ?? "" : ""
+  const sourceMarkdownZh = useWatch({ control: form.control, name: "source_markdown_zh" }) ?? ""
+  const sourceMarkdownEn = useWatch({ control: form.control, name: "source_markdown_en" }) ?? ""
+  const deferredMarkdownZh = useDeferredValue(sourceMarkdownZh)
+  const deferredMarkdownEn = useDeferredValue(sourceMarkdownEn)
+  const previewMarkdownZh = previewZhMutation.mutate
+  const previewMarkdownEn = previewEnMutation.mutate
+  const previewHtmlZh = deferredMarkdownZh.trim() ? previewZhMutation.data?.content_html ?? selectedSection?.content_html_zh ?? selectedSection?.content_html ?? "" : ""
+  const previewHtmlEn = deferredMarkdownEn.trim() ? previewEnMutation.data?.content_html ?? selectedSection?.content_html_en ?? "" : ""
 
   useEffect(() => {
     if (selectedSection) {
@@ -98,19 +122,31 @@ export function AdminTournamentContentPage() {
   }, [form, selectedSection])
 
   useEffect(() => {
-    const source = deferredMarkdown.trim()
+    const source = deferredMarkdownZh.trim()
     if (!tid || !source) return
 
     const timer = window.setTimeout(() => {
-      previewMarkdown({ source_markdown: deferredMarkdown })
+      previewMarkdownZh({ source_markdown: deferredMarkdownZh })
     }, 450)
 
     return () => window.clearTimeout(timer)
-  }, [deferredMarkdown, previewMarkdown, tid])
+  }, [deferredMarkdownZh, previewMarkdownZh, tid])
+
+  useEffect(() => {
+    const source = deferredMarkdownEn.trim()
+    if (!tid || !source) return
+
+    const timer = window.setTimeout(() => {
+      previewMarkdownEn({ source_markdown: deferredMarkdownEn })
+    }, 450)
+
+    return () => window.clearTimeout(timer)
+  }, [deferredMarkdownEn, previewMarkdownEn, tid])
 
   const startCreate = () => {
     setSelectedId(null)
-    previewMutation.reset()
+    previewZhMutation.reset()
+    previewEnMutation.reset()
     form.reset(defaultValues)
   }
 
@@ -187,7 +223,7 @@ export function AdminTournamentContentPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="truncate font-medium">{section.title}</span>
+                      <span className="truncate font-medium">{section.title_zh || section.title_en || section.title}</span>
                       <Badge variant="outline">{section.type}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">{t("tournament.admin.content.order", { order: section.sort_order })}</p>
@@ -201,7 +237,7 @@ export function AdminTournamentContentPage() {
             {createMutation.isError ? <MutationErrorAlert error={createMutation.error} title={t("tournament.admin.content.createFailed")} /> : null}
             {updateMutation.isError ? <MutationErrorAlert error={updateMutation.error} title={t("tournament.admin.content.saveFailed")} /> : null}
             {deleteMutation.isError ? <MutationErrorAlert error={deleteMutation.error} title={t("tournament.admin.content.deleteFailed")} /> : null}
-            {previewMutation.isError ? <MutationErrorAlert error={previewMutation.error} title={t("tournament.admin.content.previewFailed")} /> : null}
+            {previewZhMutation.isError || previewEnMutation.isError ? <MutationErrorAlert error={previewZhMutation.error ?? previewEnMutation.error} title={t("tournament.admin.content.previewFailed")} /> : null}
 
             <form className="space-y-4" onSubmit={submit}>
               <Card>
@@ -214,9 +250,12 @@ export function AdminTournamentContentPage() {
                     </Button>
                   ) : null}
                 </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-[1fr_160px_120px]">
-                  <Field className="md:col-span-3" error={form.formState.errors.title?.message} id="section-title" label={t("tournament.admin.content.title")}>
-                    <Input id="section-title" {...form.register("title")} />
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                  <Field error={form.formState.errors.title_zh?.message} id="section-title-zh" label={t("tournament.admin.content.titleZh")}>
+                    <Input id="section-title-zh" {...form.register("title_zh")} />
+                  </Field>
+                  <Field error={form.formState.errors.title_en?.message} id="section-title-en" label={t("tournament.admin.content.titleEn")}>
+                    <Input id="section-title-en" {...form.register("title_en")} />
                   </Field>
                   <Field error={form.formState.errors.type?.message} id="section-type" label={t("tournament.admin.content.type")}>
                     <Select
@@ -236,13 +275,20 @@ export function AdminTournamentContentPage() {
                   <Field error={form.formState.errors.sort_order?.message} id="section-sort-order" label={t("tournament.admin.content.sortOrder")}>
                     <Input id="section-sort-order" type="number" {...form.register("sort_order", { valueAsNumber: true })} />
                   </Field>
-                  <div className="hidden md:block" />
-                  <Field className="md:col-span-3" error={form.formState.errors.source_markdown?.message} id="section-markdown" label={t("tournament.admin.content.markdown")}>
+                  <Field error={form.formState.errors.source_markdown_zh?.message} id="section-markdown-zh" label={t("tournament.admin.content.markdownZh")}>
                     <Textarea
                       className="min-h-80 font-mono text-sm"
-                      id="section-markdown"
-                      placeholder={t("tournament.admin.content.markdownPlaceholder")}
-                      {...form.register("source_markdown")}
+                      id="section-markdown-zh"
+                      placeholder={t("tournament.admin.content.markdownPlaceholderZh")}
+                      {...form.register("source_markdown_zh")}
+                    />
+                  </Field>
+                  <Field error={form.formState.errors.source_markdown_en?.message} id="section-markdown-en" label={t("tournament.admin.content.markdownEn")}>
+                    <Textarea
+                      className="min-h-80 font-mono text-sm"
+                      id="section-markdown-en"
+                      placeholder={t("tournament.admin.content.markdownPlaceholderEn")}
+                      {...form.register("source_markdown_en")}
                     />
                   </Field>
                 </CardContent>
@@ -259,17 +305,14 @@ export function AdminTournamentContentPage() {
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle>{t("tournament.admin.content.preview")}</CardTitle>
-                  <Badge variant={previewMutation.isPending ? "secondary" : "outline"}>
-                    {previewMutation.isPending ? t("tournament.admin.content.rendering") : t("tournament.admin.content.sanitized")}
+                  <Badge variant={previewZhMutation.isPending || previewEnMutation.isPending ? "secondary" : "outline"}>
+                    {previewZhMutation.isPending || previewEnMutation.isPending ? t("tournament.admin.content.rendering") : t("tournament.admin.content.sanitized")}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                {previewHtml ? (
-                  <RichTextRenderer content={previewHtml} />
-                ) : (
-                  <AppAlert title={t("tournament.admin.content.noPreviewTitle")}>{t("tournament.admin.content.noPreviewDescription")}</AppAlert>
-                )}
+              <CardContent className="grid gap-4 lg:grid-cols-2">
+                <PreviewPane content={previewHtmlZh} title={t("tournament.admin.content.zh")} />
+                <PreviewPane content={previewHtmlEn} title={t("tournament.admin.content.en")} />
               </CardContent>
             </Card>
           </div>
@@ -318,21 +361,47 @@ function Field({ children, className, error, id, label }: { children: ReactNode;
   )
 }
 
+function PreviewPane({ content, title }: { content: string; title: string }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="rounded-lg border p-4">
+      <p className="mb-3 text-xs font-semibold uppercase text-muted-foreground">{title}</p>
+      {content ? (
+        <RichTextRenderer content={content} />
+      ) : (
+        <AppAlert title={t("tournament.admin.content.noPreviewTitle")}>{t("tournament.admin.content.noPreviewDescription")}</AppAlert>
+      )}
+    </div>
+  )
+}
+
 function toSectionFormValues(section: TournamentSection): SectionFormValues {
   return {
     sort_order: section.sort_order ?? 0,
-    source_markdown: section.source_markdown ?? "",
-    title: section.title ?? "",
+    source_markdown_en: section.source_markdown_en ?? "",
+    source_markdown_zh: section.source_markdown_zh ?? section.source_markdown ?? "",
+    title_en: section.title_en ?? "",
+    title_zh: section.title_zh ?? section.title ?? "",
     type: sectionTypes.includes(section.type as SectionFormValues["type"]) ? section.type as SectionFormValues["type"] : "rules",
   }
 }
 
 function toSectionRequest(values: SectionFormValues): TournamentSectionRequest {
+  const titleZh = values.title_zh.trim()
+  const titleEn = values.title_en.trim()
+  const markdownZh = values.source_markdown_zh.trim()
+  const markdownEn = values.source_markdown_en.trim()
+
   return {
     format: "markdown",
     sort_order: values.sort_order,
-    source_markdown: values.source_markdown,
-    title: values.title.trim(),
+    source_markdown: markdownZh || markdownEn,
+    source_markdown_en: markdownEn,
+    source_markdown_zh: markdownZh,
+    title: titleZh || titleEn,
+    title_en: titleEn,
+    title_zh: titleZh,
     type: values.type,
   }
 }

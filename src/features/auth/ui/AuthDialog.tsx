@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { API_BASE_URL } from "@/shared/api/http"
 import { FormFieldError, MutationErrorAlert } from "@/shared/components"
-import { login } from "../api/authApi"
+import { getCurrentUser, getPermissions, login } from "../api/authApi"
 import { authQueryKeys } from "../api/authQueries"
 import { type AuthDialogMode, useAuthStore } from "../model/authStore"
 
@@ -42,14 +42,27 @@ export function AuthDialog() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const handleSuccess = (session: { message?: string; userId: number }) => {
-    setSession(session)
-    void queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser })
-    void queryClient.invalidateQueries({ queryKey: authQueryKeys.permissions })
-    toast.success(session.message ?? t("auth.loginSuccess"))
+  const handleSuccess = async (session: { message?: string; userId: number }) => {
+    try {
+      const currentUser = await queryClient.fetchQuery({
+        queryFn: getCurrentUser,
+        queryKey: authQueryKeys.currentUser,
+        retry: false,
+      })
 
-    if (loginRedirect) {
-      navigate(loginRedirect)
+      setSession({ userId: currentUser.user_id })
+      void queryClient.fetchQuery({
+        queryFn: getPermissions,
+        queryKey: authQueryKeys.permissions,
+        retry: false,
+      }).catch(() => undefined)
+      toast.success(session.message ?? t("auth.loginSuccess"))
+
+      if (loginRedirect) {
+        navigate(loginRedirect)
+      }
+    } catch {
+      toast.error(t("auth.sessionVerificationFailed"))
     }
   }
 

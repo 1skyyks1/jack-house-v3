@@ -1,13 +1,12 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
-import { CheckCircle, Copy, Crown, NotePencil, SignOut, Trash } from "@phosphor-icons/react"
+import { CheckCircle, Copy, Crown, LockKey, NotePencil, SignOut, Star, Trash } from "@phosphor-icons/react"
 import type { TournamentPlayer, TournamentTeam } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getTeamStatusLabel, isPlayerCaptain, isTeamCaptain, isTeamMutable } from "./utils"
+import { isPlayerCaptain, isTeamCaptain, isTeamMutable } from "./utils"
 
 export function TeamSection({
   action,
@@ -20,7 +19,6 @@ export function TeamSection({
   onTransferCaptain,
   registrationOpen,
   teams,
-  title,
   userId,
 }: {
   action?: (team: TournamentTeam) => ReactNode
@@ -33,13 +31,11 @@ export function TeamSection({
   onTransferCaptain?: (team: TournamentTeam) => void
   registrationOpen: boolean
   teams: TournamentTeam[]
-  title: string
   userId: number | null
 }) {
   return (
     <section>
-      <h2 className="font-heading text-2xl font-semibold">{title}</h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {teams.map((team) => (
           <TeamCard
             action={action}
@@ -90,45 +86,36 @@ function TeamCard({
   const isCaptain = isTeamCaptain(team, userId)
   const isMutable = registrationOpen && isTeamMutable(team)
   const canTransferCaptain = isCaptain && isMutable && (team.players ?? []).some((player) => !isPlayerCaptain(team, player))
+  const players = team.players ?? []
+  const displayName = team.display_name || team.name
+  const isPrivate = !team.is_open
 
   return (
-    <article className={cn("rounded-lg border bg-card p-4", isMyTeam && "border-primary/40")}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-heading text-xl font-semibold">{team.display_name || team.name}</h3>
-            <Badge variant="outline">{team.is_open ? t("tournament.teams.open") : t("tournament.teams.private")}</Badge>
+    <article className={cn("relative min-h-20 overflow-hidden rounded-lg border bg-card px-4 py-3 pr-28 shadow-sm transition hover:border-primary/30", isMyTeam && "border-primary/50 ring-1 ring-primary/20")}>
+      <TeamAvatarPanel players={players} />
+      <div className="relative z-10 flex min-h-14 min-w-0 flex-col justify-center gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {isPrivate ? <LockKey className="size-4 shrink-0 text-muted-foreground" weight="bold" /> : null}
+            <h3 className="truncate font-heading text-lg font-semibold leading-tight">{displayName}</h3>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{t("tournament.common.captain")}: {team.captain?.user_name ?? "-"}</p>
+          {action ? <div className="shrink-0">{action(team)}</div> : null}
         </div>
-        {action ? action(team) : null}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {(team.players ?? []).map((player) => (
-          <div className="group flex items-center gap-1" key={player.id}>
-            <Link className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-sm" to={`/user/${player.user_id}`}>
-              <Avatar className="size-6">
-                <AvatarImage src={player.avatar_snapshot ?? player.user?.avatar ?? undefined} />
-                <AvatarFallback>{(player.user_name_snapshot ?? player.user?.user_name ?? "?").slice(0, 1)}</AvatarFallback>
-              </Avatar>
-              <span className="max-w-[10rem] truncate">{player.user_name_snapshot ?? player.user?.user_name ?? t("tournament.common.user", { id: player.user_id })}</span>
-            </Link>
-            {isCaptain && isMutable && !isPlayerCaptain(team, player) ? (
-              <Button className="size-7 opacity-70 group-hover:opacity-100" onClick={() => onKick?.(team, player)} size="icon" variant="ghost">
-                <Trash className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className={cn("rounded-full bg-muted px-2 py-1", team.status === 1 && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300")}>
-          {getTeamStatusLabel(team.status, t)}
-        </span>
-        {team.qual_rank ? <span className="rounded-full bg-muted px-2 py-1">{t("tournament.teams.qualifierRank", { rank: team.qual_rank })}</span> : null}
+        <div className="grid min-w-0 grid-cols-2 items-center gap-x-5 gap-y-2 overflow-hidden">
+          {players.map((player) => (
+            <div className="group flex min-w-0 shrink items-center gap-1" key={player.id}>
+              <PlayerLink player={player} team={team} />
+              {isCaptain && isMutable && !isPlayerCaptain(team, player) ? (
+                <Button className="size-7 shrink-0 opacity-70 group-hover:opacity-100" onClick={() => onKick?.(team, player)} size="icon" variant="ghost">
+                  <Trash className="size-4" />
+                </Button>
+              ) : null}
+            </div>
+          ))}
+        </div>
       </div>
       {isMyTeam ? (
-        <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+        <div className="relative z-10 mt-4 flex flex-wrap gap-2 border-t pt-4">
           {isCaptain ? (
             <>
               <Button disabled={!isMutable} onClick={() => onSubmit?.(team.id)} size="sm" variant="outline">
@@ -162,11 +149,46 @@ function TeamCard({
   )
 }
 
-export function Metric({ label, value }: { label: string; value: ReactNode }) {
+function PlayerLink({ player, team }: { player: TournamentPlayer; team: TournamentTeam }) {
+  const { t } = useTranslation()
+  const name = player.user_name_snapshot ?? player.user?.user_name ?? t("tournament.common.user", { id: player.user_id })
+
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
-      <p className="mt-2 font-heading text-3xl font-semibold">{value}</p>
+    <Link className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground" to={`/user/${player.user_id}`}>
+      <span className="truncate">{name}</span>
+      {isPlayerCaptain(team, player) ? <Star className="size-3.5 shrink-0 text-amber-500" weight="fill" /> : null}
+    </Link>
+  )
+}
+
+function TeamAvatarPanel({ players }: { players: TournamentPlayer[] }) {
+  const displayPlayers = players.slice(0, 3)
+
+  return (
+      <div
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 right-0 flex w-28 items-center justify-end overflow-hidden bg-[linear-gradient(135deg,rgba(20,184,166,0.22),hsl(var(--muted)))] pl-9 pr-3 [clip-path:polygon(24%_0,100%_0,100%_100%,0_100%)] sm:w-32"
+    >
+      <div className="relative h-14 w-16">
+        {displayPlayers.map((player, index) => {
+          const name = player.user_name_snapshot ?? player.user?.user_name ?? "?"
+
+          return (
+            <Avatar
+              className={cn(
+                "absolute size-10 border-2 border-background shadow-md",
+                index === 0 && "right-5 top-0",
+                index === 1 && "right-0 top-4",
+                index === 2 && "right-9 top-5 opacity-90",
+              )}
+              key={player.id}
+            >
+              <AvatarImage src={player.avatar_snapshot ?? player.user?.avatar ?? undefined} />
+              <AvatarFallback>{name.slice(0, 1)}</AvatarFallback>
+            </Avatar>
+          )
+        })}
+      </div>
     </div>
   )
 }

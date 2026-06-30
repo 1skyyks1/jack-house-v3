@@ -8,7 +8,7 @@ V3 第一阶段兼容旧 Express API。页面组件不直接消费原始 axios r
 - 认证：V3 使用后端 httpOnly cookie，axios 开启 `withCredentials`，不再从 `localStorage.token` 读取 JWT，也不再发送 `Authorization: Bearer`。后端不再兼容旧前端 Bearer token。
 - CSRF：cookie 认证的写请求需要 `X-CSRF-Token`，V3 会从 `jh_csrf` cookie 自动带上。
 - 生产 CORS/cookie：后端在 `NODE_ENV=production` 时要求显式配置 `CORS_ORIGIN` 或 `FRONTEND_URL`；如果 `AUTH_COOKIE_SAME_SITE=none`，必须同时配置 `AUTH_COOKIE_SECURE=true`。
-- 本地 V3 调线上后端：V3 `.env` 配 `VITE_API_BASE_URL=https://线上后端域名`；线上后端 `CORS_ORIGIN` 必须包含实际浏览器 origin，例如 `https://线上前端域名,http://localhost:5173,http://127.0.0.1:5173`。如果要跨站 cookie 登录，线上后端还需要 `AUTH_COOKIE_SAME_SITE=none` 和 `AUTH_COOKIE_SECURE=true`。origin 不要带路径或尾部 `/`。
+- 本地 V3 直连线上后端：V3 `.env` 配 `VITE_API_BASE_URL=https://线上后端域名`；线上后端 `CORS_ORIGIN` 必须包含实际浏览器 origin，例如 `https://线上前端域名,http://localhost:5173,http://127.0.0.1:5173`。因为 `localhost -> api.jackhouse.xyz` 是跨站请求，线上后端必须显式配置 `AUTH_COOKIE_SAME_SITE=none` 和 `AUTH_COOKIE_SECURE=true`，并依赖 CORS 白名单与双提交 CSRF 保护写请求。origin 不要带路径或尾部 `/`。
 - 语言：`Accept-Language: zh | en`。
 - 401：清理前端会话并打开登录流。
 - 后端响应 envelope 不完全一致，API 函数需要按接口确认并归一。

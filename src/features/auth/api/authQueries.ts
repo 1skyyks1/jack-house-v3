@@ -8,12 +8,10 @@ export const authQueryKeys = {
 }
 
 export function useCurrentUserQuery() {
-  const isLogged = useAuthStore((state) => state.isLogged)
-
   return useQuery({
-    enabled: isLogged,
     queryFn: getCurrentUser,
     queryKey: authQueryKeys.currentUser,
+    retry: false,
   })
 }
 
@@ -24,5 +22,6 @@ export function usePermissionsQuery() {
     enabled: isLogged,
     queryFn: getPermissions,
     queryKey: authQueryKeys.permissions,
+    retry: false,
   })
 }

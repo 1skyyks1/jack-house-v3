@@ -25,6 +25,23 @@ function isUnsafeMethod(method: string | undefined) {
   return !["get", "head", "options"].includes((method ?? "get").toLowerCase())
 }
 
+function getRequestPath(url: string | undefined) {
+  if (!url) return ""
+  try {
+    return new URL(url, API_BASE_URL).pathname
+  } catch {
+    return url
+  }
+}
+
+function isCsrfExemptPath(path: string) {
+  return path === "/auth/login" || path === "/auth/register"
+}
+
+function isPassiveAuthProbe(path: string) {
+  return path === "/user/info" || path === "/permissions"
+}
+
 type CsrfResponse = {
   data?: {
     csrfToken?: string
@@ -62,7 +79,8 @@ http.interceptors.request.use(async (config) => {
   headers.set("Accept-Language", i18n.language)
 
   let csrfToken = getCookie(import.meta.env.VITE_CSRF_COOKIE_NAME ?? "jh_csrf")
-  if (!csrfToken && isUnsafeMethod(config.method)) {
+  const path = getRequestPath(config.url)
+  if (!csrfToken && isUnsafeMethod(config.method) && !isCsrfExemptPath(path)) {
     csrfToken = (await fetchCsrfToken()) ?? undefined
   }
 
@@ -93,7 +111,12 @@ http.interceptors.response.use(
 
       if (status === 401) {
         csrfTokenCache = null
-        useAuthStore.getState().logout({ openLogin: true, redirectTo: window.location.pathname + window.location.search })
+        const path = getRequestPath(error.config?.url)
+        const isPassiveProbe = isPassiveAuthProbe(path)
+        useAuthStore.getState().logout({
+          openLogin: !isPassiveProbe,
+          redirectTo: isPassiveProbe ? undefined : window.location.pathname + window.location.search,
+        })
       }
 
       throw new ApiError(

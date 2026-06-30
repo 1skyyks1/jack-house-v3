@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { useTournamentListQuery, getTournamentStatus } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
@@ -11,6 +12,8 @@ import { cn } from "@/lib/utils"
 export function TournamentListPage() {
   const { t } = useTranslation()
   const tournamentsQuery = useTournamentListQuery()
+  const tournaments = tournamentsQuery.data ?? []
+  const heroTournament = tournaments.find((tournament) => tournament.banner)
 
   if (tournamentsQuery.isError) {
     return <PageState title={t("tournament.list.loadFailed")} description={getErrorMessage(tournamentsQuery.error)} />
@@ -18,34 +21,38 @@ export function TournamentListPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="overflow-hidden rounded-lg border bg-card">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="flex min-h-[18rem] flex-col justify-between p-6 sm:p-8">
-            <div>
-              <Badge className="w-fit gap-1" variant="secondary">
-                <Trophy className="size-3.5" weight="bold" />
-                {t("tournament.list.eyebrow")}
-              </Badge>
-              <h1 className="mt-5 max-w-2xl font-heading text-4xl font-semibold tracking-normal sm:text-5xl">
-                {t("tournament.list.title")}
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                {t("tournament.list.description")}
-              </p>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
-              <span>{t("tournament.list.flowRegistration")}</span>
-              <span>/</span>
-              <span>{t("tournament.list.flowQualifier")}</span>
-              <span>/</span>
-              <span>{t("tournament.list.flowBracket")}</span>
-            </div>
+      <section className="relative min-h-[22rem] overflow-hidden rounded-lg border bg-card text-white">
+        {heroTournament?.banner ? (
+          <img alt="" className="absolute inset-0 size-full object-cover" src={heroTournament.banner} />
+        ) : (
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
+        )}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06),rgba(0,0,0,0.82))]" />
+        <div className="relative z-10 flex min-h-[22rem] flex-col justify-between p-6 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <Badge className="w-fit gap-1 border-white/20 bg-black/35 text-white" variant="outline">
+              <Trophy className="size-3.5" weight="bold" />
+              {t("tournament.list.eyebrow")}
+            </Badge>
+            <Badge className="border-white/20 bg-black/35 text-white" variant="outline">
+              {t("tournament.list.mainFormatValue")}
+            </Badge>
           </div>
-          <div className="relative min-h-[18rem] bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.22),transparent_32%),linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]">
-            <div className="absolute inset-x-8 bottom-8 rounded-lg border bg-background/75 p-5 backdrop-blur">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">{t("tournament.list.mainFormat")}</p>
-              <p className="mt-2 font-heading text-3xl font-semibold">{t("tournament.list.mainFormatValue")}</p>
-            </div>
+          <div className="max-w-3xl">
+            {heroTournament?.acronym ? (
+              <p className="text-xs font-semibold uppercase text-white/70">{heroTournament.acronym}</p>
+            ) : null}
+            <h1 className="mt-2 font-heading text-4xl font-semibold tracking-normal sm:text-5xl">
+              {heroTournament?.name ?? t("tournament.list.title")}
+            </h1>
+            {heroTournament ? (
+              <Button asChild className="mt-6 bg-white text-black hover:bg-white/90">
+                <Link to={`/t/${heroTournament.acronym || heroTournament.id}`}>
+                  {t("tournament.common.openTournament")}
+                  <ArrowRight className="size-4" weight="bold" />
+                </Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>
@@ -55,7 +62,7 @@ export function TournamentListPage() {
         <AppAlert title={t("tournament.list.emptyTitle")}>{t("tournament.list.emptyDescription")}</AppAlert>
       ) : null}
       <section className="grid gap-4 md:grid-cols-2">
-        {(tournamentsQuery.data ?? []).map((tournament) => {
+        {tournaments.map((tournament) => {
           const status = getTournamentStatus(tournament)
 
           return (

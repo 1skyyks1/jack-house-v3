@@ -31,6 +31,8 @@ AUTH_COOKIE_SAME_SITE=none
 AUTH_COOKIE_SECURE=true
 ```
 
+这是浏览器跨站 cookie 的标准要求，不应在代码里按请求来源动态切换 cookie 策略。
+
 `CORS_ORIGIN` 写浏览器地址栏里的 origin，只包含协议、域名和端口，不带路径，不带尾部 `/`。
 
 ## 存储环境变量

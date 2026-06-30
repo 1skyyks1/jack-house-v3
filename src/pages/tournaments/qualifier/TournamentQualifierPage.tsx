@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
+import { getTournamentMapCoverUrl, getTournamentPublicPath } from "../_shared/tournamentVisuals"
 
 export function TournamentQualifierPage() {
   const { t } = useTranslation()
@@ -29,21 +31,19 @@ export function TournamentQualifierPage() {
   const ranking = rankingQuery.data ?? []
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <TournamentBreadcrumb current={t("tournament.common.qualifier")} tournament={tournament} tournamentId={tid} />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Button asChild className="px-0" variant="link">
-            <Link to={`/t/${tid}`}>{tournament?.acronym ?? t("tournament.common.tournament")}</Link>
-          </Button>
-          <h1 className="font-heading text-3xl font-semibold">{t("tournament.common.qualifier")}</h1>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">{tournament?.acronym ?? t("tournament.common.tournament")}</p>
+          <h1 className="mt-1 font-heading text-3xl font-semibold">{t("tournament.common.qualifier")}</h1>
         </div>
         <Badge className="gap-1" variant="secondary">
           <ChartBar className="size-3.5" weight="bold" />
           {t("tournament.qualifier.bestScorePerMap")}
         </Badge>
       </div>
-
-      <AppAlert title={t("tournament.qualifier.publicScoreboard")}>{t("tournament.qualifier.publicScoreboardDescription")}</AppAlert>
 
       <section className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <aside className="rounded-lg border bg-card p-4">
@@ -54,29 +54,50 @@ export function TournamentQualifierPage() {
           <div className="mt-4 space-y-2">
             {mappoolQuery.isLoading ? <p className="text-sm text-muted-foreground">{t("tournament.qualifier.loadingMaps")}</p> : null}
             {!mappoolQuery.isLoading && maps.length === 0 ? <p className="text-sm text-muted-foreground">{t("tournament.qualifier.noMaps")}</p> : null}
-            {maps.map((map) => (
-              <a
-                className="block rounded-md border bg-background p-3 transition hover:border-primary/40"
-                href={`https://osu.ppy.sh/beatmaps/${map.map_id}`}
-                key={map.id}
-                rel="noreferrer"
-                target="_blank"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase text-muted-foreground">{t("tournament.qualifier.stage", { stage: map.index })}</p>
-                    <p className="mt-1 truncate font-medium">{map.artist} - {map.title}</p>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">{map.version ?? "-"} / {map.mapper}</p>
+            {maps.map((map) => {
+              const coverUrl = getTournamentMapCoverUrl(map)
+
+              return (
+                <a
+                  className="group relative block h-28 overflow-hidden rounded-md border bg-muted text-white transition hover:border-primary/50"
+                  href={`https://osu.ppy.sh/beatmaps/${map.map_id}`}
+                  key={map.id}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {coverUrl ? (
+                    <img alt="" className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-[1.03]" src={coverUrl} />
+                  ) : null}
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.82))]" />
+                  <div className="relative z-10 flex h-full flex-col justify-between p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <Badge className="border-white/20 bg-black/35 text-white" variant="outline">
+                        {t("tournament.qualifier.stage", { stage: map.index })}
+                      </Badge>
+                      <ArrowSquareOut className="mt-1 size-4 text-white/70" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{map.artist} - {map.title}</p>
+                      <p className="mt-1 truncate text-xs text-white/76">{map.version ?? "-"} / {map.mapper}</p>
+                    </div>
                   </div>
-                  <ArrowSquareOut className="mt-1 size-4 text-muted-foreground" />
-                </div>
-              </a>
-            ))}
+                </a>
+              )
+            })}
           </div>
         </aside>
 
         <section className="rounded-lg border bg-card p-4">
-          <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.ranking")}</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.ranking")}</h2>
+            {tournament ? (
+              <Button asChild size="sm" variant="outline">
+                <Link to={getTournamentPublicPath(tournament)}>
+                  {t("tournament.common.tournament")}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
           <div className="mt-4 space-y-2">
             {rankingQuery.isLoading ? <p className="text-sm text-muted-foreground">{t("tournament.qualifier.loadingRanking")}</p> : null}
             {!rankingQuery.isLoading && ranking.length === 0 ? (

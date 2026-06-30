@@ -1,7 +1,7 @@
 import { LockKey, Plus, SignIn } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { toast } from "sonner"
 import {
   useCreateTournamentTeamMutation,
@@ -37,11 +37,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
-import { Metric, TeamSection } from "./components"
+import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
+import { TeamSection } from "./components"
 import { getRegistrationStatus, isPlayerCaptain } from "./utils"
 
 export function TournamentTeamsPage() {
@@ -203,8 +205,6 @@ export function TournamentTeamsPage() {
   const tournament = tournamentQuery.data
   const teams = teamsQuery.data ?? []
   const currentUserId = userId ? Number(userId) : null
-  const openTeams = teams.filter((team) => Boolean(team.is_open))
-  const privateTeams = teams.filter((team) => !team.is_open)
   const myTeam = currentUserId ? teams.find((team) => team.players?.some((player) => Number(player.user_id) === currentUserId)) : undefined
   const isCurrentUserStaff = Boolean(currentUserId && tournament?.staff?.some((staff) => Number(staff.user_id) === currentUserId))
   const registrationStatus = getRegistrationStatus(tournament, t)
@@ -216,13 +216,16 @@ export function TournamentTeamsPage() {
         : null)
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <TournamentBreadcrumb current={t("tournament.teams.title")} tournament={tournament} tournamentId={tid} />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Button asChild className="px-0" variant="link">
-            <Link to={`/t/${tid}`}>{tournament?.acronym ?? t("tournament.common.tournament")}</Link>
-          </Button>
-          <h1 className="font-heading text-3xl font-semibold">{t("tournament.teams.title")}</h1>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">{tournament?.acronym ?? t("tournament.common.tournament")}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h1 className="font-heading text-3xl font-semibold">{t("tournament.teams.title")}</h1>
+            <Badge variant={registrationStatus.isOpen ? "default" : "outline"}>{registrationStatus.title}</Badge>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button disabled={Boolean(registrationBlockReason)} onClick={() => (ensureCanRegister() ? setIsJoinOpen(true) : undefined)} variant="outline">
@@ -240,32 +243,20 @@ export function TournamentTeamsPage() {
         <MutationErrorAlert error={createMutation.error ?? joinMutation.error ?? leaveMutation.error ?? submitMutation.error ?? updateTeamInfoMutation.error ?? transferCaptainMutation.error ?? resetInviteMutation.error ?? kickMutation.error} />
       ) : null}
 
-      {registrationStatus.message ? (
-        <AppAlert tone={registrationStatus.isOpen ? "success" : "warning"} title={registrationStatus.title}>{registrationStatus.message}</AppAlert>
-      ) : null}
-
-      {registrationBlockReason && registrationStatus.isOpen ? (
-        <AppAlert title={t("tournament.teams.registrationUnavailable")}>{registrationBlockReason}</AppAlert>
-      ) : null}
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <Metric label={t("tournament.teams.metricTeams")} value={teams.length} />
-        <Metric label={t("tournament.teams.metricOpenTeams")} value={openTeams.length} />
-        <Metric label={t("tournament.teams.metricTeamSize")} value={`${tournament?.team_size_min ?? 1}-${tournament?.team_size_max ?? 2}`} />
-      </section>
-
-      {teamsQuery.isLoading ? <PageState title={t("tournament.teams.loading")} description={t("tournament.teams.loadingDescription")} /> : null}
+      {teamsQuery.isLoading ? <PageState title={t("tournament.teams.loading")} description={null} /> : null}
       {!teamsQuery.isLoading && teams.length === 0 ? (
-        <AppAlert title={t("tournament.teams.emptyTitle")}>{registrationStatus.isOpen ? t("tournament.teams.emptyOpen") : t("tournament.teams.emptyClosed")}</AppAlert>
+        <AppAlert title={t("tournament.teams.emptyTitle")} />
       ) : null}
 
-      {openTeams.length > 0 ? (
+      {teams.length > 0 ? (
         <TeamSection
           action={(team) => (
-            <Button disabled={joinMutation.isPending || Boolean(registrationBlockReason)} onClick={() => joinOpenTeam(team.id)} size="sm">
-              <SignIn className="size-4" weight="bold" />
-              {t("tournament.common.join")}
-            </Button>
+            team.is_open ? (
+              <Button disabled={joinMutation.isPending || Boolean(registrationBlockReason)} onClick={() => joinOpenTeam(team.id)} size="sm" variant="outline">
+                <SignIn className="size-4" weight="bold" />
+                {t("tournament.common.join")}
+              </Button>
+            ) : null
           )}
           myTeamId={myTeam?.id}
           onKick={(team, player) => setConfirmAction({ player, team, type: "kick" })}
@@ -276,24 +267,7 @@ export function TournamentTeamsPage() {
           onTransferCaptain={openTransferCaptain}
           registrationOpen={registrationStatus.isOpen}
           userId={currentUserId}
-          teams={openTeams}
-          title={t("tournament.teams.openTeams")}
-        />
-      ) : null}
-
-      {privateTeams.length > 0 ? (
-        <TeamSection
-          myTeamId={myTeam?.id}
-          onKick={(team, player) => setConfirmAction({ player, team, type: "kick" })}
-          onLeave={(team) => setConfirmAction({ team, type: "leave" })}
-          onEdit={openEditTeam}
-          onResetInvite={resetInviteCode}
-          onSubmit={submitTeam}
-          onTransferCaptain={openTransferCaptain}
-          registrationOpen={registrationStatus.isOpen}
-          teams={privateTeams}
-          title={t("tournament.teams.privateTeams")}
-          userId={currentUserId}
+          teams={teams}
         />
       ) : null}
 

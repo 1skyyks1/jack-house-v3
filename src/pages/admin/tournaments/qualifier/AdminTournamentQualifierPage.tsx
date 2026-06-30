@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 
@@ -49,6 +50,10 @@ const importStatusVariant: Record<string, "default" | "destructive" | "outline" 
 
 const emptyScores: TournamentQualScore[] = []
 const allTeamsValue = "__all__"
+
+function parseMpIds(value: string) {
+  return Array.from(new Set((value.match(/\d{5,}/g) ?? []).map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0)))
+}
 
 export function AdminTournamentQualifierPage() {
   const { t } = useTranslation()
@@ -116,13 +121,19 @@ export function AdminTournamentQualifierPage() {
   function handleFetchScores(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const selectedTeam = selectedTeamId && selectedTeamId !== allTeamsValue ? Number(selectedTeamId) : undefined
+    const mpIds = parseMpIds(mpId)
+
+    if (mpIds.length === 0) {
+      toast.warning(t("tournament.admin.qualifier.mpIdRequired"))
+      return
+    }
 
     fetchScoresMutation.mutate(
-      { mp_id: Number(mpId), team_id: selectedTeam },
+      { ...(mpIds.length === 1 ? { mp_id: mpIds[0] } : { mp_ids: mpIds }), team_id: selectedTeam },
       {
         onSuccess: () => {
           setMpId("")
-          toast.success(selectedTeam ? t("tournament.admin.qualifier.scoresImported") : t("tournament.admin.qualifier.detectedScoresImported"))
+          toast.success(mpIds.length > 1 ? t("tournament.admin.qualifier.batchScoresImported", { count: mpIds.length }) : selectedTeam ? t("tournament.admin.qualifier.scoresImported") : t("tournament.admin.qualifier.detectedScoresImported"))
         },
       },
     )
@@ -329,9 +340,16 @@ export function AdminTournamentQualifierPage() {
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="qual-mp-id">{t("tournament.admin.qualifier.mpId")}</Label>
-                  <Input id="qual-mp-id" min={1} required type="number" value={mpId} onChange={(event) => setMpId(event.target.value)} />
+                  <Textarea
+                    className="min-h-28 font-mono text-xs"
+                    id="qual-mp-id"
+                    placeholder={t("tournament.admin.qualifier.mpIdPlaceholder")}
+                    required
+                    value={mpId}
+                    onChange={(event) => setMpId(event.target.value)}
+                  />
                 </div>
-                <Button disabled={fetchScoresMutation.isPending || isQualifierLocked || !mpId} type="submit">
+                <Button disabled={fetchScoresMutation.isPending || isQualifierLocked || parseMpIds(mpId).length === 0} type="submit">
                   <DownloadSimple className="size-4" weight="bold" />
                   {t("tournament.admin.bracket.importMpScores")}
                 </Button>

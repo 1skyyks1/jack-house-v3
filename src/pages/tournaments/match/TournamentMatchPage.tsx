@@ -15,23 +15,18 @@ import {
   useTournamentMatchQuery,
   type TournamentGame,
   type TournamentMatch,
+  type TournamentMappoolMap,
   type TournamentPlayer,
   type TournamentTeam,
 } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
+import { getTournamentMapCoverUrl } from "../_shared/tournamentVisuals"
 
 export function TournamentMatchPage() {
   const { t } = useTranslation()
@@ -55,31 +50,12 @@ export function TournamentMatchPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/t">{t("tournament.common.tournaments")}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to={`/t/${tid}`}>{tournament?.acronym ?? t("tournament.common.tournament")}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to={`/t/${tid}/bracket`}>{t("tournament.common.bracket")}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{t("tournament.common.match", { id: match.id })}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <TournamentBreadcrumb
+        current={t("tournament.common.match", { id: match.id })}
+        tournament={tournament}
+        tournamentId={tid}
+        trail={[{ label: t("tournament.common.bracket"), to: `/t/${tid}/bracket` }]}
+      />
 
       <section className="overflow-hidden rounded-xl border bg-card">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b bg-muted/35 p-4 sm:p-5">
@@ -117,13 +93,12 @@ export function TournamentMatchPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[0.9fr_1.4fr]">
-        <div className="space-y-4">
-          <InfoPanel match={match} mpUrl={mpUrl} />
-          {match.result_note ? <AppAlert title={t("tournament.match.resultNote")}>{match.result_note}</AppAlert> : null}
-        </div>
-        <GamesPanel games={match.games ?? []} team1={match.team1} team2={match.team2} />
+      <section className="grid gap-4 lg:grid-cols-[0.8fr_1.4fr]">
+        <InfoPanel match={match} mpUrl={mpUrl} />
+        <RoundMappoolPanel maps={match.round?.mappool ?? []} />
       </section>
+      {match.result_note ? <AppAlert title={t("tournament.match.resultNote")}>{match.result_note}</AppAlert> : null}
+      <GamesPanel games={match.games ?? []} team1={match.team1} team2={match.team2} />
     </main>
   )
 }
@@ -239,6 +214,57 @@ function InfoLine({ icon, label, value }: { icon?: ReactNode; label: string; val
   )
 }
 
+function RoundMappoolPanel({ maps }: { maps: TournamentMappoolMap[] }) {
+  const { t } = useTranslation()
+  const sortedMaps = [...maps].sort((a, b) => a.type.localeCompare(b.type) || a.id - b.id)
+
+  if (sortedMaps.length === 0) return null
+
+  return (
+    <section className="rounded-xl border bg-card p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.mappool")}</h2>
+        <Badge variant="secondary">{t("tournament.common.maps", { count: sortedMaps.length })}</Badge>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {sortedMaps.map((map) => (
+          <MappoolCard key={map.id} map={map} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function MappoolCard({ map }: { map: TournamentMappoolMap }) {
+  const { t } = useTranslation()
+  const coverUrl = getTournamentMapCoverUrl(map)
+
+  return (
+    <a
+      className="group relative flex h-32 overflow-hidden rounded-lg border bg-muted text-white transition hover:border-primary/50"
+      href={`https://osu.ppy.sh/beatmaps/${map.map_id}`}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {coverUrl ? (
+        <img alt="" className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-[1.03]" src={coverUrl} />
+      ) : null}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.82))]" />
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-between p-3">
+        <div className="flex items-start justify-between gap-2">
+          <Badge className="border-white/20 bg-black/35 text-white" variant="outline">{map.type}</Badge>
+          <ArrowSquareOut className="size-4 text-white/70" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-medium">{mappoolMapTitle(map)}</p>
+          <p className="mt-1 truncate text-xs text-white/72">{t("tournament.match.mappedBy", { mapper: map.mapper })}</p>
+        </div>
+      </div>
+    </a>
+  )
+}
+
 function GamesPanel({ games, team1, team2 }: { games: TournamentGame[]; team1?: TournamentTeam | null; team2?: TournamentTeam | null }) {
   const { t } = useTranslation()
   const sortedGames = [...games].sort((a, b) => a.order - b.order)
@@ -270,38 +296,45 @@ function GameRow({ game, team1, team2 }: { game: TournamentGame; team1?: Tournam
   const { t } = useTranslation()
   const team1Won = game.winner_team === 1
   const team2Won = game.winner_team === 2
+  const coverUrl = getTournamentMapCoverUrl(game.map)
 
   return (
-    <div className="rounded-lg border bg-background p-3">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="mb-1 flex items-center gap-2">
-            <Badge variant="outline">{game.map?.type ?? `#${game.order}`}</Badge>
-            <span className="text-xs text-muted-foreground">{t("tournament.common.game", { order: game.order })}</span>
+    <article className="relative overflow-hidden rounded-lg border bg-muted text-white">
+      {coverUrl ? (
+        <img alt="" className="absolute inset-0 size-full object-cover" src={coverUrl} />
+      ) : null}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.86))]" />
+      <div className="relative z-10 p-3">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center gap-2">
+              <Badge className="border-white/20 bg-black/35 text-white" variant="outline">{game.map?.type ?? `#${game.order}`}</Badge>
+              <span className="text-xs text-white/70">{t("tournament.common.game", { order: game.order })}</span>
+            </div>
+            <p className="truncate font-medium">{mapTitle(game)}</p>
+            {game.map?.mapper ? <p className="text-xs text-white/70">{t("tournament.match.mappedBy", { mapper: game.map.mapper })}</p> : null}
           </div>
-          <p className="truncate font-medium">{mapTitle(game)}</p>
-          {game.map?.mapper ? <p className="text-xs text-muted-foreground">{t("tournament.match.mappedBy", { mapper: game.map.mapper })}</p> : null}
+          {game.map?.map_id ? (
+            <Button asChild className="border-white/20 bg-black/35 text-white hover:bg-black/50 hover:text-white" size="icon-sm" variant="outline">
+              <a href={`https://osu.ppy.sh/beatmaps/${game.map.map_id}`} rel="noreferrer" target="_blank" aria-label={mapTitle(game)}>
+                <ArrowSquareOut className="size-4" />
+              </a>
+            </Button>
+          ) : null}
         </div>
-        {game.map?.map_id ? (
-          <Button asChild size="sm" variant="ghost">
-            <a href={`https://osu.ppy.sh/beatmaps/${game.map.map_id}`} rel="noreferrer" target="_blank">
-              <ArrowSquareOut className="size-4" />
-            </a>
-          </Button>
-        ) : null}
-      </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <GameScore isWinner={team1Won} score={game.player1_score} teamName={teamName(team1)} />
-        <GameScore isWinner={team2Won} score={game.player2_score} teamName={teamName(team2)} />
+        <div className="grid gap-2 sm:grid-cols-2">
+          <GameScore isWinner={team1Won} score={game.player1_score} teamName={teamName(team1)} />
+          <GameScore isWinner={team2Won} score={game.player2_score} teamName={teamName(team2)} />
+        </div>
       </div>
-    </div>
+    </article>
   )
 }
 
 function GameScore({ isWinner, score, teamName }: { isWinner: boolean; score: number; teamName: string }) {
   return (
-    <div className={cn("flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2 text-sm", isWinner && "bg-primary/10 text-primary")}>
+    <div className={cn("flex items-center justify-between gap-3 rounded-md bg-black/35 px-3 py-2 text-sm text-white backdrop-blur", isWinner && "bg-white text-black")}>
       <span className="truncate">{teamName}</span>
       <span className="font-semibold tabular-nums">{formatScore(score)}</span>
     </div>
@@ -315,6 +348,10 @@ function teamName(team?: TournamentTeam | null) {
 function mapTitle(game: TournamentGame) {
   if (!game.map) return `Map #${game.map_id}`
   return `${game.map.artist} - ${game.map.title}`
+}
+
+function mappoolMapTitle(map: TournamentMappoolMap) {
+  return `${map.artist} - ${map.title}`
 }
 
 function groupLabel(group: string | null | undefined, t: TFunction) {

@@ -162,6 +162,7 @@ export type TournamentMappoolMap = {
   map_id: number
   mapper: string
   round_id?: number
+  set_id?: number | null
   title: string
   type: string
 }
@@ -179,8 +180,10 @@ export type UpdateTournamentRoundRequest = Partial<CreateTournamentRoundRequest>
 
 export type CreateTournamentRoundMapRequest = {
   artist: string
+  beatmap_url?: string
   map_id: number
   mapper: string
+  set_id?: number | null
   title: string
   type: string
 }
@@ -277,22 +280,34 @@ export type TournamentGame = {
 
 export type TournamentSection = {
   content_html?: string | null
+  content_html_en?: string | null
+  content_html_zh?: string | null
   created_time?: string
   format: "markdown" | "html" | string
   id: number
   sort_order: number
   source_markdown?: string | null
+  source_markdown_en?: string | null
+  source_markdown_zh?: string | null
   title: string
+  title_en?: string | null
+  title_zh?: string | null
   type: "rules" | "description" | "prize" | "faq" | string
   updated_time?: string
 }
 
 export type TournamentSectionRequest = {
   content_html?: string | null
+  content_html_en?: string | null
+  content_html_zh?: string | null
   format: "markdown" | "html"
   sort_order: number
   source_markdown?: string | null
+  source_markdown_en?: string | null
+  source_markdown_zh?: string | null
   title: string
+  title_en?: string | null
+  title_zh?: string | null
   type: "rules" | "description" | "prize" | "faq"
 }
 
@@ -338,6 +353,7 @@ export type TournamentQualMap = {
   index: number
   map_id: number
   mapper: string
+  set_id?: number | null
   star?: number | string | null
   title: string
   version?: string | null
@@ -396,7 +412,8 @@ export type UpdateTournamentQualMapRequest = {
 }
 
 export type FetchTournamentQualScoresRequest = {
-  mp_id: number
+  mp_id?: number
+  mp_ids?: number[]
   team_id?: number
 }
 

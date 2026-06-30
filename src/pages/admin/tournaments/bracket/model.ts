@@ -7,6 +7,7 @@ export type RoundFormState = {
 
 export type MapFormState = {
   artist: string
+  beatmap_url: string
   map_id: string
   mapper: string
   title: string
@@ -42,6 +43,7 @@ export const defaultRoundForm: RoundFormState = {
 
 export const defaultMapForm: MapFormState = {
   artist: "",
+  beatmap_url: "",
   map_id: "",
   mapper: "",
   title: "",

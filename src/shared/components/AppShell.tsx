@@ -45,6 +45,7 @@ export function AppShell() {
   const isLogged = useAuthStore((state) => state.isLogged)
   const logout = useAuthStore((state) => state.logout)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
+  const setSession = useAuthStore((state) => state.setSession)
   const authUserId = useAuthStore((state) => state.userId)
   const currentUserQuery = useCurrentUserQuery()
   const permissionsQuery = usePermissionsQuery()
@@ -56,6 +57,15 @@ export function AppShell() {
   const isHomeRoute = location.pathname === "/"
   const headerScrolled = isHomeRoute ? homeSectionIndex > 0 : hasScrolled
   const useOverlayHeader = !isAdminRoute && !headerScrolled
+
+  useEffect(() => {
+    if (!currentUser) return
+
+    const userId = String(currentUser.user_id)
+    if (!isLogged || authUserId !== userId) {
+      setSession({ userId })
+    }
+  }, [authUserId, currentUser, isLogged, setSession])
 
   useEffect(() => {
     if (isHomeRoute) {
