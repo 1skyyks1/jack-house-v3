@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import {
+  useImportTournamentGoogleFormTeamsMutation,
   useImportTournamentHistoricalTeamsMutation,
   useTournamentDetailQuery,
   type TournamentHistoricalImportRequest,
@@ -13,6 +14,7 @@ import { AdminPage } from "@/features/admin-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
@@ -53,7 +55,11 @@ export function AdminTournamentImportPage() {
   const { tid } = useParams()
   const tournamentQuery = useTournamentDetailQuery(tid)
   const importMutation = useImportTournamentHistoricalTeamsMutation(tid ?? "")
+  const googleFormImportMutation = useImportTournamentGoogleFormTeamsMutation(tid ?? "")
   const [payloadText, setPayloadText] = useState(sampleText)
+  const [sheetUrl, setSheetUrl] = useState("")
+  const [csvText, setCsvText] = useState("")
+  const [batchId, setBatchId] = useState("JHC2025-google-form")
   const [lastResult, setLastResult] = useState<TournamentHistoricalImportResult | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
 
@@ -85,6 +91,23 @@ export function AdminTournamentImportPage() {
     })
   }
 
+  const submitGoogleFormImport = (dryRun: boolean) => {
+    googleFormImportMutation.mutate(
+      {
+        batch_id: batchId.trim() || undefined,
+        csv_text: csvText.trim() || undefined,
+        dry_run: dryRun,
+        source_url: sheetUrl.trim() || undefined,
+      },
+      {
+        onSuccess: (result) => {
+          setLastResult(result)
+          toast.success(dryRun ? t("tournament.admin.import.dryRunPassed") : t("tournament.admin.import.imported"))
+        },
+      },
+    )
+  }
+
   return (
     <AdminPage
       actions={(
@@ -109,56 +132,114 @@ export function AdminTournamentImportPage() {
       {tournamentQuery.isLoading ? <PageState title={t("tournament.admin.common.loadingTournament")} description={t("tournament.admin.common.loadingTournamentMetadata")} /> : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <CardTitle>{t("tournament.admin.import.historicalImport")}</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("tournament.admin.import.description")}
-                </p>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle>{t("tournament.admin.import.historicalImport")}</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("tournament.admin.import.googleFormDescription")}
+                  </p>
+                </div>
+                <Badge variant="outline">{tournamentQuery.data?.name ?? t("tournament.common.tournament")}</Badge>
               </div>
-              <Badge variant="outline">{tournamentQuery.data?.name ?? t("tournament.common.tournament")}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <AppAlert tone="warning" title={t("tournament.admin.import.rulesTitle")}>{t("tournament.admin.import.rulesDescription")}</AppAlert>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AppAlert tone="warning" title={t("tournament.admin.import.rulesTitle")}>{t("tournament.admin.import.rulesDescription")}</AppAlert>
 
-            {parseError ? <AppAlert tone="destructive" title={t("tournament.admin.import.jsonParseFailed")}>{parseError}</AppAlert> : null}
-            {importMutation.isError ? <MutationErrorAlert error={importMutation.error} title={t("tournament.admin.import.importFailed")} /> : null}
+              {googleFormImportMutation.isError ? <MutationErrorAlert error={googleFormImportMutation.error} title={t("tournament.admin.import.importFailed")} /> : null}
 
-            <div className="space-y-2">
-              <Label htmlFor="historical-import-json">{t("tournament.admin.import.importJson")}</Label>
-              <Textarea
-                className="min-h-[520px] font-mono text-xs leading-relaxed"
-                id="historical-import-json"
-                onChange={(event) => setPayloadText(event.target.value)}
-                spellCheck={false}
-                value={payloadText}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="google-form-batch">{t("tournament.admin.import.batch")}</Label>
+                <Input id="google-form-batch" value={batchId} onChange={(event) => setBatchId(event.target.value)} />
+              </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                disabled={importMutation.isPending}
-                onClick={() => submitImport(true)}
-                type="button"
-                variant="outline"
-              >
-                <ClipboardText className="size-4" />
-                {t("tournament.admin.import.dryRun")}
-              </Button>
-              <Button
-                disabled={importMutation.isPending}
-                onClick={() => submitImport(false)}
-                type="button"
-              >
-                <UploadSimple className="size-4" weight="bold" />
-                {t("tournament.admin.import.importTeams")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="space-y-2">
+                <Label htmlFor="google-form-url">{t("tournament.admin.import.googleSheetUrl")}</Label>
+                <Input
+                  id="google-form-url"
+                  placeholder={t("tournament.admin.import.googleSheetUrlPlaceholder")}
+                  value={sheetUrl}
+                  onChange={(event) => setSheetUrl(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="google-form-csv">{t("tournament.admin.import.csvFallback")}</Label>
+                <Textarea
+                  className="min-h-[220px] font-mono text-xs leading-relaxed"
+                  id="google-form-csv"
+                  onChange={(event) => setCsvText(event.target.value)}
+                  placeholder={t("tournament.admin.import.csvFallbackPlaceholder")}
+                  spellCheck={false}
+                  value={csvText}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={googleFormImportMutation.isPending}
+                  onClick={() => submitGoogleFormImport(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  <ClipboardText className="size-4" />
+                  {t("tournament.admin.import.dryRun")}
+                </Button>
+                <Button
+                  disabled={googleFormImportMutation.isPending}
+                  onClick={() => submitGoogleFormImport(false)}
+                  type="button"
+                >
+                  <UploadSimple className="size-4" weight="bold" />
+                  {t("tournament.admin.import.importTeams")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("tournament.admin.import.advancedJson")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {parseError ? <AppAlert tone="destructive" title={t("tournament.admin.import.jsonParseFailed")}>{parseError}</AppAlert> : null}
+              {importMutation.isError ? <MutationErrorAlert error={importMutation.error} title={t("tournament.admin.import.importFailed")} /> : null}
+
+              <div className="space-y-2">
+                <Label htmlFor="historical-import-json">{t("tournament.admin.import.importJson")}</Label>
+                <Textarea
+                  className="min-h-[320px] font-mono text-xs leading-relaxed"
+                  id="historical-import-json"
+                  onChange={(event) => setPayloadText(event.target.value)}
+                  spellCheck={false}
+                  value={payloadText}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={importMutation.isPending}
+                  onClick={() => submitImport(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  <ClipboardText className="size-4" />
+                  {t("tournament.admin.import.dryRun")}
+                </Button>
+                <Button
+                  disabled={importMutation.isPending}
+                  onClick={() => submitImport(false)}
+                  type="button"
+                >
+                  <UploadSimple className="size-4" weight="bold" />
+                  {t("tournament.admin.import.importTeams")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="space-y-4">
           <Card>

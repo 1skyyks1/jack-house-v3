@@ -461,6 +461,13 @@ export type TournamentHistoricalImportRequest = {
   teams: TournamentHistoricalImportTeamRequest[]
 }
 
+export type TournamentGoogleFormImportRequest = {
+  batch_id?: string | null
+  csv_text?: string | null
+  dry_run?: boolean
+  source_url?: string | null
+}
+
 export type TournamentHistoricalImportResultPlayer = {
   created_user: boolean
   is_captain: boolean

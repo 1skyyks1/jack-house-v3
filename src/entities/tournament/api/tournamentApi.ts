@@ -12,6 +12,7 @@ import type {
   Tournament,
   TournamentAuditLogList,
   TournamentAuditLogQuery,
+  TournamentGoogleFormImportRequest,
   TournamentHistoricalImportRequest,
   TournamentHistoricalImportResult,
   TournamentMarkdownPreviewRequest,
@@ -190,6 +191,10 @@ export async function approveAllTournamentTeams(tournamentId: string): Promise<v
 
 export async function importTournamentHistoricalTeams(tournamentId: string, request: TournamentHistoricalImportRequest): Promise<TournamentHistoricalImportResult> {
   return await http.post(`/t/${tournamentId}/import/teams`, request) as unknown as TournamentHistoricalImportResult
+}
+
+export async function importTournamentGoogleFormTeams(tournamentId: string, request: TournamentGoogleFormImportRequest): Promise<TournamentHistoricalImportResult> {
+  return await http.post(`/t/${tournamentId}/import/google-form`, request) as unknown as TournamentHistoricalImportResult
 }
 
 export async function updateTournamentPlayer(tournamentId: string, playerId: number, request: UpdateTournamentPlayerRequest): Promise<void> {

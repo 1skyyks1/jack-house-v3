@@ -35,6 +35,7 @@ import {
   getTournamentSections,
   getTournamentStaff,
   getTournamentTeams,
+  importTournamentGoogleFormTeams,
   importTournamentHistoricalTeams,
   joinTournamentTeam,
   kickTournamentPlayer,
@@ -70,6 +71,7 @@ import type {
   JoinTournamentTeamRequest,
   RecordTournamentRollRequest,
   TournamentAuditLogQuery,
+  TournamentGoogleFormImportRequest,
   TournamentHistoricalImportRequest,
   TournamentMarkdownPreviewRequest,
   TournamentMatchActionRequest,
@@ -533,6 +535,20 @@ export function useUpdateTournamentPlayerMutation(tournamentId: string) {
     mutationFn: ({ playerId, request }: { playerId: number; request: UpdateTournamentPlayerRequest }) => updateTournamentPlayer(tournamentId, playerId, request),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.teams(tournamentId) })
+    },
+  })
+}
+
+export function useImportTournamentGoogleFormTeamsMutation(tournamentId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: TournamentGoogleFormImportRequest) => importTournamentGoogleFormTeams(tournamentId, request),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tournament", "audit-logs", tournamentId] }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.teams(tournamentId) }),
+      ])
     },
   })
 }
