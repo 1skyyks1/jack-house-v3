@@ -103,7 +103,7 @@ export function AppShell() {
   }
 
   return (
-    <div className={cn("min-h-dvh text-foreground", isAdminRoute ? "bg-background" : "bg-transparent")}>
+    <div className={cn("text-foreground", isAdminRoute ? "flex h-dvh flex-col overflow-hidden bg-background" : "min-h-dvh bg-transparent")}>
       <header
         id="app-header"
         className={cn(
@@ -275,7 +275,11 @@ export function AppShell() {
       <main
         className={cn(
           "w-full",
-          isAdminRoute || isHomeRoute || isTournamentBracketRoute ? "px-0 py-0" : "mx-auto max-w-7xl px-4 py-6 sm:px-6",
+          isAdminRoute
+            ? "min-h-0 flex-1 overflow-hidden px-0 py-0"
+            : isHomeRoute || isTournamentBracketRoute
+              ? "px-0 py-0"
+              : "mx-auto max-w-7xl px-4 py-6 sm:px-6",
         )}
       >
         <Outlet />

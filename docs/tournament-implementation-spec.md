@@ -5,7 +5,7 @@
 相关背景：
 
 - 产品规则和讨论沉淀：[tournament-system.md](./tournament-system.md)
-- 原始技术计划和进度细节：[tournament-technical-plan.md](./tournament-technical-plan.md)
+- 历史技术方案背景：[tournament-technical-plan.md](./tournament-technical-plan.md)
 - 架构图：[tournament-architecture.md](./tournament-architecture.md)
 - 长期决策：[decision-log.md](./decision-log.md)
 

@@ -21,7 +21,7 @@
 
 ## 专项文档
 
-- [tournament-technical-plan.md](./tournament-technical-plan.md)：赛事系统完整技术方案和实施入口。
+- [tournament-technical-plan.md](./tournament-technical-plan.md)：赛事系统历史技术方案背景。
 - [tournament-system.md](./tournament-system.md)：赛事系统产品规则和领域设计背景。
 - [github-storage-strategy.md](./github-storage-strategy.md)：GitHub 图床和投稿文件存储调研。
 - [optimization-backlog.md](./optimization-backlog.md)：非大功能类优化池。

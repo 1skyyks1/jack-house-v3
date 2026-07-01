@@ -21,8 +21,8 @@ export function AdminHomePage() {
   const permissions = permissionsQuery.data?.adminPermissions
 
   return (
-    <section className="grid min-h-[calc(100dvh-4rem)] lg:grid-cols-[14rem_minmax(0,1fr)]">
-      <aside className="border-b bg-card p-3 lg:border-b-0 lg:border-r">
+    <section className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] lg:grid-cols-[14rem_minmax(0,1fr)] lg:grid-rows-1">
+      <aside className="border-b bg-card p-3 lg:min-h-0 lg:overflow-auto lg:border-b-0 lg:border-r">
         <div className="px-2 pb-3">
           <h1 className="font-heading text-2xl font-semibold">{t("admin.shell.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("admin.shell.description")}</p>
@@ -46,7 +46,7 @@ export function AdminHomePage() {
             ))}
         </nav>
       </aside>
-      <div className="min-w-0 bg-background p-5">
+      <div className="min-h-0 min-w-0 overflow-auto bg-background p-5">
         <Outlet />
       </div>
     </section>

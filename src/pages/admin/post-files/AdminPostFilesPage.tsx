@@ -117,7 +117,7 @@ export function AdminPostFilesPage() {
         return
       }
 
-      await downloadPostFilesExcel(result.data)
+      downloadPostFilesCsv(result.data)
       toast.success(t("admin.postFiles.exportReady"))
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -303,7 +303,7 @@ export function AdminPostFilesPage() {
           </Button>
           <Button disabled={isExporting} onClick={exportPostFiles} type="button" variant="outline">
             <DownloadSimpleIcon data-icon="inline-start" weight="bold" />
-            {isExporting ? t("admin.postFiles.filters.exporting") : t("admin.postFiles.filters.exportExcel")}
+            {isExporting ? t("admin.postFiles.filters.exporting") : t("admin.postFiles.filters.exportCsv")}
           </Button>
         </div>
 
@@ -456,39 +456,46 @@ function PostFileStatusBadge({ status }: { status: PostFileStatus }) {
 }
 
 
-async function downloadPostFilesExcel(files: PostFile[]) {
+function downloadPostFilesCsv(files: PostFile[]) {
   const { t } = { t: i18n.t.bind(i18n) }
-  const [{ default: ExcelJS }, { saveAs }] = await Promise.all([
-    import("exceljs"),
-    import("file-saver"),
-  ])
-  const workbook = new ExcelJS.Workbook()
-  const worksheet = workbook.addWorksheet(t("admin.postFiles.excel.sheetName"))
-
-  worksheet.columns = [
-    { header: t("admin.postFiles.excel.columns.fileName"), key: "fileName", width: 100 },
-    { header: t("admin.postFiles.excel.columns.submitter"), key: "submitter", width: 20 },
-    { header: t("admin.postFiles.excel.columns.status"), key: "status", width: 12 },
-    { header: t("admin.postFiles.excel.columns.note"), key: "note", width: 50 },
-    { header: t("admin.postFiles.excel.columns.feedback"), key: "feedback", width: 100 },
-    { header: t("admin.postFiles.excel.columns.uploadedAt"), key: "uploadedAt", width: 30 },
-    { header: t("admin.postFiles.excel.columns.size"), key: "size", width: 16 },
+  const columns = [
+    { header: t("admin.postFiles.csv.columns.fileName"), value: (file: PostFile) => file.file_name },
+    { header: t("admin.postFiles.csv.columns.submitter"), value: (file: PostFile) => file.user_name ?? `${t("common.unknownUser")} #${file.user_id}` },
+    { header: t("admin.postFiles.csv.columns.status"), value: (file: PostFile) => getPostFileStatusLabel(file.status) },
+    { header: t("admin.postFiles.csv.columns.note"), value: (file: PostFile) => file.note ?? "" },
+    { header: t("admin.postFiles.csv.columns.feedback"), value: (file: PostFile) => file.feedback ?? "" },
+    { header: t("admin.postFiles.csv.columns.uploadedAt"), value: (file: PostFile) => formatDate(file.uploaded_time) },
+    { header: t("admin.postFiles.csv.columns.size"), value: (file: PostFile) => formatFileSize(file.size) },
   ]
+  const rows = [
+    columns.map((column) => column.header),
+    ...files.map((file) => columns.map((column) => column.value(file))),
+  ]
+  const csv = `\ufeff${rows.map((row) => row.map(escapeCsvCell).join(",")).join("\r\n")}`
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
 
-  files.forEach((file) => {
-    worksheet.addRow({
-      feedback: file.feedback ?? "",
-      fileName: file.file_name,
-      note: file.note ?? "",
-      size: formatFileSize(file.size),
-      status: getPostFileStatusLabel(file.status),
-      submitter: file.user_name ?? `${t("common.unknownUser")} #${file.user_id}`,
-      uploadedAt: formatDate(file.uploaded_time),
-    })
-  })
+  downloadBlob(blob, t("admin.postFiles.csv.fileName"))
+}
 
-  const buffer = await workbook.xlsx.writeBuffer()
-  const blob = new Blob([buffer as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+function escapeCsvCell(value: string) {
+  const normalized = value.replace(/\r\n|\r|\n/g, "\n")
+  const safeValue = /^[=+\-@\t\r]/.test(normalized) ? `'${normalized}` : normalized
 
-  saveAs(blob, t("admin.postFiles.excel.fileName"))
+  if (!/[",\n]/.test(safeValue)) {
+    return safeValue
+  }
+
+  return `"${safeValue.replace(/"/g, '""')}"`
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }

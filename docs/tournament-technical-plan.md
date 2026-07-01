@@ -959,110 +959,17 @@ API 封装要求：
 - SQL 在测试库可重复演练。
 - 重复 index/字段创建在真实执行前已处理。
 
-## 12. 实施顺序
+## 12. 实施状态
 
-建议按以下顺序推进：
+首期实施已完成，当前不再按本文件的历史实施顺序推进。继续开发时以 [tournament-implementation-spec.md](./tournament-implementation-spec.md) 的验收清单、[decision-log.md](./decision-log.md) 的长期决策和实际代码为准。
 
-1. 数据库迁移 SQL 在测试库演练。
-2. 完成 tournament service 和权限 helper。
-3. 完成 content section：Markdown 保存、HTML 生成、规则页展示。
-4. 完成公开赛事页骨架。
-5. 完成报名与组队闭环。
-6. 完成 staff 管理和 creator host 权限。
-7. 完成 audit log 查询与关键写操作接入。
-8. 重构资格赛 MP 导入、原始成绩记录和排名计算。
-9. 用 mock 数据验证 bracket 库。
-10. 实现 32 强双败 bracket 生成。
-11. 实现正赛 round/mappool/match 后台。
-12. 实现裁判工作台和 action 冲突检测。
-13. 已完成历史赛事补录工具。
-14. 联调、验收、补测试。
+已完成的主链路：
 
-## 13. 当前代码进度
+- 后端赛事 service、权限、audit、报名组队、staff、资格赛、bracket、裁判 action、历史补录和 osu MP 分页拉分。
+- 前端公开赛事页、组队大厅、资格赛、bracket、比赛详情、裁判工作台和赛事后台管理页。
+- 内容管理支持 Markdown 保存、HTML 预览、sanitizer 和公开展示字段收口。
 
-已落地后端准备：
-
-- `TPlayer` 已补 `t_id`、快照、联系方式、timezone、remark、review status。
-- `TTeam` 已补 `avatar`、`is_open`、`captain_player_id`、`locked_at`。
-- `Tournament` 已补 `created_by`、`qual_locked_at`、`qual_locked_by`、`qual_locked_top_n`。
-- `TMatch` 已补 `result_type`、`result_note`、`winner_overridden`。
-- `TMappool.type` 注释已更新为首期正赛 type。
-- 已新增 `TSection`、`TAuditLog`、`TQualImport` 模型。
-- `TQualScore` 已补 `attempt_no`、`source_mp_id`、`source_game_id`、`import_id`、`is_manual`。
-- 已新增 SQL 草案：`backend/sql/2026-06-19-tournament-player-team-prep.sql`、`backend/sql/2026-06-22-tournament-qualifier-lock.sql`。
-- 创建赛事时已写入 `created_by`。
-- 创建赛事路由已限制为全站 admin。
-- 删除赛事已限制为 creator host 或全站 admin。
-- 添加 host 已限制为 creator host 或全站 admin。
-- 添加任意 staff 前已检查该 user 是否已参赛。
-- 已新增 `contentService` 和内容块 controller。
-- 已新增 `teamService`，收口创建队伍、加入队伍、离开队伍、更新队伍状态、批量通过。
-- 创建队伍支持 `is_open`。
-- 加入队伍支持 `team_id` 公开加入和 `invite_code` 私密加入。
-- 队伍加入/离开已校验报名期、同赛事唯一 player、osu 绑定、队伍人数和锁定状态。
-- 已新增提交队伍、重置邀请码、踢出队员、host 更新 player 接口。
-- 已新增 `auditService`、`auditController` 和 audit log 查询接口。
-- 已接入主要关键写操作 audit：内容块、创建队伍、加入队伍、退出队伍、队伍提交、队长踢人、host 踢人 override、重置邀请码、队伍状态更新、批量通过、host 更新 player、staff 添加/移除、资格赛、bracket、match 和裁判 action。
-- host/admin 已可通过踢人接口做队伍成员 override 修正；普通队长仍受报名期和锁定限制；后台 teams 页已接入队伍信息 host 修正入口，host 可在报名期外或队伍锁定后修正 `name/display_name/avatar/is_open`。
-- 已新增 `qualifierService`，收口资格赛 MP 导入、导入日志、重复成绩跳过、来源字段写入、每图最高分排名、手动修分和资格赛锁榜；资格赛导入支持指定 team，也支持同一 MP 中多队同时打图时按 score `user_id` 自动归属到本届 player/team。
-- 已新增资格赛 import log 查询接口：`GET /t/:tid/qualifier/imports`。
-- 已新增资格赛成绩手动修正接口：`PUT /t/:tid/qualifier/scores/:scoreId`，并写入 audit。
-- 已新增资格赛锁榜接口：`POST /t/:tid/qualifier/lock`，锁榜后禁止资格赛图池变更、成绩导入、手动修分和重算排名。
-- `TMatch` 已补 bracket 位置和来源字段：`bracket_group`、`round_no`、`slot_no`、`source_match_*`、`hidden_until_match_id`。
-- 已新增 `bracketService`，支持固定 32 强双败 bracket 预生成，生成前要求资格赛排名已锁定。
-- `POST /t/:tid/bracket/generate` 已改为生成 15 个 round / 63 场 match：WB 31、LB 30、GF 1、Reset Final 1。
-- 正赛首轮种子已按确认规则生成：`#1 vs #32`、`#2 vs #31`、依次类推。
-- 生成 bracket 时会过滤无正赛资格队伍：队伍至少需要一名 player 不是 `review_failed`。
-- 已新增 bracket 自动推进：match 完成后会按 `source_match_*` 将 winner/loser 填入后续场次。
-- 自动推进已接入 `updateMatch`、MP 拉分完成和裁判手动更新单局比分。
-- 下游比赛已有结果时，自动推进会阻止静默覆盖，提示先人工处理后续比赛。
-- `updateMatch` 已支持 WBD/FF：按 round FT 写入 `FT:-1`，并记录 match audit。
-- 已新增 `TMatchAction` 模型、关联和 SQL 草案，用于独立保存 protect/ban/pick 时间线。
-- 已新增 `refereeActionService`，支持 protect/ban/pick 创建与修改，并阻止已保护图被 ban、已 ban 图被 pick、重复 pick 等冲突。
-- 裁判工作台 `recordAction` 已改为写入 `TMatchAction`，并保留旧 payload `action_type: 0/1/2`、`action_by: 1/2` 兼容。
-- 已新增修改裁判操作接口：`PUT /t/:tid/referee/:matchId/action/:actionId`。
-- 旧 undo 接口已改为返回“不支持撤销，请直接修改对应操作”。
-- 前端已新增 `entities/tournament` API/types/query 模块。
-- 用户侧已启用 `/t`、`/t/:tid`、`/t/:tid/bracket` 三个基础页面，不再全部落到暂停页。
-- `/t/:tid/bracket` 已能按后端 `bracket_group/round_no/slot_no` 横向展示 bracket 列表，并隐藏未激活 reset final。
-- `/t/:tid/bracket` 已新增移动端纵向折叠轮次视图，窄屏不用横向拖完整 bracket 也能逐轮查看 match。
-- 用户侧已新增 `/t/:tid/teams` 队伍大厅基础页面，支持查看公开/私密队伍、创建队伍、公开加入和邀请码加入；当前用户已在队伍或已是本届 staff 时前置禁用报名/加入入口。
-- 队伍大厅已接入队长提交队伍、退出队伍、踢出队员、重置邀请码等报名期核心操作。
-- 队伍大厅已接入队伍信息编辑、队长转让、提交后锁定态展示、报名期提示和报名期外禁用；后端对应写操作会写 audit。
-- 公开队伍列表后端已排除 `invite_code` 字段，避免私密队伍邀请码泄露；队长重置邀请码时由专用接口返回新 code。
-- 用户侧已新增 `/t/:tid/qualifier` 资格赛基础页面，展示资格赛图池和公开排名，不展示两轮原始成绩。
-- 用户侧已新增 `/t/:tid/match/:matchId` 比赛详情页，展示双方队伍、player、比分、状态、MP 外链、roll、WBD/FF note 和已打图记录。
-- `GET /t/:tid/match/:matchId` 已增加 match 归属赛事校验，避免跨赛事读取任意 match。
-- 后台已新增 `/admin/tournaments` 赛事列表入口，使用现有 AdminPage/AdminTable。
-- 后台已新增 `/admin/tournaments/new` 基础创建页，可创建 tournament 本体；创建者 host 仍由后端创建接口负责写入。
-- 后台已新增 `/admin/tournaments/:tid/settings` 基础设置页，并抽出 `TournamentSettingsForm` 复用创建/编辑字段和校验。
-- 后台已新增 `/admin/tournaments/:tid/content` 内容管理页，支持 `rules/description/prize/faq` Markdown 内容块的创建、编辑、删除和已保存 HTML 预览。
-- 前端 `entities/tournament` 已补 section create/update/delete mutation。
-- 后台已新增 `/admin/tournaments/:tid/teams` 队伍管理页，支持查看队伍/成员、更新队伍状态、批量通过队伍、修改 player review 状态、host 修正队伍信息和 host 移除非队长 player。
-- 前端 `entities/tournament` 已补 team status、approve all、player update mutation。
-- 后台已新增 `/admin/tournaments/:tid/staff` staff 管理页，支持搜索站内用户、添加 `host/pooler/referee/streamer/commentator` 角色、按 role 分组展示和移除 staff。
-- 前端 `entities/tournament` 已补 staff list/create/delete query 与 mutation。
-- staff 查询/新增/删除逻辑已抽离到 `staffService`，添加/移除 staff 已写 audit。
-- 后台已新增 `/admin/tournaments/:tid/qualifier` 资格赛管理页，支持添加图池、按指定队伍和 MP ID 导入成绩，或按 MP 内 score.user_id 自动识别本届所有队伍导入成绩；查看导入日志、查看原始成绩、手动修正 score、触发排名重算和锁榜；资格赛图池写操作会校验 stage/beatmap 唯一性并写 audit，已有成绩的资格赛图不能直接删除。
-- 锁榜后 `/admin/tournaments/:tid/qualifier` 会禁用资格赛写操作并展示锁定状态。
-- 前端 `entities/tournament` 已补 qualifier mappool/scores/imports/fetch/recalculate/lock/update-score query 与 mutation。
-- 后台已新增 `/admin/tournaments/:tid/bracket` 正赛管理页，支持 round 创建/删除、round mappool 增删、手动创建 match、生成 32 强双败 bracket、更新 match 结果/WBD/FF/MP ID 和触发 MP 分数导入；round 写操作会校验字段并写 audit，删除 round 前会阻止误删已有 match/mappool 的轮次；round mappool type 使用固定枚举选择，后端会校验 type、round 归属和重复 beatmap；手动 match 创建/更新会校验 round/team/winner 归属并写 audit。
-- 用户侧 `/t/:tid/bracket` 已按 winners / losers / grand final / reset final 分区展示 bracket，保留横向浏览并提示隐藏的 reset final。
-- 用户侧已新增 `/t/:tid/referee/:matchId` 裁判工作台，支持 roll、protect/ban/pick 时间线、2 秒 debounce autosave 修改历史 action、按 roll 推荐下一步、timeout、osu! 指令复制和已打图比分修正。
-- 裁判台和 match 相关写接口已校验 `match.round.t_id === tid`，避免 staff 用本赛事权限读写其他赛事 match。
-- 前端 `entities/tournament` 已补 round、round mappool、bracket generate、match create/update/fetch-scores、referee data/action/roll/timeout/game-score query 与 mutation。
-- 后台已新增 `/admin/tournaments/:tid/audit` 审计日志页，支持 entity/action/operator/entity id 过滤、分页、old/new JSON 摘要展示。
-- 前端 `entities/tournament` 已补 audit log list query。
-- 后台已新增 `/admin/tournaments/:tid/import` 历史补录页面，支持 JSON 示例、dry-run 预检、正式导入和结果摘要；赛事列表已增加 Import 入口。
-- 前端 `entities/tournament` 已补 historical import request/result types、API 和 mutation。
-- 后端已新增 `tournamentService`，收口赛事列表、详情、创建、更新、删除；创建赛事和 creator host 写入处于同一事务，赛事 create/update/delete 已写 audit。
-- 后台内容页已新增 Markdown 编辑中预览；后端新增 `POST /t/:tid/sections/preview`，公开 sections 接口不再返回 `source_markdown`。
-- audit 覆盖已复核并补齐：裁判 roll、timeout、单局比分手动修正、正赛 MP 拉分都会记录审计；预览和不支持的 undo 不写持久数据，因此不写 audit。
-- 前端赛事后台设置表单已将 schema/default/转换逻辑拆到 `TournamentSettingsFormModel`，避免 Fast Refresh 混合导出；资格赛和 staff 后台页的派生数组依赖已稳定。`pnpm exec tsc -b`、`pnpm run lint`、`pnpm run build` 已通过，lint 当前 0 warning，build 仅剩 Vite 大 chunk 提示。
-- 前端已新增赛事后台专用路由守卫：全站 admin 可进入所有赛事后台页，具体 tournament 的 staff 可进入该届 `/admin/tournaments/:tid/*` 管理页；新建赛事入口仍只对全站 tournament 权限开放。赛事详情页会为全站 admin 或本届 staff 展示 Manage 入口，避免普通赛事 staff 被全站 admin 权限守卫挡在后台外。
-- osu MP 拉分已统一走 `osu-api-v2-js` 的 `api.getMatch(matchId, { after, limit })`，按官方 matches 文档补齐事件分页，避免默认 100 条 events 截断；资格赛和正赛解析都按已知 `beatmap_id` 匹配图池，并按 score `user_id` 对应站内 `User.osu_uid` 归属到 player/team，不依赖 osu 房间内红蓝队。
-
-## 14. 未决项
+## 13. 未决项
 
 代码侧首期主链路已收口，剩余集中在真实环境联调和验收：
 

@@ -18,7 +18,7 @@ import {
   type PostListItem,
   type PostMutationRequest,
 } from "@/entities/post"
-import { RichTextEditor } from "@/features/rich-text/editor"
+import { LazyRichTextEditor } from "@/features/rich-text/editor/LazyRichTextEditor"
 import { AdminPage, AdminPagination } from "@/features/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -453,7 +453,7 @@ function AnnouncementLanguageFields({ contentError, contentName, disabled, form,
             control={form.control}
             name={contentName}
             render={({ field }) => (
-              <RichTextEditor
+              <LazyRichTextEditor
                 disabled={disabled}
                 error={contentError}
                 id={contentName}

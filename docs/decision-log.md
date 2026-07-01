@@ -40,6 +40,12 @@
 - 后台复杂表格使用 TanStack Table，基础控件使用 shadcn primitives。
 - 后台删除确认统一使用 shadcn `AlertDialog`，不使用 `window.confirm`。
 
+## 代码规范
+
+- 注释保持简洁，优先使用 `// xxxx` 单行格式。
+- 注释只解释业务约束、兼容原因、规避原因或非显而易见的实现选择。
+- 不写复述代码含义的注释；`eslint-disable` 必须配一句简短原因。
+
 ## 认证
 
 - V3 认证统一使用 httpOnly cookie + CSRF，不发送 Bearer 头；后端不再接受旧前端 Bearer token。

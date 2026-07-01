@@ -1,11 +1,12 @@
 import type { ReactNode } from "react"
-import type { UseFormReturn } from "react-hook-form"
+import { useWatch, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { FormFieldError, MutationErrorAlert } from "@/shared/components"
 import type { TournamentSettingsFormValues } from "./TournamentSettingsFormModel"
 
@@ -25,6 +26,11 @@ export function TournamentSettingsForm({
   onSubmit,
 }: TournamentSettingsFormProps) {
   const { t } = useTranslation()
+  const regStart = useWatch({ control: form.control, name: "reg_start" })
+  const regEnd = useWatch({ control: form.control, name: "reg_end" })
+  const qualStart = useWatch({ control: form.control, name: "qual_start" })
+  const qualEnd = useWatch({ control: form.control, name: "qual_end" })
+  const qualRankMode = useWatch({ control: form.control, name: "qual_rank_mode" })
 
   return (
     <form className="space-y-4" id={formId} onSubmit={onSubmit}>
@@ -59,16 +65,40 @@ export function TournamentSettingsForm({
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Field error={form.formState.errors.reg_start?.message} id="tournament-reg-start" label={t("tournament.admin.form.fields.regStart")}>
-            <Input id="tournament-reg-start" type="datetime-local" {...form.register("reg_start")} />
+            <DateTimePicker
+              aria-invalid={Boolean(form.formState.errors.reg_start)}
+              id="tournament-reg-start"
+              placeholder={t("tournament.admin.form.fields.regStart")}
+              value={regStart}
+              onChange={(value) => form.setValue("reg_start", value, { shouldDirty: true, shouldValidate: true })}
+            />
           </Field>
           <Field error={form.formState.errors.reg_end?.message} id="tournament-reg-end" label={t("tournament.admin.form.fields.regEnd")}>
-            <Input id="tournament-reg-end" type="datetime-local" {...form.register("reg_end")} />
+            <DateTimePicker
+              aria-invalid={Boolean(form.formState.errors.reg_end)}
+              id="tournament-reg-end"
+              placeholder={t("tournament.admin.form.fields.regEnd")}
+              value={regEnd}
+              onChange={(value) => form.setValue("reg_end", value, { shouldDirty: true, shouldValidate: true })}
+            />
           </Field>
           <Field error={form.formState.errors.qual_start?.message} id="tournament-qual-start" label={t("tournament.admin.form.fields.qualStart")}>
-            <Input id="tournament-qual-start" type="datetime-local" {...form.register("qual_start")} />
+            <DateTimePicker
+              aria-invalid={Boolean(form.formState.errors.qual_start)}
+              id="tournament-qual-start"
+              placeholder={t("tournament.admin.form.fields.qualStart")}
+              value={qualStart}
+              onChange={(value) => form.setValue("qual_start", value, { shouldDirty: true, shouldValidate: true })}
+            />
           </Field>
           <Field error={form.formState.errors.qual_end?.message} id="tournament-qual-end" label={t("tournament.admin.form.fields.qualEnd")}>
-            <Input id="tournament-qual-end" type="datetime-local" {...form.register("qual_end")} />
+            <DateTimePicker
+              aria-invalid={Boolean(form.formState.errors.qual_end)}
+              id="tournament-qual-end"
+              placeholder={t("tournament.admin.form.fields.qualEnd")}
+              value={qualEnd}
+              onChange={(value) => form.setValue("qual_end", value, { shouldDirty: true, shouldValidate: true })}
+            />
           </Field>
         </CardContent>
       </Card>
@@ -90,7 +120,7 @@ export function TournamentSettingsForm({
           <Field error={form.formState.errors.qual_rank_mode?.message} id="tournament-qual-rank-mode" label={t("tournament.admin.form.fields.qualRankMode")}>
             <Select
               onValueChange={(value) => form.setValue("qual_rank_mode", Number(value), { shouldDirty: true, shouldValidate: true })}
-              value={String(form.watch("qual_rank_mode"))}
+              value={String(qualRankMode)}
             >
               <SelectTrigger className="w-full" id="tournament-qual-rank-mode">
                 <SelectValue />

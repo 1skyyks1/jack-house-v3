@@ -30,7 +30,7 @@ export function AdminTable<TData>({ columns, data, emptyLabel = "No records", is
   "use no memo"
   const { t } = useTranslation()
 
-  // TanStack Table intentionally exposes imperative helpers that React Compiler should not memoize.
+  // Keep TanStack Table outside React Compiler memoization.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     columns,

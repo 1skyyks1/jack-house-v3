@@ -61,6 +61,7 @@ pnpm build
 ## 文档入口
 
 - [docs/00-ai-handoff.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/00-ai-handoff.md)：当前接手入口与工作规则
+- [docs/coding-standards.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/coding-standards.md)：编码与注释规范
 - [docs/decision-log.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/decision-log.md)：仍生效的关键决策
 - [docs/api-contract.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/api-contract.md)：V3 兼容的旧 API 合同
 - [docs/domain-model.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/domain-model.md)：核心领域对象

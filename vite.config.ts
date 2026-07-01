@@ -5,6 +5,21 @@ import tailwindcss from "@tailwindcss/vite"
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return
+
+          if (id.includes("/node_modules/react/") || id.includes("/node_modules/react-dom/") || id.includes("/node_modules/scheduler/")) return "vendor-react"
+          if (id.includes("/react-router")) return "vendor-router"
+          if (id.includes("/@tanstack/") || id.includes("/axios/") || id.includes("/zustand/")) return "vendor-data"
+          if (id.includes("/i18next") || id.includes("/react-i18next")) return "vendor-i18n"
+          if (id.includes("/radix-ui") || id.includes("/@radix-ui/") || id.includes("/@floating-ui/")) return "vendor-ui"
+        },
+      },
+    },
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

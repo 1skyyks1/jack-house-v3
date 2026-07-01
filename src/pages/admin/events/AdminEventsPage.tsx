@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, PencilSimple, Plus, Rows, Trash } from "@phosphor-icons/react"
 import type { TFunction } from "i18next"
 import { useEffect, useState } from "react"
-import { Controller, useForm, type UseFormReturn } from "react-hook-form"
+import { Controller, useForm, useWatch, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
@@ -17,7 +17,7 @@ import {
   type EventItem,
   type EventMutationRequest,
 } from "@/entities/event"
-import { RichTextEditor } from "@/features/rich-text/editor"
+import { LazyRichTextEditor } from "@/features/rich-text/editor/LazyRichTextEditor"
 import { AdminPage, AdminPagination } from "@/features/admin-shell"
 import {
   AlertDialog,
@@ -46,6 +46,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { usePageParam } from "../_shared/usePageParam"
 
@@ -375,6 +376,9 @@ type EventDialogProps = {
 
 function EventDialog({ error, form, isLoading, isOpen, isSubmitting, onOpenChange, onSubmit, submitLabel, title }: EventDialogProps) {
   const { t } = useTranslation()
+  const startValue = useWatch({ control: form.control, name: "start" })
+  const endValue = useWatch({ control: form.control, name: "end" })
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
@@ -409,25 +413,27 @@ function EventDialog({ error, form, isLoading, isOpen, isSubmitting, onOpenChang
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="event-start">{t("admin.events.fields.start")}</Label>
-                <Input
+                <DateTimePicker
                   aria-invalid={Boolean(form.formState.errors.start)}
                   className="mt-2"
                   disabled={isSubmitting}
                   id="event-start"
-                  type="datetime-local"
-                  {...form.register("start")}
+                  placeholder={t("admin.events.fields.start")}
+                  value={startValue}
+                  onChange={(value) => form.setValue("start", value, { shouldDirty: true, shouldValidate: true })}
                 />
                 <FormFieldError message={form.formState.errors.start?.message} />
               </div>
               <div>
                 <Label htmlFor="event-end">{t("admin.events.fields.end")}</Label>
-                <Input
+                <DateTimePicker
                   aria-invalid={Boolean(form.formState.errors.end)}
                   className="mt-2"
                   disabled={isSubmitting}
                   id="event-end"
-                  type="datetime-local"
-                  {...form.register("end")}
+                  placeholder={t("admin.events.fields.end")}
+                  value={endValue}
+                  onChange={(value) => form.setValue("end", value, { shouldDirty: true, shouldValidate: true })}
                 />
                 <FormFieldError message={form.formState.errors.end?.message} />
               </div>
@@ -440,7 +446,7 @@ function EventDialog({ error, form, isLoading, isOpen, isSubmitting, onOpenChang
                   control={form.control}
                   name="desc"
                   render={({ field }) => (
-                    <RichTextEditor
+                    <LazyRichTextEditor
                       disabled={isSubmitting}
                       id="event-desc"
                       label={t("admin.events.fields.description")}

@@ -27,7 +27,7 @@ import { createRichTextEditorExtensions } from "./extensions"
 import { uploadRichTextImage } from "./uploadImage"
 import "./rich-text-editor.css"
 
-type RichTextEditorProps = {
+export type RichTextEditorProps = {
   disabled?: boolean
   error?: string
   id?: string

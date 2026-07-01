@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
+import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { Field, MapRow, MetricCard, RoundsCard, TeamSelect } from "./components"
 import { defaultMapForm, defaultMatchForm, defaultRoundForm, MAIN_STAGE_MAP_TYPES, type MapFormState, type MatchFormState, type MatchUpdateState, type RoundFormState } from "./model"
@@ -301,7 +302,11 @@ export function AdminTournamentBracketPage() {
                   <TeamSelect teams={teams} value={matchForm.team2_id} onChange={(value) => setMatchForm((state) => ({ ...state, team2_id: value }))} />
                 </Field>
                 <Field label={t("tournament.admin.bracket.schedule")}>
-                  <Input type="datetime-local" value={matchForm.scheduled_time} onChange={(event) => setMatchForm((state) => ({ ...state, scheduled_time: event.target.value }))} />
+                  <DateTimePicker
+                    placeholder={t("tournament.admin.bracket.schedule")}
+                    value={matchForm.scheduled_time}
+                    onChange={(value) => setMatchForm((state) => ({ ...state, scheduled_time: value }))}
+                  />
                 </Field>
                 <Button className="self-end" disabled={createMatchMutation.isPending || !matchForm.round_id} type="submit">
                   <Plus className="size-4" weight="bold" />

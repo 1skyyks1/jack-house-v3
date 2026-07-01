@@ -26,9 +26,10 @@ import {
   type EditablePostType,
 } from "@/entities/post"
 import { useCurrentUserQuery } from "@/features/auth"
-import { RichTextEditor } from "@/features/rich-text/editor"
+import { LazyRichTextEditor } from "@/features/rich-text/editor/LazyRichTextEditor"
 import { RichTextRenderer } from "@/features/rich-text/renderer"
 import { cn } from "@/lib/utils"
+import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { AppAlert, FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import type { AppLocale } from "@/shared/i18n/client"
 import {
@@ -63,6 +64,7 @@ export function ForumEditorPage() {
     defaultValues: isEditing ? defaultValues : readPostEditorDraft()?.values ?? defaultValues,
   })
   const selectedType = useWatch({ control: form.control, name: "type" })
+  const deadlineValue = useWatch({ control: form.control, name: "end" })
   const draftValues = useWatch({ control: form.control })
   const isSubmitting = createMutation.isPending || updateMutation.isPending
 
@@ -197,13 +199,14 @@ export function ForumEditorPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="requestDeadline">{t("forum.editor.requestDeadline")}</Label>
-                <Input
+                <DateTimePicker
+                  aria-invalid={Boolean(form.formState.errors.end)}
                   className="mt-2"
                   disabled={isSubmitting}
                   id="requestDeadline"
-                  type="datetime-local"
-                  aria-invalid={Boolean(form.formState.errors.end)}
-                  {...form.register("end")}
+                  placeholder={t("forum.editor.requestDeadline")}
+                  value={deadlineValue}
+                  onChange={(value) => form.setValue("end", value || null, { shouldDirty: true, shouldValidate: true })}
                 />
                 <FormFieldError message={form.formState.errors.end?.message} />
               </div>
@@ -412,7 +415,7 @@ function LanguageEditorSection({
                 control={form.control}
                 name={contentName}
                 render={({ field }) => (
-                  <RichTextEditor
+                  <LazyRichTextEditor
                     disabled={disabled}
                     error={contentError}
                     id={contentName}
