@@ -38,7 +38,8 @@ export function AdminTournamentSettingsPage() {
   const submit = form.handleSubmit((values) => {
     if (!tid) return
     updateMutation.mutate(toTournamentMutationRequest(values), {
-      onSuccess: () => {
+      onSuccess: (tournament) => {
+        form.reset(toTournamentSettingsFormValues(tournament))
         toast.success(t("tournament.admin.form.settingsSaved"))
       },
     })

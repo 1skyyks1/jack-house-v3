@@ -7,6 +7,7 @@ import {
   useTournamentQualMappoolQuery,
   useTournamentQualRankingQuery,
   useTournamentQualScoresQuery,
+  QUAL_RANK_MODE_RANK_SUM,
   type TournamentQualMap,
   type TournamentQualScore,
   type TournamentTeam,
@@ -19,7 +20,6 @@ import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentMapCoverUrl } from "../_shared/tournamentVisuals"
 
 const TOTAL_TAB = "total"
-const RANK_MODE_RANK_SUM = 1
 const emptyRanking: TournamentTeam[] = []
 const emptyScores: TournamentQualScore[] = []
 const emptyMaps: TournamentQualMap[] = []
@@ -42,7 +42,7 @@ export function TournamentQualifierPage() {
   const maps = mappoolQuery.data ?? emptyMaps
   const totalRanking = rankingQuery.data ?? emptyRanking
   const scores = scoresQuery.data ?? emptyScores
-  const isRankSumMode = tournament?.qual_rank_mode === RANK_MODE_RANK_SUM
+  const isRankSumMode = tournament?.qual_rank_mode === QUAL_RANK_MODE_RANK_SUM
   const teamById = useMemo(() => new Map(totalRanking.map((team) => [team.id, team])), [totalRanking])
   const teamsWithPositiveScores = useMemo(() => {
     const teamIds = new Set<number>()

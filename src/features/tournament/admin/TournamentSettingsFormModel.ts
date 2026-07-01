@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { CreateTournamentRequest, Tournament } from "@/entities/tournament"
+import { QUAL_RANK_MODE_TOTAL_SCORE, type CreateTournamentRequest, type Tournament } from "@/entities/tournament"
 
 export const tournamentSettingsSchema = z.object({
   acronym: z.string().trim().min(2, "Acronym is required").max(32, "Acronym must be 32 characters or fewer"),
@@ -48,7 +48,7 @@ export const tournamentSettingsDefaultValues: TournamentSettingsFormValues = {
   desc_zh: "",
   name: "",
   qual_end: "",
-  qual_rank_mode: 0,
+  qual_rank_mode: QUAL_RANK_MODE_TOTAL_SCORE,
   qual_start: "",
   qual_top_n: 32,
   reg_end: "",
@@ -83,7 +83,7 @@ export function toTournamentSettingsFormValues(tournament: Tournament): Tourname
     desc_zh: tournament.desc_zh ?? "",
     name: tournament.name ?? "",
     qual_end: toDatetimeLocal(tournament.qual_end),
-    qual_rank_mode: tournament.qual_rank_mode ?? 0,
+    qual_rank_mode: tournament.qual_rank_mode ?? QUAL_RANK_MODE_TOTAL_SCORE,
     qual_start: toDatetimeLocal(tournament.qual_start),
     qual_top_n: tournament.qual_top_n ?? 32,
     reg_end: toDatetimeLocal(tournament.reg_end),

@@ -1,3 +1,6 @@
+export const QUAL_RANK_MODE_TOTAL_SCORE = 0
+export const QUAL_RANK_MODE_RANK_SUM = 1
+
 export type TournamentUser = {
   avatar?: string | null
   user_id: number

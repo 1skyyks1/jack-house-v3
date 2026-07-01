@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { FormFieldError, MutationErrorAlert } from "@/shared/components"
+import { QUAL_RANK_MODE_RANK_SUM, QUAL_RANK_MODE_TOTAL_SCORE } from "@/entities/tournament"
 import type { TournamentSettingsFormValues } from "./TournamentSettingsFormModel"
 
 type TournamentSettingsFormProps = {
@@ -126,8 +127,8 @@ export function TournamentSettingsForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
-                <SelectItem value="1">{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
+                <SelectItem value={String(QUAL_RANK_MODE_TOTAL_SCORE)}>{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
+                <SelectItem value={String(QUAL_RANK_MODE_RANK_SUM)}>{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
