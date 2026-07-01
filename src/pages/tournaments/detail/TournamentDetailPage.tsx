@@ -1,4 +1,4 @@
-import { BracketsCurly, CalendarBlank, ChartBar, UsersThree } from "@phosphor-icons/react"
+import { BracketsCurly, CalendarBlank, ChartBar, ChatText, ClipboardText, Info, Trophy, UsersThree } from "@phosphor-icons/react"
 import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator"
 import { RichTextRenderer, RichTextToc } from "@/features/rich-text/renderer"
 import type { TocItem } from "@/features/rich-text/model/types"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
-import { formatDate } from "@/shared/lib/date"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentHeroImage } from "../_shared/tournamentVisuals"
 
@@ -131,12 +130,6 @@ export function TournamentDetailPage() {
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <InfoBlock label={t("tournament.common.registration")} value={`${formatDate(tournament.reg_start)} - ${formatDate(tournament.reg_end)}`} />
-        <InfoBlock label={t("tournament.common.qualifier")} value={`${formatDate(tournament.qual_start)} - ${formatDate(tournament.qual_end)}`} />
-        <InfoBlock label={t("tournament.common.teamSize")} value={`${tournament.team_size_min ?? 1} - ${tournament.team_size_max ?? 2}`} />
-      </section>
-
       <StaffSection entries={Array.from(staffByRole.entries())} />
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
@@ -148,6 +141,7 @@ export function TournamentDetailPage() {
               key={section.id}
               onTocChange={updateSectionToc}
               title={section.title || section.type}
+              type={section.type}
             />
           )) : (
             <div className="rounded-lg border bg-card p-5">
@@ -174,11 +168,13 @@ function TournamentContentSection({
   id,
   onTocChange,
   title,
+  type,
 }: {
   contentHtml: string
   id: number
   onTocChange: (sectionId: number, items: TocItem[]) => void
   title: string
+  type: string
 }) {
   const handleTocChange = useCallback((items: TocItem[]) => {
     onTocChange(id, items)
@@ -188,12 +184,27 @@ function TournamentContentSection({
     <article className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between gap-4">
         <h2 className="font-heading text-xl font-semibold" id={getSectionAnchorId(id)}>{title}</h2>
-        <CalendarBlank className="size-5 text-muted-foreground" />
+        <SectionTypeIcon type={type} />
       </div>
       <Separator className="my-4" />
       <RichTextRenderer content={contentHtml} onTocChange={handleTocChange} />
     </article>
   )
+}
+
+function SectionTypeIcon({ type }: { type: string }) {
+  switch (type) {
+    case "description":
+      return <Info className="size-5 text-muted-foreground" weight="bold" />
+    case "faq":
+      return <ChatText className="size-5 text-muted-foreground" weight="bold" />
+    case "prize":
+      return <Trophy className="size-5 text-muted-foreground" weight="bold" />
+    case "rules":
+      return <ClipboardText className="size-5 text-muted-foreground" weight="bold" />
+    default:
+      return <CalendarBlank className="size-5 text-muted-foreground" weight="bold" />
+  }
 }
 
 function firstText(...values: Array<null | string | undefined>) {
@@ -245,14 +256,5 @@ function StaffSection({ entries }: { entries: Array<[string, TournamentStaff[]]>
         <p className="mt-3 text-sm text-muted-foreground">{t("tournament.common.noStaff")}</p>
       )}
     </section>
-  )
-}
-
-function InfoBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p>
-      <p className="mt-2 text-sm font-medium">{value}</p>
-    </div>
   )
 }

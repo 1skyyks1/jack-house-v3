@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft } from "@phosphor-icons/react"
+import { ArrowLeft, FloppyDisk } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router-dom"
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 export function AdminTournamentNewPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const formId = "admin-tournament-new-form"
   const createMutation = useCreateTournamentMutation()
   const form = useForm<TournamentSettingsFormValues>({
     defaultValues: tournamentSettingsDefaultValues,
@@ -36,22 +37,26 @@ export function AdminTournamentNewPage() {
   return (
     <AdminPage
       actions={(
-        <Button asChild type="button" variant="outline">
-          <Link to="/admin/tournaments">
-            <ArrowLeft className="size-4" />
-            {t("tournament.admin.common.back")}
-          </Link>
-        </Button>
+        <>
+          <Button asChild type="button" variant="outline">
+            <Link to="/admin/tournaments">
+              <ArrowLeft className="size-4" />
+              {t("tournament.admin.common.back")}
+            </Link>
+          </Button>
+          <Button disabled={createMutation.isPending} form={formId} type="submit">
+            <FloppyDisk className="size-4" weight="bold" />
+            {createMutation.isPending ? t("tournament.admin.form.createPending") : t("tournament.admin.form.createSubmit")}
+          </Button>
+        </>
       )}
     >
       <TournamentSettingsForm
         error={createMutation.error}
         errorTitle={t("tournament.admin.form.createFailed")}
         form={form}
-        isPending={createMutation.isPending}
+        formId={formId}
         onSubmit={submit}
-        pendingLabel={t("tournament.admin.form.createPending")}
-        submitLabel={t("tournament.admin.form.createSubmit")}
       />
     </AdminPage>
   )

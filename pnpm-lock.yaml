@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@elyasasmad/react-tournament-brackets':
+        specifier: ^1.1.1
+        version: 1.1.1(react-dom@19.2.7(react@19.2.7))(react-svg-pan-zoom@3.13.1)(react@19.2.7)(styled-components@6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       '@fontsource-variable/figtree':
         specifier: ^5.2.10
         version: 5.2.10
@@ -107,6 +110,9 @@ importers:
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      styled-components:
+        specifier: ^6.4.3
+        version: 6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -308,6 +314,14 @@ packages:
     peerDependencies:
       '@noble/ciphers': ^1.0.0
 
+  '@elyasasmad/react-tournament-brackets@1.1.1':
+    resolution: {integrity: sha512-NbHNrD0Uzx85xW57OXTGhnSdTw8UIqj56A3rGNd9qA3iUxhKm3b98M/FH9xoJO46ZxT6oWmYvZ4ztFsVFPviOg==}
+    peerDependencies:
+      react: ^18.1.0 || ^19.0.0
+      react-dom: ^18.1.0 || ^19.0.0
+      react-svg-pan-zoom: ^3.13.1
+      styled-components: ^6.1.19
+
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
 
@@ -316,6 +330,12 @@ packages:
 
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
+
+  '@emotion/is-prop-valid@1.4.0':
+    resolution: {integrity: sha512-QgD4fyscGcbbKwJmqNvUMSE02OsHUa+lAWKdEUIJKgqe5IwRSKd7+KhibEWdaKwgjLj0DRSHA9biAIqGBk05lw==}
+
+  '@emotion/memoize@0.9.0':
+    resolution: {integrity: sha512-30FAj7/EoJ5mwVPOWhAyCX+FPfMDrVecJAM+Iw9NRoSl4BBAQeqj4cApHHUXOVvIPgLVDsCFoz/hGD+5QQD1GQ==}
 
   '@eslint-community/eslint-utils@4.9.1':
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
@@ -2797,6 +2817,10 @@ packages:
     resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
     engines: {node: '>=18'}
 
+  loose-envify@1.4.0:
+    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
+    hasBin: true
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -3075,6 +3099,9 @@ packages:
     resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
     engines: {node: '>= 6'}
 
+  prop-types@15.8.1:
+    resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+
   prosemirror-changeset@2.4.1:
     resolution: {integrity: sha512-96WBLhOaYhJ+kPhLg3uW359Tz6I/MfcrQfL4EGv4SrcqKEMC1gmoGrXHecPE8eOwTVCJ4IwgfzM8fFad25wNfw==}
 
@@ -3181,6 +3208,9 @@ packages:
       typescript:
         optional: true
 
+  react-is@16.13.1:
+    resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
+
   react-remove-scroll-bar@2.3.8:
     resolution: {integrity: sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==}
     engines: {node: '>=10'}
@@ -3227,6 +3257,9 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-svg-pan-zoom@3.13.1:
+    resolution: {integrity: sha512-mUGoXfo255c+T/FAdZ5Fr0paw9OpAz4owGku5bRjUOzSKUmqUJpuYbscuuzOIJWbmrJ0N/9mOWPE8JdjSYITbQ==}
 
   react@19.2.7:
     resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
@@ -3422,6 +3455,25 @@ packages:
     resolution: {integrity: sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==}
     engines: {node: '>=18'}
 
+  styled-components@6.4.3:
+    resolution: {integrity: sha512-wYXrhu+JmDjZ1Tv7O0OopGTfztbzun43Pjjhh2H+xc0h5A09dwpZ5FJbrifJDcL8g5TA9btpWOX2+iSRuJTExw==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      css-to-react-native: '>= 3.2.0'
+      react: '>= 16.8.0'
+      react-dom: '>= 16.8.0'
+      react-native: '>= 0.68.0'
+    peerDependenciesMeta:
+      css-to-react-native:
+        optional: true
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+
+  stylis@4.3.6:
+    resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
+
   systeminformation@5.31.7:
     resolution: {integrity: sha512-/8NC53e5nP9nmhn42/ncdOkyJnOoue/Vy+tJOyUGd1Yv66G069wK4rrziwhrqDETgk78CudTQupw5z19S5uoZw==}
     engines: {node: '>=8.0.0'}
@@ -3460,6 +3512,9 @@ packages:
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
+
+  transformation-matrix@2.16.1:
+    resolution: {integrity: sha512-tdtC3wxVEuzU7X/ydL131Q3JU5cPMEn37oqVLITjRDSDsnSHVFzW2JiCLfZLIQEgWzZHdSy3J6bZzvKEN24jGA==}
 
   traverse@0.3.9:
     resolution: {integrity: sha512-iawgk0hLP3SxGKDfnDJf8wTz4p2qImnyihM5Hh/sGvQ3K37dPi/w8sRhdNIxYA1TwFwc5mDhIJq+O0RsvXBKdQ==}
@@ -3920,6 +3975,14 @@ snapshots:
     dependencies:
       '@noble/ciphers': 1.3.0
 
+  '@elyasasmad/react-tournament-brackets@1.1.1(react-dom@19.2.7(react@19.2.7))(react-svg-pan-zoom@3.13.1)(react@19.2.7)(styled-components@6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))':
+    dependencies:
+      deepmerge: 4.3.1
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      react-svg-pan-zoom: 3.13.1
+      styled-components: 6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+
   '@emnapi/core@1.10.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.1
@@ -3935,6 +3998,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@emotion/is-prop-valid@1.4.0':
+    dependencies:
+      '@emotion/memoize': 0.9.0
+
+  '@emotion/memoize@0.9.0': {}
 
   '@eslint-community/eslint-utils@4.9.1(eslint@10.5.0(jiti@2.7.0))':
     dependencies:
@@ -6389,6 +6458,10 @@ snapshots:
       chalk: 5.6.2
       is-unicode-supported: 1.3.0
 
+  loose-envify@1.4.0:
+    dependencies:
+      js-tokens: 4.0.0
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -6629,6 +6702,12 @@ snapshots:
       kleur: 3.0.3
       sisteransi: 1.0.5
 
+  prop-types@15.8.1:
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      react-is: 16.13.1
+
   prosemirror-changeset@2.4.1:
     dependencies:
       prosemirror-transform: 1.12.0
@@ -6810,6 +6889,8 @@ snapshots:
       react-dom: 19.2.7(react@19.2.7)
       typescript: 6.0.3
 
+  react-is@16.13.1: {}
+
   react-remove-scroll-bar@2.3.8(@types/react@19.2.17)(react@19.2.7):
     dependencies:
       react: 19.2.7
@@ -6850,6 +6931,11 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.2.17
+
+  react-svg-pan-zoom@3.13.1:
+    dependencies:
+      prop-types: 15.8.1
+      transformation-matrix: 2.16.1
 
   react@19.2.7: {}
 
@@ -7110,6 +7196,17 @@ snapshots:
 
   strip-final-newline@4.0.0: {}
 
+  styled-components@6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+    dependencies:
+      '@emotion/is-prop-valid': 1.4.0
+      csstype: 3.2.3
+      react: 19.2.7
+      stylis: 4.3.6
+    optionalDependencies:
+      react-dom: 19.2.7(react@19.2.7)
+
+  stylis@4.3.6: {}
+
   systeminformation@5.31.7: {}
 
   tailwind-merge@3.6.0: {}
@@ -7140,6 +7237,8 @@ snapshots:
       is-number: 7.0.0
 
   toidentifier@1.0.1: {}
+
+  transformation-matrix@2.16.1: {}
 
   traverse@0.3.9: {}
 

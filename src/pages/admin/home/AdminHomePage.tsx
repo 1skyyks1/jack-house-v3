@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { getAdminPermissionLabel, hasAdminPermission, type AdminPermissionKey } from "@/features/admin-permissions"
+import { hasAdminPermission, type AdminPermissionKey } from "@/features/admin-permissions"
 import { usePermissionsQuery } from "@/features/auth"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +41,7 @@ export function AdminHomePage() {
                   )
                 }
               >
-                {getAdminPermissionLabel(item.key)}
+                {t(`admin.nav.${item.key}`)}
               </NavLink>
             ))}
         </nav>

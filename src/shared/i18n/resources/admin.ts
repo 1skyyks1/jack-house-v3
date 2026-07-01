@@ -420,6 +420,7 @@ export const enAdmin = {
       events: "Events",
       postFiles: "Post files",
       posts: "Posts",
+      tournaments: "Tournaments",
       users: "Users",
     },
     shell: {

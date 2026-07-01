@@ -58,30 +58,23 @@ const homeSections: HomeSection[] = homeVisuals.map((visual) => ({
 
 export function HomePage() {
   const { t } = useTranslation()
+  const { setTheme } = useTheme()
   const containerRef = useRef<HTMLElement | null>(null)
-  const previousThemeRef = useRef<string | null>(null)
   const isAnimatingRef = useRef(false)
   const touchStartYRef = useRef<number | null>(null)
 
-  const { theme, setTheme } = useTheme()
   const [activeIndex, setActiveIndex] = useState(0)
 
   const activeId = homeSections[activeIndex]?.id ?? "community"
 
   useEffect(() => {
-    if (previousThemeRef.current === null) {
-      previousThemeRef.current = theme ?? "system"
-    }
-
+    const previousTheme = window.localStorage.getItem("jack-house-theme") ?? "system"
     setTheme("dark")
 
     return () => {
-      const previousTheme = previousThemeRef.current ?? "system"
-      if (previousTheme !== "dark") {
-        setTheme(previousTheme)
-      }
+      setTheme(previousTheme)
     }
-  }, [setTheme, theme])
+  }, [setTheme])
 
   const goToSection = useCallback((nextIndex: number) => {
     const safeIndex = Math.max(0, Math.min(nextIndex, homeSections.length - 1))

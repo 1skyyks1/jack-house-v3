@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -45,7 +45,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { AppAlert, FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 
-const sectionTypes = ["rules", "description", "prize", "faq"] as const
+const presetSectionTypes = ["rules", "description", "prize", "faq"] as const
+const sectionTypePattern = /^[a-z][a-z0-9_-]{0,31}$/
+
+function normalizeSectionType(value: unknown) {
+  return String(value ?? "").trim().toLowerCase()
+}
 
 function createSectionSchema(t: (key: string) => string) {
   return z.object({
@@ -54,7 +59,7 @@ function createSectionSchema(t: (key: string) => string) {
     source_markdown_zh: z.string(),
     title_en: z.string().trim().max(255, t("tournament.admin.content.validationTitleMax")),
     title_zh: z.string().trim().max(255, t("tournament.admin.content.validationTitleMax")),
-    type: z.enum(sectionTypes),
+    type: z.string().trim().min(1, t("tournament.admin.content.validationTypeRequired")).max(32, t("tournament.admin.content.validationTypeInvalid")).regex(sectionTypePattern, t("tournament.admin.content.validationTypeInvalid")),
   }).superRefine((values, ctx) => {
     if (!values.title_zh.trim() && !values.title_en.trim()) {
       ctx.addIssue({
@@ -114,6 +119,14 @@ export function AdminTournamentContentPage() {
   const previewMarkdownEn = previewEnMutation.mutate
   const previewHtmlZh = deferredMarkdownZh.trim() ? previewZhMutation.data?.content_html ?? selectedSection?.content_html_zh ?? selectedSection?.content_html ?? "" : ""
   const previewHtmlEn = deferredMarkdownEn.trim() ? previewEnMutation.data?.content_html ?? selectedSection?.content_html_en ?? "" : ""
+  const sectionTypeOptions = useMemo(() => {
+    const values = new Set<string>(presetSectionTypes)
+    const currentType = normalizeSectionType(selectedSection?.type)
+    if (currentType && sectionTypePattern.test(currentType)) {
+      values.add(currentType)
+    }
+    return Array.from(values)
+  }, [selectedSection?.type])
 
   useEffect(() => {
     if (selectedSection) {
@@ -241,14 +254,21 @@ export function AdminTournamentContentPage() {
 
             <form className="space-y-4" onSubmit={submit}>
               <Card>
-                <CardHeader className="flex-row items-center justify-between">
+                <CardHeader>
                   <CardTitle>{isCreating ? t("tournament.admin.content.newContent") : t("tournament.admin.content.editContent")}</CardTitle>
-                  {!isCreating && selectedSection ? (
-                    <Button onClick={() => setDeletingSection(selectedSection)} size="sm" type="button" variant="outline">
-                      <Trash className="size-4" />
-                      {t("tournament.admin.content.delete")}
-                    </Button>
-                  ) : null}
+                  <CardAction>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {!isCreating && selectedSection ? (
+                        <Button onClick={() => setDeletingSection(selectedSection)} size="sm" type="button" variant="outline">
+                          <Trash className="size-4" />
+                          {t("tournament.admin.content.delete")}
+                        </Button>
+                      ) : null}
+                      <Button disabled={isMutating} size="sm" type="submit">
+                        {isMutating ? t("tournament.admin.form.saving") : isCreating ? t("tournament.admin.content.createSubmit") : t("tournament.admin.content.saveSubmit")}
+                      </Button>
+                    </div>
+                  </CardAction>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <Field error={form.formState.errors.title_zh?.message} id="section-title-zh" label={t("tournament.admin.content.titleZh")}>
@@ -259,15 +279,15 @@ export function AdminTournamentContentPage() {
                   </Field>
                   <Field error={form.formState.errors.type?.message} id="section-type" label={t("tournament.admin.content.type")}>
                     <Select
-                      onValueChange={(value) => form.setValue("type", value as SectionFormValues["type"], { shouldDirty: true, shouldValidate: true })}
-                      value={sectionType}
+                      onValueChange={(value) => form.setValue("type", normalizeSectionType(value), { shouldDirty: true, shouldValidate: true })}
+                      value={normalizeSectionType(sectionType) || "rules"}
                     >
                       <SelectTrigger className="w-full" id="section-type">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {sectionTypes.map((type) => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        {sectionTypeOptions.map((type) => (
+                          <SelectItem key={type} value={type}>{getSectionTypeLabel(type, t)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -293,12 +313,6 @@ export function AdminTournamentContentPage() {
                   </Field>
                 </CardContent>
               </Card>
-
-              <div className="flex justify-end">
-                <Button disabled={isMutating} type="submit">
-                  {isMutating ? t("tournament.admin.form.saving") : isCreating ? t("tournament.admin.content.createSubmit") : t("tournament.admin.content.saveSubmit")}
-                </Button>
-              </div>
             </form>
 
             <Card>
@@ -377,13 +391,14 @@ function PreviewPane({ content, title }: { content: string; title: string }) {
 }
 
 function toSectionFormValues(section: TournamentSection): SectionFormValues {
+  const type = normalizeSectionType(section.type)
   return {
     sort_order: section.sort_order ?? 0,
     source_markdown_en: section.source_markdown_en ?? "",
     source_markdown_zh: section.source_markdown_zh ?? section.source_markdown ?? "",
     title_en: section.title_en ?? "",
     title_zh: section.title_zh ?? section.title ?? "",
-    type: sectionTypes.includes(section.type as SectionFormValues["type"]) ? section.type as SectionFormValues["type"] : "rules",
+    type: sectionTypePattern.test(type) ? type : "rules",
   }
 }
 
@@ -404,4 +419,10 @@ function toSectionRequest(values: SectionFormValues): TournamentSectionRequest {
     title_zh: titleZh,
     type: values.type,
   }
+}
+
+function getSectionTypeLabel(type: string, t: (key: string) => string) {
+  const key = `tournament.admin.content.types.${type}`
+  const label = t(key)
+  return label === key ? type : label
 }

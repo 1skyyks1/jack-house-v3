@@ -226,11 +226,17 @@ export function AdminTournamentQualifierPage() {
             <CardHeader className="border-b">
               <CardTitle>{t("tournament.qualifier.mappool")}</CardTitle>
               <CardAction>
-                <Badge variant="outline">{t("tournament.common.maps", { count: mappool.length })}</Badge>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Badge variant="outline">{t("tournament.common.maps", { count: mappool.length })}</Badge>
+                  <Button disabled={createMapMutation.isPending || isQualifierLocked} size="sm" type="submit" form="qual-create-map-form">
+                    <Plus className="size-4" weight="bold" />
+                    {t("tournament.admin.bracket.addMap")}
+                  </Button>
+                </div>
               </CardAction>
             </CardHeader>
             <CardContent>
-              <form className="mb-4 grid gap-3 lg:grid-cols-[7rem_minmax(16rem,1fr)_7rem_auto]" onSubmit={handleCreateMap}>
+              <form className="mb-4 grid gap-3 lg:grid-cols-[7rem_minmax(16rem,1fr)_7rem]" id="qual-create-map-form" onSubmit={handleCreateMap}>
                 <div className="grid gap-1.5">
                   <Label htmlFor="qual-map-index">{t("tournament.qualifier.stage", { stage: "" }).trim()}</Label>
                   <Input id="qual-map-index" min={1} required type="number" value={mapIndex} onChange={(event) => setMapIndex(event.target.value)} />
@@ -243,10 +249,6 @@ export function AdminTournamentQualifierPage() {
                   <Label htmlFor="qual-map-weight">{t("tournament.admin.qualifier.weight")}</Label>
                   <Input id="qual-map-weight" min={0} step="0.1" type="number" value={mapWeight} onChange={(event) => setMapWeight(event.target.value)} />
                 </div>
-                <Button className="self-end" disabled={createMapMutation.isPending || isQualifierLocked} type="submit">
-                  <Plus className="size-4" weight="bold" />
-                  {t("tournament.admin.bracket.addMap")}
-                </Button>
               </form>
               <Table>
                 <TableHeader>
@@ -321,9 +323,15 @@ export function AdminTournamentQualifierPage() {
           <Card size="sm">
             <CardHeader className="border-b">
               <CardTitle>{t("tournament.admin.import.importTeams")}</CardTitle>
+              <CardAction>
+                <Button disabled={fetchScoresMutation.isPending || isQualifierLocked || parseMpIds(mpId).length === 0} size="sm" type="submit" form="qual-fetch-scores-form">
+                  <DownloadSimple className="size-4" weight="bold" />
+                  {t("tournament.admin.bracket.importMpScores")}
+                </Button>
+              </CardAction>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-3" onSubmit={handleFetchScores}>
+              <form className="grid gap-3" id="qual-fetch-scores-form" onSubmit={handleFetchScores}>
                 <div className="grid gap-1.5">
                   <Label>{t("tournament.referee.team")}</Label>
                   <Select value={selectedTeamId || allTeamsValue} onValueChange={setSelectedTeamId}>
@@ -349,10 +357,6 @@ export function AdminTournamentQualifierPage() {
                     onChange={(event) => setMpId(event.target.value)}
                   />
                 </div>
-                <Button disabled={fetchScoresMutation.isPending || isQualifierLocked || parseMpIds(mpId).length === 0} type="submit">
-                  <DownloadSimple className="size-4" weight="bold" />
-                  {t("tournament.admin.bracket.importMpScores")}
-                </Button>
               </form>
             </CardContent>
           </Card>
@@ -360,9 +364,14 @@ export function AdminTournamentQualifierPage() {
           <Card size="sm">
             <CardHeader className="border-b">
               <CardTitle>{t("tournament.admin.qualifier.manualCorrection")}</CardTitle>
+              <CardAction>
+                <Button disabled={updateScoreMutation.isPending || isQualifierLocked || !selectedScoreId || !manualScore} size="sm" type="submit" form="qual-update-score-form">
+                  {t("tournament.admin.qualifier.saveCorrection")}
+                </Button>
+              </CardAction>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-3" onSubmit={handleUpdateScore}>
+              <form className="grid gap-3" id="qual-update-score-form" onSubmit={handleUpdateScore}>
                 <div className="grid gap-1.5">
                   <Label>{t("tournament.common.score")}</Label>
                   <Select value={selectedScoreId} onValueChange={(value) => {
@@ -384,9 +393,6 @@ export function AdminTournamentQualifierPage() {
                   <Label htmlFor="qual-manual-score">{t("tournament.common.score")}</Label>
                   <Input id="qual-manual-score" min={0} required type="number" value={manualScore} onChange={(event) => setManualScore(event.target.value)} />
                 </div>
-                <Button disabled={updateScoreMutation.isPending || isQualifierLocked || !selectedScoreId || !manualScore} type="submit">
-                  {t("tournament.admin.qualifier.saveCorrection")}
-                </Button>
               </form>
             </CardContent>
           </Card>

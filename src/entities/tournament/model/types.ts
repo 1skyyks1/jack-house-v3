@@ -42,6 +42,7 @@ export type Tournament = {
   qual_locked_at?: string | null
   qual_locked_by?: number | null
   qual_locked_top_n?: number | null
+  qual_rank_mode?: number
   qual_start?: string | null
   qual_top_n?: number
   reg_end?: string | null
@@ -308,7 +309,7 @@ export type TournamentSectionRequest = {
   title: string
   title_en?: string | null
   title_zh?: string | null
-  type: "rules" | "description" | "prize" | "faq"
+  type: string
 }
 
 export type TournamentMarkdownPreviewRequest = {

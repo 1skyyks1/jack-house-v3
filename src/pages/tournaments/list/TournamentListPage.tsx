@@ -1,61 +1,25 @@
-import { ArrowRight, CalendarBlank, Trophy } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { useTournamentListQuery, getTournamentStatus } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
-import { formatDate } from "@/shared/lib/date"
 import { cn } from "@/lib/utils"
 
 export function TournamentListPage() {
   const { t } = useTranslation()
   const tournamentsQuery = useTournamentListQuery()
   const tournaments = tournamentsQuery.data ?? []
-  const heroTournament = tournaments.find((tournament) => tournament.banner)
 
   if (tournamentsQuery.isError) {
     return <PageState title={t("tournament.list.loadFailed")} description={getErrorMessage(tournamentsQuery.error)} />
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="relative min-h-[22rem] overflow-hidden rounded-lg border bg-card text-white">
-        {heroTournament?.banner ? (
-          <img alt="" className="absolute inset-0 size-full object-cover" src={heroTournament.banner} />
-        ) : (
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
-        )}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.06),rgba(0,0,0,0.82))]" />
-        <div className="relative z-10 flex min-h-[22rem] flex-col justify-between p-6 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <Badge className="w-fit gap-1 border-white/20 bg-black/35 text-white" variant="outline">
-              <Trophy className="size-3.5" weight="bold" />
-              {t("tournament.list.eyebrow")}
-            </Badge>
-            <Badge className="border-white/20 bg-black/35 text-white" variant="outline">
-              {t("tournament.list.mainFormatValue")}
-            </Badge>
-          </div>
-          <div className="max-w-3xl">
-            {heroTournament?.acronym ? (
-              <p className="text-xs font-semibold uppercase text-white/70">{heroTournament.acronym}</p>
-            ) : null}
-            <h1 className="mt-2 font-heading text-4xl font-semibold tracking-normal sm:text-5xl">
-              {heroTournament?.name ?? t("tournament.list.title")}
-            </h1>
-            {heroTournament ? (
-              <Button asChild className="mt-6 bg-white text-black hover:bg-white/90">
-                <Link to={`/t/${heroTournament.acronym || heroTournament.id}`}>
-                  {t("tournament.common.openTournament")}
-                  <ArrowRight className="size-4" weight="bold" />
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </section>
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <header>
+        <h1 className="font-heading text-3xl font-semibold">{t("tournament.list.title")}</h1>
+      </header>
 
       {tournamentsQuery.isLoading ? <TournamentListSkeleton /> : null}
       {tournamentsQuery.data?.length === 0 ? (
@@ -86,17 +50,6 @@ export function TournamentListPage() {
                     {t(`tournament.status.${status.key}`)}
                   </Badge>
                 </div>
-                <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                  <span className="flex items-center gap-2">
-                    <CalendarBlank className="size-4" />
-                    {t("tournament.list.registrationRange", { start: formatDate(tournament.reg_start), end: formatDate(tournament.reg_end) })}
-                  </span>
-                  <span>{t("tournament.list.topN", { count: tournament.qual_top_n ?? 32 })}</span>
-                </div>
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-                  {t("tournament.common.openTournament")}
-                  <ArrowRight className="size-4" weight="bold" />
-                </span>
               </div>
             </Link>
           )

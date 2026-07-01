@@ -1,4 +1,4 @@
-import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, UserCircle } from "@phosphor-icons/react"
+import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, Trophy, UserCircle } from "@phosphor-icons/react"
 import { useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
@@ -32,6 +32,7 @@ import { ThemeToggle } from "./ThemeToggle"
 const publicNavItems = [
   { to: "/", labelKey: "common.home", icon: HouseIcon, end: true },
   { to: "/forum", labelKey: "common.forum", icon: NewspaperIcon, end: false },
+  { to: "/t", labelKey: "common.tournaments", icon: Trophy, end: false },
   { to: "/pack", labelKey: "common.pack", icon: StackIcon, end: false },
   { to: "/about", labelKey: "common.about", icon: InfoIcon, end: false },
 ] as const
@@ -55,6 +56,7 @@ export function AppShell() {
   const currentUserId = currentUser?.user_id ? String(currentUser.user_id) : authUserId
   const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/")
   const isHomeRoute = location.pathname === "/"
+  const isTournamentBracketRoute = /^\/t\/[^/]+\/bracket\/?$/.test(location.pathname)
   const headerScrolled = isHomeRoute ? homeSectionIndex > 0 : hasScrolled
   const useOverlayHeader = !isAdminRoute && !headerScrolled
 
@@ -273,7 +275,7 @@ export function AppShell() {
       <main
         className={cn(
           "w-full",
-          isAdminRoute ? "px-0 py-0" : isHomeRoute ? "px-0 py-0" : "mx-auto max-w-7xl px-4 py-6 sm:px-6",
+          isAdminRoute || isHomeRoute || isTournamentBracketRoute ? "px-0 py-0" : "mx-auto max-w-7xl px-4 py-6 sm:px-6",
         )}
       >
         <Outlet />

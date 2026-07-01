@@ -1,11 +1,10 @@
 import type { ReactNode } from "react"
 import type { UseFormReturn } from "react-hook-form"
-import { FloppyDisk } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { FormFieldError, MutationErrorAlert } from "@/shared/components"
 import type { TournamentSettingsFormValues } from "./TournamentSettingsFormModel"
@@ -14,25 +13,21 @@ type TournamentSettingsFormProps = {
   error?: unknown
   errorTitle: string
   form: UseFormReturn<TournamentSettingsFormValues>
-  isPending: boolean
+  formId?: string
   onSubmit: () => void
-  pendingLabel: string
-  submitLabel: string
 }
 
 export function TournamentSettingsForm({
   error,
   errorTitle,
   form,
-  isPending,
+  formId,
   onSubmit,
-  pendingLabel,
-  submitLabel,
 }: TournamentSettingsFormProps) {
   const { t } = useTranslation()
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
+    <form className="space-y-4" id={formId} onSubmit={onSubmit}>
       {error ? <MutationErrorAlert error={error} title={errorTitle} /> : null}
 
       <Card>
@@ -82,7 +77,7 @@ export function TournamentSettingsForm({
         <CardHeader>
           <CardTitle>{t("tournament.admin.form.sections.competition")}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
+        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Field error={form.formState.errors.team_size_min?.message} id="tournament-team-size-min" label={t("tournament.admin.form.fields.teamSizeMin")}>
             <Input id="tournament-team-size-min" type="number" {...form.register("team_size_min", { valueAsNumber: true })} />
           </Field>
@@ -92,15 +87,23 @@ export function TournamentSettingsForm({
           <Field error={form.formState.errors.qual_top_n?.message} id="tournament-qual-top-n" label={t("tournament.admin.form.fields.qualTopN")}>
             <Input id="tournament-qual-top-n" type="number" {...form.register("qual_top_n", { valueAsNumber: true })} />
           </Field>
+          <Field error={form.formState.errors.qual_rank_mode?.message} id="tournament-qual-rank-mode" label={t("tournament.admin.form.fields.qualRankMode")}>
+            <Select
+              onValueChange={(value) => form.setValue("qual_rank_mode", Number(value), { shouldDirty: true, shouldValidate: true })}
+              value={String(form.watch("qual_rank_mode"))}
+            >
+              <SelectTrigger className="w-full" id="tournament-qual-rank-mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
+                <SelectItem value="1">{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button disabled={isPending} type="submit">
-          <FloppyDisk className="size-4" weight="bold" />
-          {isPending ? pendingLabel : submitLabel}
-        </Button>
-      </div>
     </form>
   )
 }

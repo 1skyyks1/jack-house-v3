@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Eye } from "@phosphor-icons/react"
+import { ArrowLeft, Eye, FloppyDisk } from "@phosphor-icons/react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useForm } from "react-hook-form"
@@ -21,6 +21,7 @@ import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 export function AdminTournamentSettingsPage() {
   const { t } = useTranslation()
   const { tid } = useParams()
+  const formId = "admin-tournament-settings-form"
   const tournamentQuery = useTournamentDetailQuery(tid)
   const updateMutation = useUpdateTournamentMutation(tid ?? "")
   const form = useForm<TournamentSettingsFormValues>({
@@ -65,6 +66,12 @@ export function AdminTournamentSettingsPage() {
               </Link>
             </Button>
           ) : null}
+          {tournamentQuery.data ? (
+            <Button disabled={updateMutation.isPending} form={formId} type="submit">
+              <FloppyDisk className="size-4" weight="bold" />
+              {updateMutation.isPending ? t("tournament.admin.form.saving") : t("tournament.admin.form.saveSettings")}
+            </Button>
+          ) : null}
         </>
       )}
     >
@@ -75,10 +82,8 @@ export function AdminTournamentSettingsPage() {
           error={updateMutation.error}
           errorTitle={t("tournament.admin.form.saveFailed")}
           form={form}
-          isPending={updateMutation.isPending}
+          formId={formId}
           onSubmit={submit}
-          pendingLabel={t("tournament.admin.form.saving")}
-          submitLabel={t("tournament.admin.form.saveSettings")}
         />
       ) : null}
     </AdminPage>
