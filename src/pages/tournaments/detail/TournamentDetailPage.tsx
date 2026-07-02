@@ -75,7 +75,7 @@ export function TournamentDetailPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-3 py-6 sm:px-6 lg:px-8">
       <TournamentBreadcrumb current={tournament.acronym || tournament.name} />
 
       <section className="relative min-h-[22rem] overflow-hidden rounded-lg border bg-card text-white">

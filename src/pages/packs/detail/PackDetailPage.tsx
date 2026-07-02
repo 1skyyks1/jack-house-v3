@@ -51,7 +51,7 @@ export function PackDetailPage() {
 
   return (
     <section>
-      <Breadcrumb className="mb-2">
+      <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -65,20 +65,20 @@ export function PackDetailPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <PackShowcase
-        maps={maps}
-        onSelectMap={setSelectedMapId}
-        pack={packQuery.data}
-        selectedMap={selectedMap}
-        selectedMapId={selectedMap?.map_id ?? null}
-      />
+      <div className="space-y-4">
+        <PackShowcase
+          maps={maps}
+          onSelectMap={setSelectedMapId}
+          pack={packQuery.data}
+          selectedMap={selectedMap}
+          selectedMapId={selectedMap?.map_id ?? null}
+        />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:items-stretch">
-        <PackDescription className="lg:h-[22rem]" description={packQuery.data.description} />
-        <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
-      </div>
+        <div className="grid min-h-0 gap-4 lg:h-[18rem] lg:grid-cols-2 lg:items-stretch">
+          <PackDescription className="h-[18rem] lg:h-full" description={packQuery.data.description} />
+          <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
+        </div>
 
-      <div className="mt-6">
         <PackComments packId={packId} />
       </div>
     </section>

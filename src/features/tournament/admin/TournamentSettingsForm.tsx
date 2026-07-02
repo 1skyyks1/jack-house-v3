@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { useWatch, type UseFormReturn } from "react-hook-form"
+import { Controller, useWatch, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,6 @@ export function TournamentSettingsForm({
   const regEnd = useWatch({ control: form.control, name: "reg_end" })
   const qualStart = useWatch({ control: form.control, name: "qual_start" })
   const qualEnd = useWatch({ control: form.control, name: "qual_end" })
-  const qualRankMode = useWatch({ control: form.control, name: "qual_rank_mode" })
 
   return (
     <form className="space-y-4" id={formId} onSubmit={onSubmit}>
@@ -119,18 +118,25 @@ export function TournamentSettingsForm({
             <Input id="tournament-qual-top-n" type="number" {...form.register("qual_top_n", { valueAsNumber: true })} />
           </Field>
           <Field error={form.formState.errors.qual_rank_mode?.message} id="tournament-qual-rank-mode" label={t("tournament.admin.form.fields.qualRankMode")}>
-            <Select
-              onValueChange={(value) => form.setValue("qual_rank_mode", Number(value), { shouldDirty: true, shouldValidate: true })}
-              value={String(qualRankMode)}
-            >
-              <SelectTrigger className="w-full" id="tournament-qual-rank-mode">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={String(QUAL_RANK_MODE_TOTAL_SCORE)}>{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
-                <SelectItem value={String(QUAL_RANK_MODE_RANK_SUM)}>{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              control={form.control}
+              name="qual_rank_mode"
+              render={({ field, fieldState }) => (
+                <Select
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger aria-invalid={fieldState.invalid} className="w-full" id="tournament-qual-rank-mode">
+                    <SelectValue placeholder={t("tournament.admin.form.fields.qualRankMode")} />
+                  </SelectTrigger>
+                  <SelectContent position="item-aligned">
+                    <SelectItem value={String(QUAL_RANK_MODE_TOTAL_SCORE)}>{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
+                    <SelectItem value={String(QUAL_RANK_MODE_RANK_SUM)}>{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </Field>
         </CardContent>
       </Card>

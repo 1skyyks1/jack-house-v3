@@ -4,11 +4,11 @@ import type {
   AnalyticsOverviewResponse,
   AnalyticsPagesResponse,
   AnalyticsStatsRange,
-  DashboardCounts,
+  DashboardUserGrowthResponse,
 } from "../model/types"
 
-export async function getDashboardCounts(): Promise<DashboardCounts> {
-  return await http.get("/dashboard/home")
+export async function getDashboardUserGrowth(days = 30): Promise<DashboardUserGrowthResponse> {
+  return await http.get("/dashboard/users/daily", { params: { days } })
 }
 
 export async function getAnalyticsOverview(params: AnalyticsStatsRange): Promise<AnalyticsOverviewResponse> {

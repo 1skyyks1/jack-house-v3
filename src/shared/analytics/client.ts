@@ -10,6 +10,11 @@ export const analytics = createAnalytics({
   appId: import.meta.env.VITE_ANALYTICS_APP_ID ?? "jack-house-v3",
   debug: import.meta.env.DEV,
   endpoint: import.meta.env.VITE_ANALYTICS_ENDPOINT ?? `${API_BASE_URL}/analytics/collect`,
+  features: {
+    activeTime: true,
+    context: true,
+    pageViews: true,
+  },
   getUserId: () => useAuthStore.getState().userId,
 })
 

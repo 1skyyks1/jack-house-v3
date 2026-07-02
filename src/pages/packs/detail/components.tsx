@@ -79,7 +79,7 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
   }
 
   return (
-    <section className="flex h-full flex-col rounded-lg border bg-card p-4">
+    <section className="flex h-full min-h-0 flex-col rounded-lg border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-heading text-xl font-semibold">{t("pack.detail.infoTitle")}</h2>
         <div className="flex items-center gap-2">
@@ -494,7 +494,7 @@ type PackDescriptionProps = {
 export function PackDescription({ className, description }: PackDescriptionProps) {
   const { t } = useTranslation()
   return (
-    <section className={cn("flex flex-col rounded-lg border bg-card p-4", className)}>
+    <section className={cn("flex h-full min-h-0 flex-col rounded-lg border bg-card p-4", className)}>
       <h2 className="font-heading text-xl font-semibold">{t("pack.detail.descriptionTitle")}</h2>
       <Separator className="my-3" />
       <div className="scrollbar-soft min-h-0 flex-1 overflow-y-auto pr-2">

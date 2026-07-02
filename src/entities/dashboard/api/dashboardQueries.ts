@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardCounts } from "./dashboardApi"
+import { getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardUserGrowth } from "./dashboardApi"
 import type { AnalyticsStatsRange } from "../model/types"
 
 export const dashboardQueryKeys = {
   analyticsDaily: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "daily", params] as const,
   analyticsOverview: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "overview", params] as const,
   analyticsPages: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "pages", params] as const,
-  counts: ["dashboard", "counts"] as const,
+  userGrowth: (days: number) => ["dashboard", "users", "growth", days] as const,
 }
 
-export function useDashboardCountsQuery() {
+export function useDashboardUserGrowthQuery(days = 30) {
   return useQuery({
-    queryFn: getDashboardCounts,
-    queryKey: dashboardQueryKeys.counts,
+    queryFn: () => getDashboardUserGrowth(days),
+    queryKey: dashboardQueryKeys.userGrowth(days),
+    staleTime: 60_000,
   })
 }
 

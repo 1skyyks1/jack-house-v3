@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { QUAL_RANK_MODE_TOTAL_SCORE, type CreateTournamentRequest, type Tournament } from "@/entities/tournament"
 
+type QualRankModeFormValue = "0" | "1"
+
 export const tournamentSettingsSchema = z.object({
   acronym: z.string().trim().min(2, "Acronym is required").max(32, "Acronym must be 32 characters or fewer"),
   banner: z.string().trim().url("Banner must be a valid URL").or(z.literal("")),
@@ -8,7 +10,7 @@ export const tournamentSettingsSchema = z.object({
   desc_zh: z.string().trim().max(255, "Chinese description must be 255 characters or fewer").optional(),
   name: z.string().trim().min(2, "Tournament name is required").max(255, "Tournament name must be 255 characters or fewer"),
   qual_end: z.string().optional(),
-  qual_rank_mode: z.number().int().min(0).max(1),
+  qual_rank_mode: z.enum(["0", "1"]),
   qual_start: z.string().optional(),
   qual_top_n: z.number().int().min(2).max(128),
   reg_end: z.string().min(1, "Registration end is required"),
@@ -48,7 +50,7 @@ export const tournamentSettingsDefaultValues: TournamentSettingsFormValues = {
   desc_zh: "",
   name: "",
   qual_end: "",
-  qual_rank_mode: QUAL_RANK_MODE_TOTAL_SCORE,
+  qual_rank_mode: normalizeQualRankModeValue(QUAL_RANK_MODE_TOTAL_SCORE),
   qual_start: "",
   qual_top_n: 32,
   reg_end: "",
@@ -65,7 +67,7 @@ export function toTournamentMutationRequest(values: TournamentSettingsFormValues
     desc_zh: emptyToNull(values.desc_zh),
     name: values.name.trim(),
     qual_end: toIsoOrNull(values.qual_end),
-    qual_rank_mode: values.qual_rank_mode,
+    qual_rank_mode: Number(values.qual_rank_mode),
     qual_start: toIsoOrNull(values.qual_start),
     qual_top_n: values.qual_top_n,
     reg_end: toIsoOrNull(values.reg_end) ?? "",
@@ -83,7 +85,7 @@ export function toTournamentSettingsFormValues(tournament: Tournament): Tourname
     desc_zh: tournament.desc_zh ?? "",
     name: tournament.name ?? "",
     qual_end: toDatetimeLocal(tournament.qual_end),
-    qual_rank_mode: tournament.qual_rank_mode ?? QUAL_RANK_MODE_TOTAL_SCORE,
+    qual_rank_mode: normalizeQualRankModeValue(tournament.qual_rank_mode),
     qual_start: toDatetimeLocal(tournament.qual_start),
     qual_top_n: tournament.qual_top_n ?? 32,
     reg_end: toDatetimeLocal(tournament.reg_end),
@@ -96,6 +98,10 @@ export function toTournamentSettingsFormValues(tournament: Tournament): Tourname
 function emptyToNull(value?: string) {
   const trimmed = value?.trim()
   return trimmed ? trimmed : null
+}
+
+function normalizeQualRankModeValue(value?: number | null): QualRankModeFormValue {
+  return value === 1 ? "1" : "0"
 }
 
 function toIsoOrNull(value?: string) {

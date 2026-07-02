@@ -1,79 +1,47 @@
-import type { ReactNode } from "react"
-import { ChartLineUp, Eye, Note, Timer, UsersThree } from "@phosphor-icons/react"
+import { ChartLineUp } from "@phosphor-icons/react"
 import { lazy, Suspense, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   useAnalyticsDailyQuery,
   useAnalyticsOverviewQuery,
   useAnalyticsPagesQuery,
-  useDashboardCountsQuery,
+  useDashboardUserGrowthQuery,
   type AnalyticsDailyPoint,
   type AnalyticsPageStats,
+  type DashboardUserGrowthPoint as ApiDashboardUserGrowthPoint,
 } from "@/entities/dashboard"
 import { AdminPage } from "@/features/admin-shell"
-import { getErrorMessage, PageState } from "@/shared/components"
-import type { DashboardDailyPoint, DashboardPagePoint } from "./DashboardCharts"
+import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint, DashboardUserGrowthPoint } from "./DashboardCharts"
 
-const anniversary = new Date("2027-06-01T00:00:00+08:00")
+const analyticsDays = 30
 const analyticsAppId = "jack-house-v3"
 const DashboardCharts = lazy(() => import("./DashboardCharts").then((module) => ({ default: module.DashboardCharts })))
 
 export function AdminDashboardPage() {
   const { t } = useTranslation()
-  const countsQuery = useDashboardCountsQuery()
-  const [daysToAnniversary] = useState(() => Math.ceil((anniversary.getTime() - Date.now()) / 86_400_000))
-  const [analyticsRange] = useState(() => getLastDaysRange(30))
+  const [analyticsRange] = useState(() => getLastDaysRange(analyticsDays))
   const analyticsParams = { appId: analyticsAppId, ...analyticsRange }
   const overviewQuery = useAnalyticsOverviewQuery(analyticsParams)
   const dailyQuery = useAnalyticsDailyQuery(analyticsParams)
   const pagesQuery = useAnalyticsPagesQuery(analyticsParams)
-
-  if (countsQuery.isError) {
-    return <PageState title={t("admin.dashboard.loadFailedTitle")} description={getErrorMessage(countsQuery.error)} />
-  }
+  const userGrowthQuery = useDashboardUserGrowthQuery(analyticsDays)
 
   const overview = overviewQuery.data?.overview
   const dailyData = normalizeDaily(dailyQuery.data?.daily ?? [])
   const pageData = normalizePages(pagesQuery.data?.pages ?? [])
+  const userGrowthData = normalizeUserGrowth(userGrowthQuery.data?.daily ?? [])
   const analyticsError = overviewQuery.isError || dailyQuery.isError || pagesQuery.isError
   const analyticsLoading = overviewQuery.isLoading || dailyQuery.isLoading || pagesQuery.isLoading
   const hasAnalyticsOverview = !analyticsError && Boolean(overview)
-  const hasAnalyticsCharts = dailyData.length > 0 || pageData.length > 0
+  const chartLoading = analyticsLoading || userGrowthQuery.isLoading
+  const hasAnalyticsCharts = !analyticsError && (dailyData.length > 0 || pageData.length > 0)
+  const hasUserGrowthChart = !userGrowthQuery.isError && userGrowthData.length > 0
+  const hasDashboardCharts = hasAnalyticsCharts || hasUserGrowthChart
+  const chartSummary = getChartSummary(dailyData, userGrowthData, hasAnalyticsOverview ? toNumber(overview?.users) : undefined, hasAnalyticsOverview ? toNumber(overview?.active_ms) : undefined)
 
   return (
-    <AdminPage>
-      <div className="space-y-5">
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            icon={<UsersThree className="size-5" weight="bold" />}
-            isLoading={countsQuery.isLoading}
-            label={t("admin.dashboard.users")}
-            meta={t("admin.dashboard.usersMeta")}
-            value={formatNumber(countsQuery.data?.userCount)}
-          />
-          <MetricCard
-            icon={<Note className="size-5" weight="bold" />}
-            isLoading={countsQuery.isLoading}
-            label={t("admin.dashboard.posts")}
-            meta={t("admin.dashboard.postsMeta")}
-            value={formatNumber(countsQuery.data?.postCount)}
-          />
-          <MetricCard
-            icon={<Eye className="size-5" weight="bold" />}
-            isLoading={analyticsLoading}
-            label={t("admin.dashboard.pv30")}
-            meta={t("admin.dashboard.analyticsSource")}
-            value={hasAnalyticsOverview ? formatNumber(toNumber(overview?.pv)) : "-"}
-          />
-          <MetricCard
-            icon={<Timer className="size-5" weight="bold" />}
-            isLoading={analyticsLoading}
-            label={t("admin.dashboard.activeTime")}
-            meta={t("admin.dashboard.activeTimeMeta")}
-            value={hasAnalyticsOverview ? formatDuration(toNumber(overview?.active_ms)) : "-"}
-          />
-        </section>
-
+    <AdminPage className="h-full min-h-0">
+      <div className="min-h-0 flex-1">
         {analyticsError ? (
           <section className="rounded-lg border border-dashed bg-card p-4">
             <div className="flex items-start gap-3">
@@ -85,74 +53,49 @@ export function AdminDashboardPage() {
               </div>
             </div>
           </section>
-        ) : analyticsLoading ? (
+        ) : chartLoading ? (
           <DashboardChartFallback label={t("admin.dashboard.loadingAnalytics")} />
-        ) : !hasAnalyticsCharts ? (
+        ) : !hasDashboardCharts ? (
           <DashboardChartFallback label={t("admin.dashboard.noTrafficData")} />
         ) : (
           <Suspense fallback={<DashboardChartFallback label={t("admin.dashboard.loadingAnalytics")} />}>
-            <DashboardCharts dailyData={dailyData} isLoading={false} pageData={pageData} />
+            <DashboardCharts
+              dailyData={analyticsError ? [] : dailyData}
+              isLoading={false}
+              pageData={analyticsError ? [] : pageData}
+              summary={chartSummary}
+              userGrowthData={userGrowthQuery.isError ? [] : userGrowthData}
+            />
           </Suspense>
         )}
-
-        <section className="grid gap-3 md:grid-cols-3">
-          <SecondaryMetric label={t("admin.dashboard.uv")} value={hasAnalyticsOverview ? formatNumber(toNumber(overview?.uv)) : "-"} />
-          <SecondaryMetric label={t("admin.dashboard.sessions")} value={hasAnalyticsOverview ? formatNumber(toNumber(overview?.sessions)) : "-"} />
-          <SecondaryMetric
-            label={t("admin.dashboard.anniversary")}
-            value={daysToAnniversary >= 0 ? t("admin.dashboard.days", { count: daysToAnniversary }) : t("admin.dashboard.passed")}
-          />
-        </section>
       </div>
     </AdminPage>
   )
 }
 
-type MetricCardProps = {
-  icon: ReactNode
-  isLoading?: boolean
-  label: string
-  meta?: string
-  value?: string
-}
-
-function MetricCard({ icon, isLoading = false, label, meta, value }: MetricCardProps) {
+function DashboardChartFallback({ label }: { label: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className="rounded-md bg-muted p-2 text-muted-foreground">{icon}</span>
-      </div>
-      <div className="mt-5 font-heading text-3xl font-semibold">
-        {isLoading ? <span className="block h-8 w-20 animate-pulse rounded bg-muted" /> : value ?? "-"}
-      </div>
-      {meta ? <p className="mt-2 text-xs text-muted-foreground">{meta}</p> : null}
+    <div className="space-y-4 xl:grid xl:h-full xl:min-h-0 xl:grid-rows-2 xl:gap-4 xl:space-y-0">
+      <section className="grid gap-4 xl:min-h-0 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <ChartFallbackCard key={index} label={label} />
+        ))}
+      </section>
+      <section className="grid gap-4 xl:min-h-0 xl:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <ChartFallbackCard key={index} label={label} />
+        ))}
+      </section>
     </div>
   )
 }
 
-function DashboardChartFallback({ label }: { label: string }) {
+function ChartFallbackCard({ label }: { label: string }) {
   return (
-    <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-      <div className="rounded-lg border bg-card p-4">
-        <div className="grid h-[280px] place-items-center rounded-md border border-dashed bg-background text-sm text-muted-foreground">
-          {label}
-        </div>
+    <div className="rounded-lg border bg-card p-4 xl:h-full xl:min-h-0">
+      <div className="grid h-[220px] place-items-center rounded-md border border-dashed bg-background text-sm text-muted-foreground xl:h-full xl:min-h-0">
+        {label}
       </div>
-      <div className="rounded-lg border bg-card p-4">
-        <div className="grid h-[280px] place-items-center rounded-md border border-dashed bg-background text-sm text-muted-foreground">
-          {label}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function SecondaryMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border bg-card px-4 py-3">
-      <div className="text-xs uppercase text-muted-foreground">{label}</div>
-      <div className="mt-1 font-heading text-xl font-semibold">{value}</div>
     </div>
   )
 }
@@ -169,23 +112,53 @@ function getLastDaysRange(days: number) {
 
 function normalizeDaily(rows: AnalyticsDailyPoint[]): DashboardDailyPoint[] {
   return rows.map((row) => ({
-    activeMs: toNumber(row.active_ms),
+    activeMinutes: Math.round(toNumber(row.active_ms) / 60_000),
     date: row.date,
     dateLabel: formatShortDate(row.date),
     pv: toNumber(row.pv),
-    sessions: toNumber(row.sessions),
+    users: toNumber(row.users),
     uv: toNumber(row.uv),
   }))
 }
 
 function normalizePages(rows: AnalyticsPageStats[]): DashboardPagePoint[] {
-  return rows.slice(0, 8).map((row) => ({
-    label: compactPath(row.path),
-    path: row.path,
-    pv: toNumber(row.pv),
-    sessions: toNumber(row.sessions),
-    uv: toNumber(row.uv),
+  return rows
+    .filter((row) => isPublicPagePath(row.path))
+    .slice(0, 8)
+    .map((row) => ({
+      label: compactPath(row.path),
+      path: row.path,
+      pv: toNumber(row.pv),
+    }))
+}
+
+function normalizeUserGrowth(rows: ApiDashboardUserGrowthPoint[]): DashboardUserGrowthPoint[] {
+  return rows.map((row) => ({
+    date: row.date,
+    dateLabel: formatShortDate(row.date),
+    newUsers: toNumber(row.new_users),
+    totalUsers: toNumber(row.total_users),
   }))
+}
+
+function getChartSummary(dailyData: DashboardDailyPoint[], userGrowthData: DashboardUserGrowthPoint[], loginUsers?: number, activeMs?: number): DashboardChartSummary {
+  const traffic = dailyData.reduce(
+    (total, item) => ({
+      pv: total.pv + item.pv,
+      uv: total.uv + item.uv,
+    }),
+    { pv: 0, uv: 0 },
+  )
+  const currentUserPoint = userGrowthData[userGrowthData.length - 1]
+  const newUsers = userGrowthData.reduce((total, item) => total + item.newUsers, 0)
+
+  return {
+    activeLabel: formatDuration(activeMs ?? dailyData.reduce((total, item) => total + item.activeMinutes * 60_000, 0)),
+    loginUsers,
+    newUsers,
+    totalUsers: currentUserPoint?.totalUsers,
+    traffic,
+  }
 }
 
 function toNumber(value: number | string | undefined) {
@@ -193,10 +166,6 @@ function toNumber(value: number | string | undefined) {
   if (!value) return 0
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-function formatNumber(value: number | undefined) {
-  return typeof value === "number" ? new Intl.NumberFormat("en-US").format(value) : "-"
 }
 
 function formatDuration(ms: number) {
@@ -219,5 +188,18 @@ function toDateInput(date: Date) {
 
 function compactPath(path: string) {
   if (path === "/") return "/"
-  return path.length > 18 ? `${path.slice(0, 16)}...` : path
+  const pathname = getPathname(path)
+  return pathname.length > 18 ? `${pathname.slice(0, 16)}...` : pathname
+}
+
+function isPublicPagePath(path: string) {
+  return !getPathname(path).startsWith("/admin")
+}
+
+function getPathname(path: string) {
+  try {
+    return new URL(path, "https://jackhouse.local").pathname
+  } catch {
+    return path.split("?")[0] || path
+  }
 }

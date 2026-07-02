@@ -1,6 +1,13 @@
-export type DashboardCounts = {
-  postCount: number
-  userCount: number
+export type DashboardUserGrowthPoint = {
+  date: string
+  new_users: number | string
+  total_users: number | string
+}
+
+export type DashboardUserGrowthResponse = {
+  daily: DashboardUserGrowthPoint[]
+  days: number
+  ok: boolean
 }
 
 export type AnalyticsStatsRange = {
@@ -22,6 +29,7 @@ export type AnalyticsDailyPoint = {
   date: string
   pv: number | string
   sessions: number | string
+  users: number | string
   uv: number | string
 }
 
@@ -29,6 +37,7 @@ export type AnalyticsPageStats = {
   path: string
   pv: number | string
   sessions: number | string
+  users: number | string
   uv: number | string
 }
 

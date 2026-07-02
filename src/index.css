@@ -121,6 +121,34 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 36%, transparent) transparent;
+    scrollbar-width: thin;
+    }
+  *::-webkit-scrollbar {
+    height: 0.625rem;
+    width: 0.625rem;
+    }
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+    border-radius: 999px;
+    }
+  *::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--muted-foreground) 28%, transparent);
+    background-clip: padding-box;
+    border: 0.1875rem solid transparent;
+    border-radius: 999px;
+    min-height: 2.5rem;
+    }
+  *:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--primary) 44%, transparent);
+    background-clip: padding-box;
+    border: 0.1875rem solid transparent;
+    }
+  *::-webkit-scrollbar-thumb:active {
+    background: color-mix(in oklch, var(--primary) 58%, transparent);
+    background-clip: padding-box;
+    border: 0.1875rem solid transparent;
     }
   body {
       @apply bg-background text-foreground;
@@ -141,38 +169,6 @@
     }
 
     .scrollbar-soft {
-      scrollbar-color: color-mix(in oklch, var(--muted-foreground) 36%, transparent) color-mix(in oklch, var(--muted) 42%, transparent);
       scrollbar-gutter: stable;
-      scrollbar-width: thin;
-    }
-
-    .scrollbar-soft::-webkit-scrollbar {
-      height: 0.625rem;
-      width: 0.625rem;
-    }
-
-    .scrollbar-soft::-webkit-scrollbar-track {
-      background: color-mix(in oklch, var(--muted) 42%, transparent);
-      border-radius: 999px;
-    }
-
-    .scrollbar-soft::-webkit-scrollbar-thumb {
-      background: color-mix(in oklch, var(--muted-foreground) 28%, transparent);
-      background-clip: padding-box;
-      border: 0.1875rem solid transparent;
-      border-radius: 999px;
-      min-height: 2.5rem;
-    }
-
-    .scrollbar-soft:hover::-webkit-scrollbar-thumb {
-      background: color-mix(in oklch, var(--primary) 44%, transparent);
-      background-clip: padding-box;
-      border: 0.1875rem solid transparent;
-    }
-
-    .scrollbar-soft::-webkit-scrollbar-thumb:active {
-      background: color-mix(in oklch, var(--primary) 58%, transparent);
-      background-clip: padding-box;
-      border: 0.1875rem solid transparent;
     }
   }

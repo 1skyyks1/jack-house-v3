@@ -68,7 +68,7 @@ export function TournamentBracketPage() {
 
   return (
     <main className="flex min-h-[calc(100dvh-4rem)] flex-col gap-4 pb-6 pt-2">
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="px-3 sm:px-6 lg:px-8">
         <TournamentBreadcrumb current={t("tournament.common.bracket")} tournament={tournamentQuery.data} tournamentId={tid} />
 
         {bracketQuery.isLoading ? <PageState title={t("tournament.bracket.loading")} description={t("tournament.bracket.loadingDescription")} /> : null}
@@ -89,7 +89,7 @@ export function TournamentBracketPage() {
         ) : null}
       </div>
 
-      <div className="grid gap-4 px-4 sm:px-6 md:hidden">
+      <div className="grid gap-4 px-3 sm:px-6 md:hidden">
         {mobileSections.map((section) => (
           <BracketSection key={section.group} matchLookup={matchLookup} section={section} tournamentId={tid ?? ""} />
         ))}

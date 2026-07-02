@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { LanguageSwitch } from "./LanguageSwitch"
+import { PageTitle } from "./PageTitle"
 import { ThemeToggle } from "./ThemeToggle"
 
 const publicNavItems = [
@@ -104,6 +105,7 @@ export function AppShell() {
 
   return (
     <div className={cn("text-foreground", isAdminRoute ? "flex h-dvh flex-col overflow-hidden bg-background" : "min-h-dvh bg-transparent")}>
+      <PageTitle />
       <header
         id="app-header"
         className={cn(
@@ -120,7 +122,7 @@ export function AppShell() {
               : "border-b border-transparent bg-transparent",
         )}
       >
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-3 sm:px-6">
           <NavLink
             to="/"
             className={cn(
@@ -279,7 +281,7 @@ export function AppShell() {
             ? "min-h-0 flex-1 overflow-hidden px-0 py-0"
             : isHomeRoute || isTournamentBracketRoute
               ? "px-0 py-0"
-              : "mx-auto max-w-7xl px-4 py-6 sm:px-6",
+              : "mx-auto max-w-7xl px-3 py-6 sm:px-6",
         )}
       >
         <Outlet />

@@ -24,7 +24,7 @@ const homeVisuals: HomeVisual[] = [
     descriptionKey: "home.visuals.community.description",
     displayTitle: "JACK HOUSE",
     id: "community",
-    imageUrl: "https://raw.githubusercontent.com/1skyyks1/jack-house-img/main/jackhouse.jpg",
+    imageUrl: "https://cdn.jsdelivr.net/gh/1skyyks1/jack-house-img@main/jackhouse.jpg",
     link: "/forum",
     titleKey: "home.visuals.community.title",
   },
@@ -32,7 +32,7 @@ const homeVisuals: HomeVisual[] = [
     descriptionKey: "home.visuals.packs.description",
     displayTitle: "JACKMAPS",
     id: "packs",
-    imageUrl: "https://raw.githubusercontent.com/1skyyks1/jack-house-img/main/packs.png",
+    imageUrl: "https://cdn.jsdelivr.net/gh/1skyyks1/jack-house-img@main/packs.png",
     link: "/pack",
     titleKey: "home.visuals.packs.title",
   },
@@ -40,7 +40,7 @@ const homeVisuals: HomeVisual[] = [
     descriptionKey: "home.visuals.tourney.description",
     displayTitle: "TOURNEY",
     id: "tourney",
-    imageUrl: "https://raw.githubusercontent.com/1skyyks1/jack-house-img/main/jhc2026.png",
+    imageUrl: "https://cdn.jsdelivr.net/gh/1skyyks1/jack-house-img@main/jhc2026.png",
     link: "/t",
     titleKey: "home.visuals.tourney.title",
   },
@@ -170,7 +170,7 @@ export function HomePage() {
   return (
     <section
       ref={containerRef}
-      className="relative isolate h-dvh overflow-hidden bg-black"
+      className="relative isolate h-[100lvh] overflow-hidden bg-black"
     >
       <div className="fixed right-5 top-1/2 z-20 hidden -translate-y-1/2 lg:flex">
         <div className="flex flex-col gap-3">
@@ -196,9 +196,9 @@ export function HomePage() {
       </div>
 
       <div
-        className="relative z-10 h-dvh will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)]"
+        className="relative z-10 h-[100lvh] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)]"
         style={{
-          transform: `translate3d(0, -${activeIndex * 100}dvh, 0)`,
+          transform: `translate3d(0, -${activeIndex * 100}lvh, 0)`,
         }}
       >
         {homeSections.map((section, index) => (
@@ -223,14 +223,14 @@ function HomeSectionPanel({ entry, index }: HomeSectionPanelProps) {
 
   return (
     <article
-      className="relative isolate h-dvh overflow-hidden"
+      className="relative isolate h-[100lvh] overflow-hidden"
       data-anchor={entry.id}
       data-home-section
       data-index={index}
     >
       <img alt="" className="absolute inset-0 -z-30 size-full object-cover" src={entry.imageUrl} />
       <div className="absolute inset-0 -z-20 bg-black/60" />
-      <div className="mx-auto flex h-dvh w-full max-w-[1420px] flex-col items-center justify-center px-4 pt-24 pb-8 text-center sm:px-6 lg:px-8 lg:pt-28 lg:pb-10">
+      <div className="mx-auto flex h-[100lvh] w-full max-w-[1420px] flex-col items-center justify-center px-3 pt-24 pb-8 text-center sm:px-6 lg:px-8 lg:pt-28 lg:pb-10">
         <div className="space-y-5">
           <h2 className="font-heading text-5xl font-semibold tracking-[-0.06em] text-white drop-shadow-[0_0_24px_rgba(255,255,255,0.12)] sm:text-7xl lg:text-[8rem]">
             {entry.displayTitle}
