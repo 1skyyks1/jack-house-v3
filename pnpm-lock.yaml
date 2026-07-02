@@ -21,11 +21,11 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.79.0(react@19.2.7))
       '@jack-house-analytics/core':
-        specifier: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz
-        version: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz
+        specifier: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz
+        version: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz
       '@jack-house-analytics/react':
-        specifier: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.0.tgz
-        version: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.0.tgz(@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz)(react-router-dom@7.17.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+        specifier: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.1.tgz
+        version: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.1.tgz(@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz)(react-router-dom@7.17.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -437,15 +437,15 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz':
-    resolution: {integrity: sha512-c1tumgCL59sUfypkECCPl96jNxlrW729WFQnba+T5kyKZFdFe54dtgFDJStc33WUGN4RMPNDzIVQAZUln6hyYw==, tarball: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz}
-    version: 0.1.0
+  '@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz':
+    resolution: {integrity: sha512-zC/7iFWKzix8nDDnPoUCGhD3lV0ipifpyv47jYFZivmsiBnzKWYQbfwL5ndMUBYElI3nC7EZI1P8ANnLG16B2w==, tarball: file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz}
+    version: 0.1.1
 
-  '@jack-house-analytics/react@file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.0.tgz':
-    resolution: {integrity: sha512-TPYTHEQ4+LIc8Cq+1yvDhIOlJb+VSsuxRClXwRCxdTy6vrNjX8E74cJXoI+LcaxlKMa2/j+dWfUf3RI0FzLsJw==, tarball: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.0.tgz}
-    version: 0.1.0
+  '@jack-house-analytics/react@file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.1.tgz':
+    resolution: {integrity: sha512-jvMQd9f5CUh4rc0b4GxpxeOgrha5QvuEUQ4yhttXu2FEjkmQCztfidZrFEOBIKJkz8uTuj5oWfvvoBb1B+6ajw==, tarball: file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.1.tgz}
+    version: 0.1.1
     peerDependencies:
-      '@jack-house-analytics/core': 0.1.0
+      '@jack-house-analytics/core': 0.1.1
       react-router-dom: '>=6'
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -3984,11 +3984,11 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz': {}
+  '@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz': {}
 
-  '@jack-house-analytics/react@file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.0.tgz(@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz)(react-router-dom@7.17.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))':
+  '@jack-house-analytics/react@file:../.packed/jack-house-analytics/jack-house-analytics-react-0.1.1.tgz(@jack-house-analytics/core@file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz)(react-router-dom@7.17.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))':
     dependencies:
-      '@jack-house-analytics/core': file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.0.tgz
+      '@jack-house-analytics/core': file:../.packed/jack-house-analytics/jack-house-analytics-core-0.1.1.tgz
       react-router-dom: 7.17.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
 
   '@jridgewell/gen-mapping@0.3.13':

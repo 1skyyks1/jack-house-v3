@@ -29,7 +29,7 @@ export type AnalyticsDailyPoint = {
   date: string
   pv: number | string
   sessions: number | string
-  users: number | string
+  users?: number | string
   uv: number | string
 }
 

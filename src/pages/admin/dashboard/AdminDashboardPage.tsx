@@ -27,9 +27,11 @@ export function AdminDashboardPage() {
   const userGrowthQuery = useDashboardUserGrowthQuery(analyticsDays)
 
   const overview = overviewQuery.data?.overview
-  const dailyData = normalizeDaily(dailyQuery.data?.daily ?? [])
+  const rawDailyData = dailyQuery.data?.daily ?? []
+  const dailyData = normalizeDaily(rawDailyData, analyticsRange)
   const pageData = normalizePages(pagesQuery.data?.pages ?? [])
   const userGrowthData = normalizeUserGrowth(userGrowthQuery.data?.daily ?? [])
+  const hasDailyLoginUsers = rawDailyData.some(hasLoginUserField)
   const analyticsError = overviewQuery.isError || dailyQuery.isError || pagesQuery.isError
   const analyticsLoading = overviewQuery.isLoading || dailyQuery.isLoading || pagesQuery.isLoading
   const hasAnalyticsOverview = !analyticsError && Boolean(overview)
@@ -61,6 +63,7 @@ export function AdminDashboardPage() {
           <Suspense fallback={<DashboardChartFallback label={t("admin.dashboard.loadingAnalytics")} />}>
             <DashboardCharts
               dailyData={analyticsError ? [] : dailyData}
+              hasDailyLoginUsers={hasDailyLoginUsers}
               isLoading={false}
               pageData={analyticsError ? [] : pageData}
               summary={chartSummary}
@@ -110,15 +113,25 @@ function getLastDaysRange(days: number) {
   }
 }
 
-function normalizeDaily(rows: AnalyticsDailyPoint[]): DashboardDailyPoint[] {
-  return rows.map((row) => ({
-    activeMinutes: Math.round(toNumber(row.active_ms) / 60_000),
-    date: row.date,
-    dateLabel: formatShortDate(row.date),
-    pv: toNumber(row.pv),
-    users: toNumber(row.users),
-    uv: toNumber(row.uv),
-  }))
+function normalizeDaily(rows: AnalyticsDailyPoint[], range: { from: string; to: string }): DashboardDailyPoint[] {
+  const rowsByDate = new Map(rows.map((row) => [toDateKey(row.date), row]))
+
+  return eachDate(range.from, range.to).map((date) => {
+    const row = rowsByDate.get(date)
+
+    return {
+      activeMinutes: Math.round(toNumber(row?.active_ms) / 60_000),
+      date,
+      dateLabel: formatShortDate(date),
+      pv: toNumber(row?.pv),
+      users: toNumber(row?.users),
+      uv: toNumber(row?.uv),
+    }
+  })
+}
+
+function hasLoginUserField(row: AnalyticsDailyPoint) {
+  return row.users !== undefined && row.users !== null
 }
 
 function normalizePages(rows: AnalyticsPageStats[]): DashboardPagePoint[] {
@@ -176,14 +189,40 @@ function formatDuration(ms: number) {
   return `${new Intl.NumberFormat("en-US").format(hours)} h`
 }
 
-function formatShortDate(value: string) {
+function formatShortDate(value: string | Date) {
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
+  if (Number.isNaN(date.getTime())) return String(value)
   return new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short" }).format(date)
 }
 
 function toDateInput(date: Date) {
   return date.toISOString().slice(0, 10)
+}
+
+function toDateKey(value: string | Date) {
+  if (value instanceof Date) {
+    return toDateInput(value)
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : toDateInput(date)
+}
+
+function eachDate(from: string, to: string) {
+  const dates: string[] = []
+  const current = new Date(`${from}T00:00:00Z`)
+  const end = new Date(`${to}T00:00:00Z`)
+
+  while (current <= end) {
+    dates.push(toDateInput(current))
+    current.setUTCDate(current.getUTCDate() + 1)
+  }
+
+  return dates
 }
 
 function compactPath(path: string) {

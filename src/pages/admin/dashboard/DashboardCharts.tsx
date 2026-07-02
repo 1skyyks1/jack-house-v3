@@ -40,6 +40,7 @@ export type DashboardChartSummary = {
 
 type DashboardChartsProps = {
   dailyData: DashboardDailyPoint[]
+  hasDailyLoginUsers: boolean
   isLoading: boolean
   pageData: DashboardPagePoint[]
   summary: DashboardChartSummary
@@ -85,7 +86,7 @@ const userGrowthChartConfig = {
   },
 } satisfies ChartConfig
 
-export function DashboardCharts({ dailyData, isLoading, pageData, summary, userGrowthData }: DashboardChartsProps) {
+export function DashboardCharts({ dailyData, hasDailyLoginUsers, isLoading, pageData, summary, userGrowthData }: DashboardChartsProps) {
   const { t } = useTranslation()
 
   return (
@@ -126,18 +127,18 @@ export function DashboardCharts({ dailyData, isLoading, pageData, summary, userG
           stats={[{ label: t("admin.dashboard.loginUsers30"), value: formatNumber(summary.loginUsers) }]}
           title={t("admin.dashboard.userTrend")}
         >
-          {dailyData.length > 0 ? (
+          {dailyData.length > 0 && hasDailyLoginUsers ? (
             <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={userChartConfig}>
               <LineChart data={dailyData} margin={{ left: 8, right: 8, top: 8 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis axisLine={false} dataKey="dateLabel" tickLine={false} tickMargin={8} />
                 <YAxis axisLine={false} tickLine={false} tickMargin={8} width={36} />
                 <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-                <Line dataKey="users" dot={false} stroke="var(--color-users)" strokeWidth={2} type="monotone" />
+                <Line dataKey="users" dot={{ r: 2 }} stroke="var(--color-users)" strokeWidth={2} type="monotone" />
               </LineChart>
             </ChartContainer>
           ) : (
-            <DashboardChartState label={t("admin.dashboard.noTrafficData")} />
+            <DashboardChartState label={t(hasDailyLoginUsers ? "admin.dashboard.noTrafficData" : "admin.dashboard.noLoginUserTrendData")} />
           )}
         </ChartCard>
 
