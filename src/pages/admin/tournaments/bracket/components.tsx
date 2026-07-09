@@ -146,12 +146,12 @@ export function TeamSelect({ onChange, teams, value }: { onChange: (value: strin
   )
 }
 
-export function MapRow({ map, onDelete }: { map: TournamentMappoolMap; onDelete: () => void }) {
+export function MapRow({ label, map, onDelete }: { label: string; map: TournamentMappoolMap; onDelete: () => void }) {
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border bg-background px-3 py-2">
       <div className="min-w-0">
         <div className="mb-1 flex items-center gap-2">
-          <Badge variant="outline">{map.type}</Badge>
+          <Badge variant="outline">{label}</Badge>
           <span className="text-xs text-muted-foreground">#{map.map_id}</span>
         </div>
         <a className="block truncate font-medium hover:underline" href={`https://osu.ppy.sh/beatmaps/${map.map_id}`} rel="noreferrer" target="_blank">

@@ -1,11 +1,8 @@
-import { BracketsCurly, CalendarBlank, ChartBar, ChatText, ClipboardText, Info, Trophy, UsersThree } from "@phosphor-icons/react"
+import { BracketsCurly, CalendarBlank, ChartBar, ChatText, ClipboardText, Info, MapTrifold, Trophy, UsersThree } from "@phosphor-icons/react"
 import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
-import { getTournamentStatus, useTournamentDetailQuery, useTournamentQualMappoolQuery, useTournamentSectionsQuery, type TournamentSection, type TournamentStaff } from "@/entities/tournament"
-import { hasAdminPermission } from "@/features/admin-permissions"
-import { useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
-import { Badge } from "@/components/ui/badge"
+import { useTournamentDetailQuery, useTournamentQualMappoolQuery, useTournamentSectionsQuery, type TournamentSection, type TournamentStaff } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -13,7 +10,7 @@ import { RichTextRenderer, RichTextToc } from "@/features/rich-text/renderer"
 import type { TocItem } from "@/features/rich-text/model/types"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
-import { getTournamentHeroImage } from "../_shared/tournamentVisuals"
+import { getTournamentHeroImage, getTournamentPublicPath } from "../_shared/tournamentVisuals"
 
 export function TournamentDetailPage() {
   const { i18n, t } = useTranslation()
@@ -22,8 +19,6 @@ export function TournamentDetailPage() {
   const tournamentQuery = useTournamentDetailQuery(tid)
   const sectionsQuery = useTournamentSectionsQuery(tid)
   const qualMappoolQuery = useTournamentQualMappoolQuery(tid)
-  const currentUserQuery = useCurrentUserQuery()
-  const permissionsQuery = usePermissionsQuery()
   const sections = useMemo(() => sectionsQuery.data ?? [], [sectionsQuery.data])
   const contentSections = useMemo(
     () => sections.map((section) => ({
@@ -59,14 +54,11 @@ export function TournamentDetailPage() {
   }
 
   const tournament = tournamentQuery.data
-  const status = getTournamentStatus(tournament)
+  const publicTournamentPath = getTournamentPublicPath(tournament)
   const heroImage = getTournamentHeroImage(tournament, qualMappoolQuery.data ?? [])
   const description = i18n.language.startsWith("en")
     ? firstText(tournament.desc_en, tournament.desc_zh)
     : firstText(tournament.desc_zh, tournament.desc_en)
-  const currentUserId = currentUserQuery.data?.user_id
-  const canManageTournament = hasAdminPermission(permissionsQuery.data?.adminPermissions, "tournaments")
-    || Boolean(currentUserId && tournament.staff?.some((staff) => Number(staff.user_id) === Number(currentUserId)))
   const staffByRole = new Map<string, TournamentStaff[]>()
   for (const staff of tournament.staff ?? []) {
     const next = staffByRole.get(staff.role) ?? []
@@ -75,7 +67,7 @@ export function TournamentDetailPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-3 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <TournamentBreadcrumb current={tournament.acronym || tournament.name} />
 
       <section className="relative min-h-[22rem] overflow-hidden rounded-lg border bg-card text-white">
@@ -85,11 +77,7 @@ export function TournamentDetailPage() {
           <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
         )}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.84))]" />
-        <div className="relative z-10 flex min-h-[22rem] flex-col justify-between p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge className="border-white/20 bg-black/35 text-white" variant="outline">{tournament.acronym}</Badge>
-            <Badge className="border-white/20 bg-black/35 text-white" variant="outline">{t(`tournament.status.${status.key}`)}</Badge>
-          </div>
+        <div className="relative z-10 flex min-h-[22rem] flex-col justify-end p-6 sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div className="min-w-0">
               <h1 className="max-w-4xl font-heading text-4xl font-semibold sm:text-5xl">{tournament.name}</h1>
@@ -101,30 +89,35 @@ export function TournamentDetailPage() {
             </div>
             <div className="flex flex-wrap gap-2 lg:justify-end">
               <Button asChild>
-                <Link to={`/t/${tid}/bracket`}>
+                <Link to={`${publicTournamentPath}/bracket`}>
                   <BracketsCurly className="size-4" weight="bold" />
-                  {t("tournament.common.bracket")}
+                  {t("tournament.common.schedule")}
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to={`/t/${tid}/teams`}>
+                <Link to={`${publicTournamentPath}/mappool`}>
+                  <MapTrifold className="size-4" weight="bold" />
+                  {t("tournament.common.mappool")}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to={`${publicTournamentPath}/leaderboard`}>
+                  <Trophy className="size-4" weight="bold" />
+                  {t("tournament.common.leaderboard")}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to={`${publicTournamentPath}/teams`}>
                   <UsersThree className="size-4" weight="bold" />
                   {t("tournament.common.teams")}
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to={`/t/${tid}/qualifier`}>
+                <Link to={`${publicTournamentPath}/qualifier`}>
                   <ChartBar className="size-4" weight="bold" />
                   {t("tournament.common.qualifier")}
                 </Link>
               </Button>
-              {canManageTournament ? (
-                <Button asChild className="bg-white text-black hover:bg-white/90" variant="secondary">
-                  <Link to={`/admin/tournaments/${tournament.id}/settings`}>
-                    {t("tournament.common.manage")}
-                  </Link>
-                </Button>
-              ) : null}
             </div>
           </div>
         </div>

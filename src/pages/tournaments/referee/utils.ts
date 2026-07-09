@@ -12,32 +12,31 @@ export function isMapDisabled(actionType: ActionType, map: TournamentMappoolMap,
   return isBanned || isPicked
 }
 
-export function getHighRollTeamId(match: TournamentMatch) {
-  if (match.team1_roll == null || match.team2_roll == null) return null
-  return match.team1_roll > match.team2_roll ? match.team1_id : match.team2_id
+export function getRollWinnerTeamId(match: TournamentMatch) {
+  return match.roll_winner_id ?? null
 }
 
 export function getNextAction(match: TournamentMatch, actions: TournamentMatchAction[]) {
-  const highRollTeamId = getHighRollTeamId(match)
-  const lowRollTeamId = highRollTeamId && Number(highRollTeamId) === Number(match.team1_id) ? match.team2_id : match.team1_id
+  const rollWinnerTeamId = getRollWinnerTeamId(match)
+  const otherTeamId = rollWinnerTeamId && Number(rollWinnerTeamId) === Number(match.team1_id) ? match.team2_id : match.team1_id
   const protectedCount = actions.filter((action) => action.action_type === "protect").length
   const bannedCount = actions.filter((action) => action.action_type === "ban").length
   const pickedActions = actions.filter((action) => action.action_type === "pick")
 
-  if (!highRollTeamId || !lowRollTeamId) {
-    return { action_type: "protect" as ActionType, label: "Record both roll points first", team_id: null }
+  if (!rollWinnerTeamId || !otherTeamId) {
+    return { action_type: "protect" as ActionType, labelKey: "recordRollFirst", team_id: null }
   }
 
-  if (protectedCount === 0) return { action_type: "protect" as ActionType, label: "High roll protects first", team_id: highRollTeamId }
-  if (protectedCount === 1) return { action_type: "protect" as ActionType, label: "Low roll protects second", team_id: lowRollTeamId }
-  if (bannedCount === 0) return { action_type: "ban" as ActionType, label: "Low roll bans first", team_id: lowRollTeamId }
-  if (bannedCount === 1) return { action_type: "ban" as ActionType, label: "High roll bans second", team_id: highRollTeamId }
-  if (pickedActions.length === 0) return { action_type: "pick" as ActionType, label: "High roll picks first", team_id: highRollTeamId }
-  if (pickedActions.length === 1) return { action_type: "pick" as ActionType, label: "Low roll picks second", team_id: lowRollTeamId }
+  if (protectedCount === 0) return { action_type: "protect" as ActionType, labelKey: "rollWinnerProtectsFirst", team_id: rollWinnerTeamId }
+  if (protectedCount === 1) return { action_type: "protect" as ActionType, labelKey: "lowRollProtectsSecond", team_id: otherTeamId }
+  if (bannedCount === 0) return { action_type: "ban" as ActionType, labelKey: "lowRollBansFirst", team_id: otherTeamId }
+  if (bannedCount === 1) return { action_type: "ban" as ActionType, labelKey: "rollWinnerBansSecond", team_id: rollWinnerTeamId }
+  if (pickedActions.length === 0) return { action_type: "pick" as ActionType, labelKey: "rollWinnerPicksFirst", team_id: rollWinnerTeamId }
+  if (pickedActions.length === 1) return { action_type: "pick" as ActionType, labelKey: "lowRollPicksSecond", team_id: otherTeamId }
 
   const lastPick = pickedActions[pickedActions.length - 1]
-  const nextTeamId = Number(lastPick.team_id) === Number(highRollTeamId) ? lowRollTeamId : highRollTeamId
-  return { action_type: "pick" as ActionType, label: "Alternate picks", team_id: nextTeamId }
+  const nextTeamId = Number(lastPick.team_id) === Number(rollWinnerTeamId) ? otherTeamId : rollWinnerTeamId
+  return { action_type: "pick" as ActionType, labelKey: "alternatePicks", team_id: nextTeamId }
 }
 
 export function teamName(team?: TournamentTeam | null) {

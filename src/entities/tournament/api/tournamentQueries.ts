@@ -25,6 +25,7 @@ import {
   getTournamentList,
   getTournamentManageSections,
   getTournamentMatch,
+  getTournamentPerformance,
   getTournamentQualImports,
   getTournamentQualMappool,
   getTournamentQualRanking,
@@ -47,6 +48,7 @@ import {
   resetTournamentInviteCode,
   submitTournamentTeam,
   transferTournamentCaptain,
+  unlockTournamentQualRanking,
   updateTournamentGameScore,
   updateTournamentMatch,
   updateTournamentMatchAction,
@@ -58,6 +60,8 @@ import {
   updateTournamentTeamInfo,
   updateTournamentTeamStatus,
   updateTournament,
+  uploadTournamentDefaultTeamAvatar,
+  uploadTournamentTeamAvatar,
 } from "./tournamentApi"
 import type {
   CreateTournamentQualMapRequest,
@@ -98,6 +102,7 @@ export const tournamentQueryKeys = {
   qualImports: (tournamentId: string, page: number, pageSize: number) => [...tournamentQueryKeys.qualImportsRoot(tournamentId), page, pageSize] as const,
   qualImportsRoot: (tournamentId: string) => ["tournament", "qualifier", "imports", tournamentId] as const,
   qualMappool: (tournamentId: string) => ["tournament", "qualifier", "mappool", tournamentId] as const,
+  performance: (tournamentId: string) => ["tournament", "performance", tournamentId] as const,
   qualRanking: (tournamentId: string) => ["tournament", "qualifier", "ranking", tournamentId] as const,
   qualScores: (tournamentId: string) => ["tournament", "qualifier", "scores", tournamentId] as const,
   referee: (tournamentId: string, matchId: string) => ["tournament", "referee", tournamentId, matchId] as const,
@@ -140,6 +145,20 @@ export function useUpdateTournamentMutation(tournamentId: string) {
 
   return useMutation({
     mutationFn: (request: UpdateTournamentRequest) => updateTournament(tournamentId, request),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.detail(tournamentId) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.list }),
+      ])
+    },
+  })
+}
+
+export function useUploadTournamentDefaultTeamAvatarMutation(tournamentId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (file: File) => uploadTournamentDefaultTeamAvatar(tournamentId, file),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.detail(tournamentId) }),
@@ -262,6 +281,14 @@ export function useTournamentBracketQuery(tournamentId: string | undefined) {
     enabled: Boolean(tournamentId),
     queryFn: () => getTournamentBracket(tournamentId as string),
     queryKey: tournamentQueryKeys.bracket(tournamentId ?? ""),
+  })
+}
+
+export function useTournamentPerformanceQuery(tournamentId: string | undefined) {
+  return useQuery({
+    enabled: Boolean(tournamentId),
+    queryFn: () => getTournamentPerformance(tournamentId as string),
+    queryKey: tournamentQueryKeys.performance(tournamentId ?? ""),
   })
 }
 
@@ -392,6 +419,7 @@ export function useUpdateTournamentMatchMutation(tournamentId: string) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(variables.matchId)) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(variables.matchId)) }),
       ])
     },
   })
@@ -406,6 +434,8 @@ export function useFetchTournamentMatchScoresMutation(tournamentId: string) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(matchId)) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(matchId)) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
       ])
     },
   })
@@ -479,6 +509,7 @@ export function useUpdateTournamentGameScoreMutation(tournamentId: string, match
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, matchId) }),
         queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
       ])
     },
   })
@@ -661,6 +692,22 @@ export function useLockTournamentQualRankingMutation(tournamentId: string) {
   })
 }
 
+export function useUnlockTournamentQualRankingMutation(tournamentId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => unlockTournamentQualRanking(tournamentId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.detail(tournamentId) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.qualRanking(tournamentId) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.teams(tournamentId) }),
+        queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      ])
+    },
+  })
+}
+
 export function useUpdateTournamentQualScoreMutation(tournamentId: string) {
   const queryClient = useQueryClient()
 
@@ -732,6 +779,17 @@ export function useUpdateTournamentTeamInfoMutation(tournamentId: string) {
 
   return useMutation({
     mutationFn: ({ request, teamId }: { request: UpdateTournamentTeamInfoRequest; teamId: number }) => updateTournamentTeamInfo(tournamentId, teamId, request),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.teams(tournamentId) })
+    },
+  })
+}
+
+export function useUploadTournamentTeamAvatarMutation(tournamentId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ file, teamId }: { file: File; teamId: number }) => uploadTournamentTeamAvatar(tournamentId, teamId, file),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.teams(tournamentId) })
     },

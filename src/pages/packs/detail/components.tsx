@@ -11,10 +11,11 @@ import {
   SquaresFour,
   Star,
   Tag,
+  Trash,
 } from "@phosphor-icons/react"
 import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import osuDirectIcon from "@/assets/pic/osuDirect.svg"
 import sayobotIcon from "@/assets/pic/sayobot.ico"
@@ -24,9 +25,11 @@ import {
   getPackCoverUrl,
   getPackExternalLinks,
   getPackRankStatus,
+  getPackTagLabel,
   getPackTypeLabel,
   getVisiblePackTagGroups,
   toFiniteNumber,
+  useDeletePackMutation,
   usePackTagsQuery,
   useRefreshOsuPackMutation,
   useUpdatePackTagsMutation,
@@ -34,6 +37,17 @@ import {
   type PackMap,
 } from "@/entities/pack"
 import { RichTextRenderer } from "@/features/rich-text/renderer"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -153,13 +167,15 @@ function getAvatarFallback(name: string | null | undefined) {
 
 function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const tagsQuery = usePackTagsQuery()
+  const deleteMutation = useDeletePackMutation()
   const refreshMutation = useRefreshOsuPackMutation()
   const updateTagsMutation = useUpdatePackTagsMutation()
   const [isEditingTags, setIsEditingTags] = useState(false)
   const [selectedTags, setSelectedTags] = useState<number[]>(() => pack.tags?.map((tag) => tag.tag_id) ?? [])
   const selectedTagSet = new Set(selectedTags)
-  const isUpdating = refreshMutation.isPending || updateTagsMutation.isPending
+  const isUpdating = deleteMutation.isPending || refreshMutation.isPending || updateTagsMutation.isPending
   const isRefreshDisabled = !pack.osu_bid || isUpdatedToday(pack.updated_time) || isUpdating
 
   const toggleTag = (tagId: number) => {
@@ -206,6 +222,15 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
         },
       },
     )
+  }
+
+  const deleteCurrentPack = () => {
+    deleteMutation.mutate(pack.pack_id, {
+      onSuccess: () => {
+        toast.success(t("pack.detail.deleteSuccess"))
+        navigate("/pack")
+      },
+    })
   }
 
   return (
@@ -265,7 +290,7 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
                       type="button"
                       variant={selectedTagSet.has(tag.tag_id) ? "default" : "outline"}
                     >
-                      {tag.tag_name}
+                      {getPackTagLabel(tag)}
                     </Button>
                   ))}
                 </div>
@@ -294,6 +319,38 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">{pack.tags?.length ? t("pack.detail.activeTags", { count: pack.tags.length }) : t("pack.detail.noTagsAssigned")}</p>
         )}
+      </div>
+
+      <div className="border-t pt-5">
+        <div className="flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-destructive">{t("pack.detail.deletePack")}</div>
+            <p className="mt-1 text-xs text-muted-foreground">{t("pack.detail.deleteHint")}</p>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={isUpdating} type="button" variant="destructive">
+                <Trash className="size-4" weight="bold" />
+                {t("pack.detail.deletePack")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("pack.detail.deleteTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("pack.detail.deleteDescription", { title: pack.title_unicode || pack.title })}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteMutation.isPending}>{t("user.edit.cancel")}</AlertDialogCancel>
+                <AlertDialogAction disabled={deleteMutation.isPending} onClick={deleteCurrentPack} variant="destructive">
+                  {deleteMutation.isPending ? t("pack.detail.deleting") : t("pack.detail.deleteConfirm")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+        {deleteMutation.error ? <MutationErrorAlert className="mt-3" error={deleteMutation.error} /> : null}
       </div>
     </div>
   )
@@ -381,7 +438,7 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
             <span className="rounded bg-black/45 px-2 py-1 text-xs font-semibold">{getPackTypeLabel(pack.type)}</span>
             {pack.tags?.map((tag) => (
               <span className="rounded bg-black/45 px-2 py-1 text-xs font-semibold text-white/86" key={tag.tag_id}>
-                {tag.tag_name}
+                {getPackTagLabel(tag)}
               </span>
             ))}
           </div>

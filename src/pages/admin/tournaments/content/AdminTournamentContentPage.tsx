@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Eye, FilePlus, Trash } from "@phosphor-icons/react"
+import { Eye, FilePlus, Trash } from "@phosphor-icons/react"
 import type { ReactNode } from "react"
 import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -44,6 +44,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { AppAlert, FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const presetSectionTypes = ["rules", "description", "prize", "faq"] as const
 const sectionTypePattern = /^[a-z][a-z0-9_-]{0,31}$/
@@ -192,15 +194,9 @@ export function AdminTournamentContentPage() {
     <AdminPage
       actions={(
         <>
-          <Button asChild type="button" variant="outline">
-            <Link to="/admin/tournaments">
-              <ArrowLeft className="size-4" />
-              {t("tournament.admin.common.back")}
-            </Link>
-          </Button>
           {tournamentQuery.data ? (
             <Button asChild type="button" variant="outline">
-              <Link to={`/t/${tournamentQuery.data.acronym || tournamentQuery.data.id}`}>
+              <Link to={getTournamentPublicPath(tournamentQuery.data)}>
                 <Eye className="size-4" />
                 {t("tournament.admin.common.view")}
               </Link>
@@ -208,6 +204,7 @@ export function AdminTournamentContentPage() {
           ) : null}
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.content")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
       {sectionsQuery.isLoading || tournamentQuery.isLoading ? <PageState title={t("tournament.admin.content.loading")} description={t("tournament.admin.content.loadingDescription")} /> : null}
 
@@ -226,8 +223,8 @@ export function AdminTournamentContentPage() {
               {sections.map((section) => (
                 <Button
                   className={cn(
-                    "h-auto w-full justify-start rounded-lg border bg-background px-3 py-2 text-left hover:border-primary/40",
-                    selectedId === section.id && "border-primary/50 bg-primary/5",
+                    "h-auto w-full justify-start rounded-none border-0 border-l-2 border-transparent bg-transparent px-3 py-2 text-left hover:bg-muted/50",
+                    selectedId === section.id && "border-primary bg-primary/5",
                   )}
                   key={section.id}
                   onClick={() => setSelectedId(section.id)}

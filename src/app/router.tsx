@@ -15,6 +15,7 @@ import {
   AdminTournamentBracketPage,
   AdminTournamentContentPage,
   AdminTournamentImportPage,
+  AdminTournamentMappoolPage,
   AdminTournamentNewPage,
   AdminTournamentQualifierPage,
   AdminTournamentSettingsPage,
@@ -35,7 +36,9 @@ import {
   TournamentPausedPage,
   TournamentBracketPage,
   TournamentDetailPage,
+  TournamentLeaderboardPage,
   TournamentListPage,
+  TournamentMappoolPage,
   TournamentMatchPage,
   TournamentQualifierPage,
   TournamentRefereePage,
@@ -131,6 +134,14 @@ export const router = createBrowserRouter([
       {
         path: "t/:tid/teams",
         element: lazyElement(<TournamentTeamsPage />),
+      },
+      {
+        path: "t/:tid/mappool",
+        element: lazyElement(<TournamentMappoolPage />),
+      },
+      {
+        path: "t/:tid/leaderboard",
+        element: lazyElement(<TournamentLeaderboardPage />),
       },
       {
         path: "t/:tid/qualifier",
@@ -257,6 +268,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireTournamentAdmin>
                 {lazyElement(<AdminTournamentImportPage />)}
+              </RequireTournamentAdmin>
+            ),
+          },
+          {
+            path: "tournaments/:tid/mappool",
+            element: (
+              <RequireTournamentAdmin>
+                {lazyElement(<AdminTournamentMappoolPage />)}
               </RequireTournamentAdmin>
             ),
           },

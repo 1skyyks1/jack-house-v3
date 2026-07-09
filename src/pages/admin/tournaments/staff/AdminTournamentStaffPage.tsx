@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, Plus, Trash } from "@phosphor-icons/react"
+import { Eye, Plus, Trash } from "@phosphor-icons/react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
@@ -38,6 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const staffRoles: TournamentStaffRole[] = ["host", "pooler", "referee", "streamer", "commentator"]
 
@@ -54,6 +56,8 @@ export function AdminTournamentStaffPage() {
   const [search, setSearch] = useState("")
   const [role, setRole] = useState<TournamentStaffRole>("referee")
   const [userId, setUserId] = useState("")
+  const [osuUid, setOsuUid] = useState("")
+  const [userName, setUserName] = useState("")
   const usersQuery = useUserSearchQuery({ page: 1, pageSize: 20, search }, search.trim().length >= 2)
 
   const staff = staffQuery.data ?? emptyStaff
@@ -73,11 +77,20 @@ export function AdminTournamentStaffPage() {
 
   const addStaff = () => {
     const parsedUserId = Number(userId)
-    if (!parsedUserId) return
-    createMutation.mutate({ role, user_id: parsedUserId }, {
+    const parsedOsuUid = Number(osuUid)
+    if (!parsedUserId && !parsedOsuUid) return
+    if (!parsedUserId && !userName.trim()) return
+    createMutation.mutate({
+      role,
+      user_id: parsedUserId || undefined,
+      osu_uid: parsedUserId ? undefined : parsedOsuUid,
+      user_name: parsedUserId ? undefined : userName.trim(),
+    }, {
       onSuccess: () => {
         toast.success(t("tournament.admin.staff.added"))
         setUserId("")
+        setOsuUid("")
+        setUserName("")
       },
     })
   }
@@ -86,15 +99,9 @@ export function AdminTournamentStaffPage() {
     <AdminPage
       actions={(
         <>
-          <Button asChild type="button" variant="outline">
-            <Link to="/admin/tournaments">
-              <ArrowLeft className="size-4" />
-              {t("tournament.admin.common.back")}
-            </Link>
-          </Button>
           {tournamentQuery.data ? (
             <Button asChild type="button" variant="outline">
-              <Link to={`/t/${tournamentQuery.data.acronym || tournamentQuery.data.id}`}>
+              <Link to={getTournamentPublicPath(tournamentQuery.data)}>
                 <Eye className="size-4" />
                 {t("tournament.admin.common.view")}
               </Link>
@@ -102,6 +109,7 @@ export function AdminTournamentStaffPage() {
           ) : null}
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.staff")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
       {tournamentQuery.isLoading || staffQuery.isLoading ? <PageState title={t("tournament.admin.staff.loading")} description={t("tournament.admin.staff.loadingDescription")} /> : null}
       {createMutation.isError ? <MutationErrorAlert className="mb-4" error={createMutation.error} title={t("tournament.admin.staff.addFailed")} /> : null}
@@ -146,6 +154,31 @@ export function AdminTournamentStaffPage() {
                 </Select>
               </div>
 
+              <div className="grid gap-3 border-l pl-3">
+                <div className="space-y-2">
+                  <Label htmlFor="staff-osu-uid">{t("tournament.admin.staff.osuUid")}</Label>
+                  <Input
+                    disabled={Boolean(userId)}
+                    id="staff-osu-uid"
+                    inputMode="numeric"
+                    placeholder="123456"
+                    value={osuUid}
+                    onChange={(event) => setOsuUid(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="staff-user-name">{t("tournament.admin.staff.userName")}</Label>
+                  <Input
+                    autoComplete="off"
+                    disabled={Boolean(userId)}
+                    id="staff-user-name"
+                    placeholder="osu! username"
+                    value={userName}
+                    onChange={(event) => setUserName(event.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="staff-role">{t("tournament.admin.staff.role")}</Label>
                 <Select onValueChange={(value) => setRole(value as TournamentStaffRole)} value={role}>
@@ -161,13 +194,13 @@ export function AdminTournamentStaffPage() {
               </div>
 
               {selectedUser ? (
-                <div className="rounded-lg border bg-background p-3 text-sm">
+                <div className="border-l pl-3 text-sm">
                   <p className="font-medium">{selectedUser.user_name}</p>
                   <p className="text-muted-foreground">user #{selectedUser.user_id} · osu {selectedUser.osu_uid ?? "-"}</p>
                 </div>
               ) : null}
 
-              <Button className="w-full" disabled={!userId || createMutation.isPending} onClick={addStaff} type="button">
+              <Button className="w-full" disabled={(!userId && (!Number(osuUid) || !userName.trim())) || createMutation.isPending} onClick={addStaff} type="button">
                 <Plus className="size-4" weight="bold" />
                 {createMutation.isPending ? t("tournament.admin.staff.adding") : t("tournament.admin.staff.addStaff")}
               </Button>
@@ -222,7 +255,7 @@ function StaffCard({ isDeleting, onDelete, staff }: { isDeleting: boolean; onDel
         </Avatar>
         <div className="min-w-0">
           <Link className="truncate font-medium hover:text-primary" to={`/user/${staff.user_id}`}>{name}</Link>
-          <p className="text-xs text-muted-foreground">user #{staff.user_id}</p>
+          <p className="text-xs text-muted-foreground">osu {staff.user?.osu_uid ?? "-"} · user #{staff.user_id}</p>
         </div>
       </div>
       <AlertDialog>

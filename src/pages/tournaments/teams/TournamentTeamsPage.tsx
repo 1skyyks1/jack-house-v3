@@ -1,4 +1,4 @@
-import { LockKey, Plus, SignIn } from "@phosphor-icons/react"
+import { LockKey, MagnifyingGlass, Plus, SignIn } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
@@ -14,6 +14,7 @@ import {
   useTournamentTeamsQuery,
   useTransferTournamentCaptainMutation,
   useUpdateTournamentTeamInfoMutation,
+  useUploadTournamentTeamAvatarMutation,
   type TournamentPlayer,
   type TournamentTeam,
 } from "@/entities/tournament"
@@ -59,6 +60,7 @@ export function TournamentTeamsPage() {
   const leaveMutation = useLeaveTournamentTeamMutation(tid ?? "")
   const submitMutation = useSubmitTournamentTeamMutation(tid ?? "")
   const updateTeamInfoMutation = useUpdateTournamentTeamInfoMutation(tid ?? "")
+  const uploadTeamAvatarMutation = useUploadTournamentTeamAvatarMutation(tid ?? "")
   const transferCaptainMutation = useTransferTournamentCaptainMutation(tid ?? "")
   const resetInviteMutation = useResetTournamentInviteCodeMutation(tid ?? "")
   const kickMutation = useKickTournamentPlayerMutation(tid ?? "")
@@ -72,9 +74,10 @@ export function TournamentTeamsPage() {
   const [inviteCode, setInviteCode] = useState("")
   const [editName, setEditName] = useState("")
   const [editDisplayName, setEditDisplayName] = useState("")
-  const [editAvatar, setEditAvatar] = useState("")
   const [editIsOpen, setEditIsOpen] = useState(true)
   const [transferPlayerId, setTransferPlayerId] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [locatedTeamId, setLocatedTeamId] = useState<number | null>(null)
 
   const requireLogin = () => {
     if (isLogged) return true
@@ -148,7 +151,6 @@ export function TournamentTeamsPage() {
     setEditingTeam(team)
     setEditName(team.name)
     setEditDisplayName(team.display_name || team.name)
-    setEditAvatar(team.avatar ?? "")
     setEditIsOpen(Boolean(team.is_open))
   }
 
@@ -156,7 +158,6 @@ export function TournamentTeamsPage() {
     if (!editingTeam || !editName.trim()) return
     updateTeamInfoMutation.mutate({
       request: {
-        avatar: editAvatar.trim() || null,
         display_name: editDisplayName.trim(),
         is_open: editIsOpen,
         name: editName.trim(),
@@ -166,6 +167,19 @@ export function TournamentTeamsPage() {
       onSuccess: () => {
         toast.success(t("tournament.teams.updated"))
         setEditingTeam(null)
+      },
+    })
+  }
+
+  const uploadTeamAvatar = (file: File | undefined) => {
+    if (!editingTeam || !file) return
+    uploadTeamAvatarMutation.mutate({
+      file,
+      teamId: editingTeam.id,
+    }, {
+      onSuccess: (team) => {
+        setEditingTeam(team)
+        toast.success(t("tournament.teams.avatarUploaded"))
       },
     })
   }
@@ -215,8 +229,24 @@ export function TournamentTeamsPage() {
       ? t("tournament.teams.alreadyInTeam")
         : null)
 
+  const locateTeam = (value: string) => {
+    setSearchTerm(value)
+    const query = normalizeSearch(value)
+    if (!query) {
+      setLocatedTeamId(null)
+      return
+    }
+    const matchedTeam = teams.find((team) => normalizeSearch(getTeamSearchText(team)).includes(query))
+    setLocatedTeamId(matchedTeam?.id ?? null)
+    if (matchedTeam) {
+      window.setTimeout(() => {
+        document.getElementById(`team-card-${matchedTeam.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 0)
+    }
+  }
+
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-3 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <TournamentBreadcrumb current={t("tournament.teams.title")} tournament={tournament} tournamentId={tid} />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -239,13 +269,26 @@ export function TournamentTeamsPage() {
         </div>
       </div>
 
-      {(createMutation.error || joinMutation.error || leaveMutation.error || submitMutation.error || updateTeamInfoMutation.error || transferCaptainMutation.error || resetInviteMutation.error || kickMutation.error) ? (
-        <MutationErrorAlert error={createMutation.error ?? joinMutation.error ?? leaveMutation.error ?? submitMutation.error ?? updateTeamInfoMutation.error ?? transferCaptainMutation.error ?? resetInviteMutation.error ?? kickMutation.error} />
+      {(createMutation.error || joinMutation.error || leaveMutation.error || submitMutation.error || updateTeamInfoMutation.error || uploadTeamAvatarMutation.error || transferCaptainMutation.error || resetInviteMutation.error || kickMutation.error) ? (
+        <MutationErrorAlert error={createMutation.error ?? joinMutation.error ?? leaveMutation.error ?? submitMutation.error ?? updateTeamInfoMutation.error ?? uploadTeamAvatarMutation.error ?? transferCaptainMutation.error ?? resetInviteMutation.error ?? kickMutation.error} />
       ) : null}
 
       {teamsQuery.isLoading ? <PageState title={t("tournament.teams.loading")} description={null} /> : null}
       {!teamsQuery.isLoading && teams.length === 0 ? (
         <AppAlert title={t("tournament.teams.emptyTitle")} />
+      ) : null}
+
+      {teams.length > 0 ? (
+        <div className="relative max-w-md">
+          <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            aria-label={t("tournament.common.quickSearch")}
+            className="pl-9"
+            placeholder={t("tournament.common.teamPlayerSearchPlaceholder")}
+            value={searchTerm}
+            onChange={(event) => locateTeam(event.target.value)}
+          />
+        </div>
       ) : null}
 
       {teams.length > 0 ? (
@@ -265,6 +308,7 @@ export function TournamentTeamsPage() {
           onResetInvite={resetInviteCode}
           onSubmit={submitTeam}
           onTransferCaptain={openTransferCaptain}
+          highlightedTeamId={locatedTeamId}
           registrationOpen={registrationStatus.isOpen}
           userId={currentUserId}
           teams={teams}
@@ -326,8 +370,17 @@ export function TournamentTeamsPage() {
               <Input id="edit-display-name" onChange={(event) => setEditDisplayName(event.target.value)} value={editDisplayName} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-avatar">{t("tournament.teams.avatarUrl")}</Label>
-              <Input id="edit-avatar" onChange={(event) => setEditAvatar(event.target.value)} value={editAvatar} />
+              <Label htmlFor="edit-avatar-file">{t("tournament.teams.avatarUpload")}</Label>
+              <Input
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                disabled={uploadTeamAvatarMutation.isPending}
+                id="edit-avatar-file"
+                onChange={(event) => {
+                  uploadTeamAvatar(event.target.files?.[0])
+                  event.currentTarget.value = ""
+                }}
+                type="file"
+              />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={editIsOpen} onCheckedChange={(checked) => setEditIsOpen(Boolean(checked))} />
@@ -335,7 +388,7 @@ export function TournamentTeamsPage() {
             </label>
           </div>
           <DialogFooter>
-            <Button disabled={updateTeamInfoMutation.isPending || !editName.trim()} onClick={saveTeamInfo}>
+            <Button disabled={updateTeamInfoMutation.isPending || uploadTeamAvatarMutation.isPending || !editName.trim()} onClick={saveTeamInfo}>
               {t("tournament.common.save")}
             </Button>
           </DialogFooter>
@@ -397,6 +450,22 @@ export function TournamentTeamsPage() {
       </AlertDialog>
     </main>
   )
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function getTeamSearchText(team: TournamentTeam) {
+  return [
+    team.name,
+    team.display_name,
+    ...(team.players ?? []).flatMap((player) => [
+      player.user_name_snapshot,
+      player.user?.user_name,
+      String(player.user_id),
+    ]),
+  ].filter(Boolean).join(" ")
 }
 
 type ConfirmAction =

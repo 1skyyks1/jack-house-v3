@@ -2,7 +2,7 @@ import type { FormEvent, ReactNode } from "react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Calculator, CheckCircle, DownloadSimple, ListNumbers, Plus, Trophy } from "@phosphor-icons/react"
+import { Calculator, CheckCircle, DownloadSimple, ListNumbers, LockOpen, Plus, Trophy } from "@phosphor-icons/react"
 import { Link, useParams } from "react-router-dom"
 import {
   useCalculateTournamentQualRankingMutation,
@@ -15,6 +15,7 @@ import {
   useTournamentQualRankingQuery,
   useTournamentQualScoresQuery,
   useTournamentTeamsQuery,
+  useUnlockTournamentQualRankingMutation,
   useUpdateTournamentQualScoreMutation,
   type TournamentQualScore,
   type TournamentTeam,
@@ -39,8 +40,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const importStatusVariant: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
   failed: "destructive",
@@ -78,6 +81,7 @@ export function AdminTournamentQualifierPage() {
   const fetchScoresMutation = useFetchTournamentQualScoresMutation(tournamentId)
   const calculateRankingMutation = useCalculateTournamentQualRankingMutation(tournamentId)
   const lockRankingMutation = useLockTournamentQualRankingMutation(tournamentId)
+  const unlockRankingMutation = useUnlockTournamentQualRankingMutation(tournamentId)
   const updateScoreMutation = useUpdateTournamentQualScoreMutation(tournamentId)
 
   const teams = teamsQuery.data ?? []
@@ -86,6 +90,7 @@ export function AdminTournamentQualifierPage() {
   const scores = scoresQuery.data ?? emptyScores
   const imports = importsQuery.data?.rows ?? []
   const isQualifierLocked = Boolean(tournamentQuery.data?.qual_locked_at)
+  const publicTournamentPath = tournamentQuery.data ? getTournamentPublicPath(tournamentQuery.data) : `/t/${tournamentId}`
   const selectedScore = useMemo(
     () => scores.find((score) => String(score.id) === selectedScoreId),
     [scores, selectedScoreId],
@@ -159,10 +164,7 @@ export function AdminTournamentQualifierPage() {
       actions={(
         <>
           <Button asChild size="sm" variant="outline">
-            <Link to="/admin/tournaments">{t("tournament.admin.common.back")}</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link to={`/t/${tournamentQuery.data?.acronym || tournamentId}/qualifier`}>{t("tournament.admin.qualifier.publicQualifier")}</Link>
+            <Link to={`${publicTournamentPath}/qualifier`}>{t("tournament.admin.qualifier.publicQualifier")}</Link>
           </Button>
           <Button
             disabled={calculateRankingMutation.isPending || isQualifierLocked}
@@ -197,25 +199,45 @@ export function AdminTournamentQualifierPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {isQualifierLocked ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button disabled={unlockRankingMutation.isPending} size="sm" type="button" variant="outline">
+                  <LockOpen className="size-4" weight="bold" />
+                  解锁排名
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>解锁资格赛排名</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    解锁后可以重新导入成绩、修正成绩并重新计算排名。已有成绩和排名不会被删除；重新确认后需要再次锁定排名。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("tournament.common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => unlockRankingMutation.mutate(undefined, { onSuccess: () => toast.success("资格赛排名已解锁") })}
+                  >
+                    解锁排名
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.common.qualifier")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-3">
         <MetricCard icon={<ListNumbers className="size-4" />} label={t("tournament.admin.qualifier.qualifierMaps")} value={mappool.length} />
         <MetricCard icon={<Trophy className="size-4" />} label={t("tournament.admin.qualifier.rankedTeams")} value={ranking.length} />
-        <MetricCard icon={<DownloadSimple className="size-4" />} label={t("tournament.admin.qualifier.importLogs")} value={importsQuery.data?.total ?? 0} />
         <MetricCard icon={<CheckCircle className="size-4" />} label={t("tournament.admin.qualifier.rawScores")} value={scores.length} />
       </div>
 
-      {isQualifierLocked ? (
-        <AppAlert title={t("tournament.admin.qualifier.lockedTitle")}>{t("tournament.admin.qualifier.lockedDescription", { date: formatDate(tournamentQuery.data?.qual_locked_at), top: tournamentQuery.data?.qual_locked_top_n ?? tournamentQuery.data?.qual_top_n ?? 32 })}</AppAlert>
-      ) : (
-        <AppAlert title={t("tournament.admin.qualifier.lockBeforeMainStage")}>{t("tournament.admin.qualifier.lockBeforeMainStageDescription")}</AppAlert>
-      )}
-
-      {(createMapMutation.isError || fetchScoresMutation.isError || calculateRankingMutation.isError || lockRankingMutation.isError || updateScoreMutation.isError) ? (
+      {(createMapMutation.isError || fetchScoresMutation.isError || calculateRankingMutation.isError || lockRankingMutation.isError || unlockRankingMutation.isError || updateScoreMutation.isError) ? (
         <MutationErrorAlert
-          error={createMapMutation.error ?? fetchScoresMutation.error ?? calculateRankingMutation.error ?? lockRankingMutation.error ?? updateScoreMutation.error}
+          error={createMapMutation.error ?? fetchScoresMutation.error ?? calculateRankingMutation.error ?? lockRankingMutation.error ?? unlockRankingMutation.error ?? updateScoreMutation.error}
           title={t("tournament.admin.qualifier.operationFailed")}
         />
       ) : null}
@@ -223,11 +245,10 @@ export function AdminTournamentQualifierPage() {
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex flex-col gap-4">
           <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>{t("tournament.qualifier.mappool")}</CardTitle>
-              <CardAction>
-                <div className="flex flex-wrap justify-end gap-2">
-                  <Badge variant="outline">{t("tournament.common.maps", { count: mappool.length })}</Badge>
+            <CardHeader className="items-start border-b">
+              <CardTitle className="pt-1">{t("tournament.qualifier.mappool")}</CardTitle>
+              <CardAction className="self-start">
+                <div className="flex flex-wrap items-start justify-end gap-2">
                   <Button disabled={createMapMutation.isPending || isQualifierLocked} size="sm" type="submit" form="qual-create-map-form">
                     <Plus className="size-4" weight="bold" />
                     {t("tournament.admin.bracket.addMap")}
@@ -404,20 +425,22 @@ export function AdminTournamentQualifierPage() {
                 <Badge variant="outline">{importsQuery.data?.total ?? 0}</Badge>
               </CardAction>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {imports.map((item) => (
-                <article className="rounded-lg border p-3" key={item.id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{item.team ? getTeamName(item.team) : `Team ${item.team_id}`}</p>
-                      <p className="text-xs text-muted-foreground">MP {item.mp_id} / {formatDate(item.created_time)}</p>
+            <CardContent>
+              <div className="divide-y">
+                {imports.map((item) => (
+                  <article className="py-3" key={item.id}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{item.team ? getTeamName(item.team) : `Team ${item.team_id}`}</p>
+                        <p className="text-xs text-muted-foreground">MP {item.mp_id} / {formatDate(item.created_time)}</p>
+                      </div>
+                      <Badge variant={importStatusVariant[item.status] ?? "outline"}>{item.status}</Badge>
                     </div>
-                    <Badge variant={importStatusVariant[item.status] ?? "outline"}>{item.status}</Badge>
-                  </div>
-                  {item.message ? <p className="mt-2 text-xs text-muted-foreground">{item.message}</p> : null}
-                  <p className="mt-2 text-xs text-muted-foreground">{t("tournament.admin.qualifier.by", { name: item.importedBy?.user_name ?? item.imported_by ?? "-" })}</p>
-                </article>
-              ))}
+                    {item.message ? <p className="mt-2 text-xs text-muted-foreground">{item.message}</p> : null}
+                    <p className="mt-2 text-xs text-muted-foreground">{t("tournament.admin.qualifier.by", { name: item.importedBy?.user_name ?? item.imported_by ?? "-" })}</p>
+                  </article>
+                ))}
+              </div>
               {!importsQuery.isLoading && imports.length === 0 ? <p className="text-sm text-muted-foreground">{t("tournament.admin.qualifier.noImportLogs")}</p> : null}
             </CardContent>
           </Card>

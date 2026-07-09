@@ -6,11 +6,7 @@ export type RoundFormState = {
 }
 
 export type MapFormState = {
-  artist: string
   beatmap_url: string
-  map_id: string
-  mapper: string
-  title: string
   type: string
 }
 
@@ -26,6 +22,7 @@ export type MatchUpdateState = {
   mp_id: string
   result_note: string
   result_type: "normal" | "wbd" | "ff"
+  scheduled_time: string
   status: string
   team1_score: string
   team2_score: string
@@ -42,11 +39,7 @@ export const defaultRoundForm: RoundFormState = {
 }
 
 export const defaultMapForm: MapFormState = {
-  artist: "",
   beatmap_url: "",
-  map_id: "",
-  mapper: "",
-  title: "",
   type: MAIN_STAGE_MAP_TYPES[0],
 }
 

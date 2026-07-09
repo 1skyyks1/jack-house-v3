@@ -70,7 +70,7 @@
 
 ## 赛事系统
 
-- 赛事系统已作为迁移 MVP 之后的独立产品线接入 V3；继续按 `tournament-implementation-spec.md`、`tournament-technical-plan.md` 和 `tournament-architecture.md` 联调与验收。
+- 赛事系统已作为迁移 MVP 之后的独立产品线接入 V3；后续按 `tournament-system.md`、`tournament-bracket-flow.md`、`tournament-architecture.md` 和实际代码继续迭代。
 - 后端赛事 API 根路径为 `/t`，前端公开页面路由也使用 `/t`；不要再新增 `/tournament` API 调用。
 - 赛事系统与旧 `event` 活动系统保持领域隔离，只复用 UI、用户链接、排行榜展示、富文本和上传等基础能力。
 - 赛事按“届”建模，JHC2026 和 JHC2027 即使属于同一系列，也作为两个独立 tournament。
@@ -109,6 +109,7 @@
 - 资格赛图池固定为 stage 1-7，不需要 type/mod 信息。
 - 站内不公开资格赛两轮原始成绩详情；用户侧展示对局、比分/总分和 osu MP 外链，具体详情跳转 osu MP 查看。
 - 正赛第一版只支持 32 强双败制，采用 folded seeding，如 #1 vs #32、#2 vs #31，并需要在网站上绘制完整对阵图。
+- JHC 正赛不是通用 32DE 库默认流转；match 编号和队伍来源以 `tournament-bracket-flow.md` 的 Chrono Schedule source graph 为准，后续不得用标准双败 losers bracket 规则重新推导。
 - 双败需要支持 grand final reset：败者组冠军赢下第一场 GF 后，需要再打一场 reset final；reset final 在 bracket 数据中预生成但隐藏。
 - 32 强对阵图优先评估上下分区的双败 SVG bracket，候选库为 `@g-loot/react-tournament-brackets`；如果样式/移动端/数据结构不满足再自研。
 - 正赛 round 固定配置 BO/FT，不做单个 match override。

@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1280" viewBox="0 0 1800 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Jack House tournament system flow</title>
+  <desc id="desc">Tournament lifecycle flow for Jack House, covering setup, team registration, qualifier import and ranking, bracket generation, referee operations, and public result publishing.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2f7"/>
+    </linearGradient>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="126%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#334155" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#6b7892"/>
+    </marker>
+    <style>
+      .title { font: 750 34px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #172033; }
+      .subtitle { font: 500 15px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; }
+      .badge-text { font: 650 12px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; text-anchor: middle; dominant-baseline: middle; }
+      .stage-title { font: 750 22px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #243246; text-anchor: middle; dominant-baseline: middle; }
+      .stage-sub { font: 520 13px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #667085; text-anchor: middle; dominant-baseline: middle; }
+      .step-title { font: 680 16px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #2f3b4f; text-anchor: middle; dominant-baseline: middle; }
+      .step-sub { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #667085; text-anchor: middle; dominant-baseline: middle; }
+      .lane-title { font: 750 26px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #1f2937; }
+      .note-title { font: 700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #263244; text-anchor: middle; dominant-baseline: middle; }
+      .note-sub { font: 500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; text-anchor: middle; dominant-baseline: middle; }
+      .grid { stroke: #e5ebf3; stroke-width: 1; opacity: .68; }
+      .badge { fill: #ffffff; stroke: #d7dee8; stroke-width: 1; }
+      .arrow { fill: none; stroke: #6b7892; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .stage-blue { fill: #eef6ff; stroke: #80a9d8; stroke-width: 2.4; filter: url(#shadow); }
+      .stage-gold { fill: #fff8e6; stroke: #d6bb68; stroke-width: 2.4; filter: url(#shadow); }
+      .stage-purple { fill: #f4f0ff; stroke: #a78bdd; stroke-width: 2.4; filter: url(#shadow); }
+      .stage-green { fill: #edf9f3; stroke: #7ebd9b; stroke-width: 2.4; filter: url(#shadow); }
+      .stage-rose { fill: #fff1f1; stroke: #d99191; stroke-width: 2.4; filter: url(#shadow); }
+      .stage-indigo { fill: #f0f4ff; stroke: #8192ca; stroke-width: 2.4; filter: url(#shadow); }
+      .step-blue { fill: #ffffff; stroke: #80a9d8; stroke-width: 1.8; }
+      .step-gold { fill: #ffffff; stroke: #d6bb68; stroke-width: 1.8; }
+      .step-purple { fill: #ffffff; stroke: #a78bdd; stroke-width: 1.8; }
+      .step-green { fill: #ffffff; stroke: #7ebd9b; stroke-width: 1.8; }
+      .step-rose { fill: #ffffff; stroke: #d99191; stroke-width: 1.8; }
+      .step-indigo { fill: #ffffff; stroke: #8192ca; stroke-width: 1.8; }
+      .support-card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.8; filter: url(#shadow); }
+      .support-wrap { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.8; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1280" fill="url(#bg)"/>
+  <path class="grid" d="M0 160 H1800 M0 320 H1800 M0 480 H1800 M0 640 H1800 M0 800 H1800 M0 960 H1800 M0 1120 H1800 M220 0 V1280 M440 0 V1280 M660 0 V1280 M880 0 V1280 M1100 0 V1280 M1320 0 V1280 M1540 0 V1280"/>
+
+  <text x="80" y="74" class="title">Jack House 赛事系统流程图</text>
+  <text x="80" y="104" class="subtitle">从赛事初始化到报名、资格赛、正赛、裁判执场与结果沉淀的主流程</text>
+  <rect x="1430" y="58" width="290" height="38" rx="19" class="badge"/>
+  <text x="1575" y="78" class="badge-text">jack-house-v3 + jack-house-web/backend</text>
+
+  <text x="82" y="320" class="lane-title">赛前</text>
+  <text x="82" y="760" class="lane-title">赛中</text>
+  <text x="82" y="1100" class="lane-title">支撑</text>
+
+  <!-- Stage 1 -->
+  <rect x="160" y="165" width="430" height="310" rx="20" class="stage-blue"/>
+  <text x="375" y="207" class="stage-title">1. 赛事初始化</text>
+  <text x="375" y="233" class="stage-sub">Admin / Creator host</text>
+  <rect x="198" y="262" width="354" height="42" rx="11" class="step-blue"/>
+  <text x="375" y="283" class="step-title">创建 Tournament</text>
+  <rect x="198" y="318" width="354" height="42" rx="11" class="step-blue"/>
+  <text x="375" y="339" class="step-title">配置 acronym / 时间 / 队伍人数</text>
+  <rect x="198" y="374" width="354" height="42" rx="11" class="step-blue"/>
+  <text x="375" y="395" class="step-title">维护规则、公告、资源链接</text>
+  <rect x="198" y="430" width="354" height="42" rx="11" class="step-blue"/>
+  <text x="375" y="451" class="step-title">添加 host / pooler / referee</text>
+
+  <!-- Stage 2 -->
+  <rect x="685" y="165" width="430" height="310" rx="20" class="stage-gold"/>
+  <text x="900" y="207" class="stage-title">2. 报名与组队</text>
+  <text x="900" y="233" class="stage-sub">Player / Captain / Host</text>
+  <rect x="723" y="262" width="354" height="42" rx="11" class="step-gold"/>
+  <text x="900" y="283" class="step-title">用户 osu! 登录并进入赛事</text>
+  <rect x="723" y="318" width="354" height="42" rx="11" class="step-gold"/>
+  <text x="900" y="339" class="step-title">创建队伍或邀请码加入</text>
+  <rect x="723" y="374" width="354" height="42" rx="11" class="step-gold"/>
+  <text x="900" y="395" class="step-title">队长提交队伍信息</text>
+  <rect x="723" y="430" width="354" height="42" rx="11" class="step-gold"/>
+  <text x="900" y="451" class="step-title">Host 审核 / 修正选手快照</text>
+
+  <!-- Stage 3 -->
+  <rect x="1210" y="165" width="430" height="310" rx="20" class="stage-purple"/>
+  <text x="1425" y="207" class="stage-title">3. 资格赛</text>
+  <text x="1425" y="233" class="stage-sub">Pooler / Referee / Host</text>
+  <rect x="1248" y="262" width="354" height="42" rx="11" class="step-purple"/>
+  <text x="1425" y="283" class="step-title">发布 qualifier mappool</text>
+  <rect x="1248" y="318" width="354" height="42" rx="11" class="step-purple"/>
+  <text x="1425" y="339" class="step-title">队伍完成 osu! MP 对局</text>
+  <rect x="1248" y="374" width="354" height="42" rx="11" class="step-purple"/>
+  <text x="1425" y="395" class="step-title">按 MP ID 拉取 / 批量导入成绩</text>
+  <rect x="1248" y="430" width="170" height="42" rx="11" class="step-purple"/>
+  <text x="1333" y="451" class="step-title">计算排名</text>
+  <rect x="1432" y="430" width="170" height="42" rx="11" class="step-purple"/>
+  <text x="1517" y="451" class="step-title">锁定榜单</text>
+
+  <!-- Stage 4 -->
+  <rect x="1210" y="610" width="430" height="310" rx="20" class="stage-green"/>
+  <text x="1425" y="652" class="stage-title">4. 正赛生成</text>
+  <text x="1425" y="678" class="stage-sub">Host / Bracket service</text>
+  <rect x="1248" y="707" width="354" height="42" rx="11" class="step-green"/>
+  <text x="1425" y="728" class="step-title">选择晋级队伍与 seeding</text>
+  <rect x="1248" y="763" width="354" height="42" rx="11" class="step-green"/>
+  <text x="1425" y="784" class="step-title">生成 32 强双败 bracket</text>
+  <rect x="1248" y="819" width="354" height="42" rx="11" class="step-green"/>
+  <text x="1425" y="840" class="step-title">创建 rounds / matches / slots</text>
+  <rect x="1248" y="875" width="354" height="42" rx="11" class="step-green"/>
+  <text x="1425" y="896" class="step-title">配置正赛图池与赛程</text>
+
+  <!-- Stage 5 -->
+  <rect x="685" y="610" width="430" height="310" rx="20" class="stage-rose"/>
+  <text x="900" y="652" class="stage-title">5. 裁判执场与赛果</text>
+  <text x="900" y="678" class="stage-sub">Referee desk / Match service</text>
+  <rect x="723" y="707" width="354" height="42" rx="11" class="step-rose"/>
+  <text x="900" y="728" class="step-title">加载 match / team / mappool</text>
+  <rect x="723" y="763" width="354" height="42" rx="11" class="step-rose"/>
+  <text x="900" y="784" class="step-title">Roll / Protect / Ban / Pick</text>
+  <rect x="723" y="819" width="354" height="42" rx="11" class="step-rose"/>
+  <text x="900" y="840" class="step-title">拉取 MP 分数或手动录入</text>
+  <rect x="723" y="875" width="170" height="42" rx="11" class="step-rose"/>
+  <text x="808" y="896" class="step-title">设置 winner</text>
+  <rect x="907" y="875" width="170" height="42" rx="11" class="step-rose"/>
+  <text x="992" y="896" class="step-title">推进结果</text>
+
+  <!-- Stage 6 -->
+  <rect x="160" y="610" width="430" height="310" rx="20" class="stage-indigo"/>
+  <text x="375" y="652" class="stage-title">6. 公开展示与沉淀</text>
+  <text x="375" y="678" class="stage-sub">Visitor / Player / Staff</text>
+  <rect x="198" y="707" width="354" height="42" rx="11" class="step-indigo"/>
+  <text x="375" y="728" class="step-title">赛事首页 / 规则 / 图池</text>
+  <rect x="198" y="763" width="354" height="42" rx="11" class="step-indigo"/>
+  <text x="375" y="784" class="step-title">资格赛榜单与总排行</text>
+  <rect x="198" y="819" width="354" height="42" rx="11" class="step-indigo"/>
+  <text x="375" y="840" class="step-title">正赛 bracket / match detail</text>
+  <rect x="198" y="875" width="354" height="42" rx="11" class="step-indigo"/>
+  <text x="375" y="896" class="step-title">审计日志 / 导入日志 / 历史数据</text>
+
+  <!-- Main flow arrows -->
+  <path d="M590 320 H666" class="arrow"/>
+  <path d="M1115 320 H1191" class="arrow"/>
+  <path d="M1425 475 V591" class="arrow"/>
+  <path d="M1210 765 H1134" class="arrow"/>
+  <path d="M685 765 H609" class="arrow"/>
+
+  <!-- Support layer -->
+  <rect x="160" y="1010" width="1480" height="170" rx="20" class="support-wrap"/>
+  <text x="900" y="1047" class="note-title">支撑数据与外部系统</text>
+  <text x="900" y="1071" class="note-sub">业务服务通过事务、权限校验与审计日志连接这些底层能力</text>
+
+  <rect x="220" y="1100" width="230" height="54" rx="13" class="support-card"/>
+  <text x="335" y="1122" class="note-title">osu! API / MP</text>
+  <text x="335" y="1143" class="note-sub">OAuth、profile、match scores</text>
+  <rect x="490" y="1100" width="230" height="54" rx="13" class="support-card"/>
+  <text x="605" y="1122" class="note-title">Google Sheets</text>
+  <text x="605" y="1143" class="note-sub">报名表、赛程、补录导入</text>
+  <rect x="760" y="1100" width="230" height="54" rx="13" class="support-card"/>
+  <text x="875" y="1122" class="note-title">MariaDB</text>
+  <text x="875" y="1143" class="note-sub">team / player / round / match</text>
+  <rect x="1030" y="1100" width="230" height="54" rx="13" class="support-card"/>
+  <text x="1145" y="1122" class="note-title">Audit / Import Log</text>
+  <text x="1145" y="1143" class="note-sub">敏感变更、资格赛导入批次</text>
+  <rect x="1300" y="1100" width="280" height="54" rx="13" class="support-card"/>
+  <text x="1440" y="1122" class="note-title">jack-house-v3 页面</text>
+  <text x="1440" y="1143" class="note-sub">/t/:tid、/qualifier、/bracket、/referee</text>
+</svg>

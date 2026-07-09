@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createPack, getOsuPackPreview, getPackById, getPackList, getTagList, importOsuPack, refreshOsuPack, updatePackTags } from "./packApi"
+import { createPack, deletePack, getOsuPackPreview, getPackById, getPackList, getTagList, importOsuPack, refreshOsuPack, updatePackTags } from "./packApi"
 import type { CreatePackRequest, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackTagsRequest } from "../model/types"
 
 export const packQueryKeys = {
@@ -70,6 +70,18 @@ export function useRefreshOsuPackMutation() {
         queryClient.invalidateQueries({ queryKey: packQueryKeys.detail(String(request.packId)) }),
         queryClient.invalidateQueries({ queryKey: packQueryKeys.root }),
       ])
+    },
+  })
+}
+
+export function useDeletePackMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (packId: number | string) => deletePack(packId),
+    onSuccess: async (_data, packId) => {
+      queryClient.removeQueries({ queryKey: packQueryKeys.detail(String(packId)) })
+      await queryClient.invalidateQueries({ queryKey: packQueryKeys.root })
     },
   })
 }

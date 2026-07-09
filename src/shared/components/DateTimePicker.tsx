@@ -10,8 +10,10 @@ type DateTimePickerProps = {
   className?: string
   disabled?: boolean
   id?: string
+  minuteStep?: number
   onChange: (value: string) => void
   placeholder?: string
+  timeZone?: "local" | "UTC"
   value?: string | null
 }
 
@@ -20,11 +22,13 @@ export function DateTimePicker({
   className,
   disabled = false,
   id,
+  minuteStep = 1,
   onChange,
   placeholder = "Select date and time",
+  timeZone = "local",
   value,
 }: DateTimePickerProps) {
-  const selectedDate = parseDateTimeValue(value)
+  const selectedDate = parseDateTimeValue(value, timeZone)
   const timeValue = getTimePart(value)
 
   const handleDateSelect = (date?: Date) => {
@@ -53,7 +57,7 @@ export function DateTimePicker({
           variant="outline"
         >
           <CalendarBlank className="size-4" />
-          <span className="truncate">{selectedDate ? formatDateTimeLabel(selectedDate) : placeholder}</span>
+          <span className="truncate">{selectedDate ? formatDateTimeLabel(selectedDate, timeZone) : placeholder}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
@@ -69,6 +73,7 @@ export function DateTimePicker({
           <Input
             aria-label="Time"
             disabled={disabled}
+            step={minuteStep * 60}
             type="time"
             value={timeValue}
             onChange={(event) => handleTimeChange(event.target.value)}
@@ -79,8 +84,15 @@ export function DateTimePicker({
   )
 }
 
-function parseDateTimeValue(value?: string | null) {
+function parseDateTimeValue(value?: string | null, timeZone: "local" | "UTC" = "local") {
   if (!value) return undefined
+  if (timeZone === "UTC") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+    if (match) {
+      const [, year, month, day, hours, minutes] = match
+      return new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes))
+    }
+  }
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? undefined : date
 }
@@ -95,7 +107,11 @@ function toDateTimeLocalValue(date: Date, time: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${hours}:${minutes}`
 }
 
-function formatDateTimeLabel(date: Date) {
+function formatDateTimeLabel(date: Date, timeZone: "local" | "UTC") {
+  if (timeZone === "UTC") {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())} UTC`
+  }
+
   return new Intl.DateTimeFormat(undefined, {
     day: "2-digit",
     hour: "2-digit",

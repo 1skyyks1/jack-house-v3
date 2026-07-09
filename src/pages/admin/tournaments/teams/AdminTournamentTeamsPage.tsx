@@ -1,6 +1,6 @@
-import { ArrowLeft, Eye, NotePencil, Trash, UsersThree } from "@phosphor-icons/react"
+import { Eye, FileArrowUp, MagnifyingGlass, NotePencil, Trash, UsersThree } from "@phosphor-icons/react"
 import type { FormEvent } from "react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
@@ -12,6 +12,7 @@ import {
   useUpdateTournamentTeamInfoMutation,
   useUpdateTournamentPlayerMutation,
   useUpdateTournamentTeamStatusMutation,
+  useUploadTournamentTeamAvatarMutation,
   type TournamentPlayer,
   type TournamentTeam,
   type UpdateTournamentTeamInfoRequest,
@@ -45,9 +46,13 @@ import {
 } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { TeamFlag } from "@/pages/tournaments/_shared/TeamFlag"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const teamStatuses = [0, 1, 2, 3] as const
 const reviewStatuses = ["review_pending", "review_passed", "review_failed"] as const
+const PAGE_SIZE = 10
 
 export function AdminTournamentTeamsPage() {
   const { t } = useTranslation()
@@ -56,37 +61,47 @@ export function AdminTournamentTeamsPage() {
   const teamsQuery = useTournamentTeamsQuery(tid)
   const updateTeamMutation = useUpdateTournamentTeamStatusMutation(tid ?? "")
   const updateTeamInfoMutation = useUpdateTournamentTeamInfoMutation(tid ?? "")
+  const uploadTeamAvatarMutation = useUploadTournamentTeamAvatarMutation(tid ?? "")
   const updatePlayerMutation = useUpdateTournamentPlayerMutation(tid ?? "")
   const kickMutation = useKickTournamentPlayerMutation(tid ?? "")
   const approveAllMutation = useApproveAllTournamentTeamsMutation(tid ?? "")
+  const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const teams = teamsQuery.data ?? []
+  const filteredTeams = useMemo(() => {
+    const query = normalizeSearch(searchTerm)
+    if (!query) return teams
+    return teams.filter((team) => normalizeSearch(getTeamSearchText(team)).includes(query))
+  }, [searchTerm, teams])
+  const pageCount = Math.max(1, Math.ceil(filteredTeams.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const pagedTeams = filteredTeams.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const players = teams.flatMap((team) => team.players ?? [])
+  const passedPlayers = players.filter((player) => player.review_status === "review_passed").length
+  const failedPlayers = players.filter((player) => player.review_status === "review_failed").length
 
   if (tournamentQuery.isError || teamsQuery.isError) {
     return <PageState title={t("tournament.admin.teams.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? teamsQuery.error)} />
   }
 
-  const teams = teamsQuery.data ?? []
-  const players = teams.flatMap((team) => team.players ?? [])
-  const passedPlayers = players.filter((player) => player.review_status === "review_passed").length
-  const failedPlayers = players.filter((player) => player.review_status === "review_failed").length
-
   return (
     <AdminPage
       actions={(
         <>
-          <Button asChild type="button" variant="outline">
-            <Link to="/admin/tournaments">
-              <ArrowLeft className="size-4" />
-              {t("tournament.admin.common.back")}
-            </Link>
-          </Button>
           {tournamentQuery.data ? (
             <Button asChild type="button" variant="outline">
-              <Link to={`/t/${tournamentQuery.data.acronym || tournamentQuery.data.id}/teams`}>
+              <Link to={`${getTournamentPublicPath(tournamentQuery.data)}/teams`}>
                 <Eye className="size-4" />
                 {t("tournament.admin.common.view")}
               </Link>
             </Button>
           ) : null}
+          <Button asChild type="button" variant="outline">
+            <Link to={`/admin/tournaments/${tid}/import`}>
+              <FileArrowUp className="size-4" />
+              {t("tournament.admin.common.import")}
+            </Link>
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={approveAllMutation.isPending || teams.length === 0} type="button">
@@ -117,12 +132,14 @@ export function AdminTournamentTeamsPage() {
           </AlertDialog>
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.common.teams")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
       {teamsQuery.isLoading || tournamentQuery.isLoading ? <PageState title={t("tournament.admin.teams.loading")} description={t("tournament.admin.teams.loadingDescription")} /> : null}
 
       {approveAllMutation.isError ? <MutationErrorAlert className="mb-4" error={approveAllMutation.error} title={t("tournament.admin.teams.approveAllFailed")} /> : null}
       {updateTeamMutation.isError ? <MutationErrorAlert className="mb-4" error={updateTeamMutation.error} title={t("tournament.admin.teams.updateTeamFailed")} /> : null}
       {updateTeamInfoMutation.isError ? <MutationErrorAlert className="mb-4" error={updateTeamInfoMutation.error} title={t("tournament.admin.teams.updateTeamInfoFailed")} /> : null}
+      {uploadTeamAvatarMutation.isError ? <MutationErrorAlert className="mb-4" error={uploadTeamAvatarMutation.error} title={t("tournament.admin.teams.avatarUploadFailed")} /> : null}
       {updatePlayerMutation.isError ? <MutationErrorAlert className="mb-4" error={updatePlayerMutation.error} title={t("tournament.admin.teams.updatePlayerFailed")} /> : null}
       {kickMutation.isError ? <MutationErrorAlert className="mb-4" error={kickMutation.error} title={t("tournament.admin.teams.removePlayerFailed")} /> : null}
 
@@ -138,45 +155,84 @@ export function AdminTournamentTeamsPage() {
           {teams.length === 0 ? <AppAlert title={t("tournament.admin.teams.noTeamsTitle")}>{t("tournament.admin.teams.noTeamsDescription")}</AppAlert> : null}
 
           {teams.length > 0 ? (
-            <TeamManagementTable
-              isRemovingPlayer={kickMutation.isPending}
-              isUpdatingPlayer={updatePlayerMutation.isPending}
-              isUpdatingTeam={updateTeamMutation.isPending}
-              isUpdatingTeamInfo={updateTeamInfoMutation.isPending}
-              onKickPlayer={(team, player) => {
-                kickMutation.mutate({
-                  playerId: player.id,
-                  teamId: team.id,
-                }, {
-                  onSuccess: () => toast.success(t("tournament.admin.teams.playerRemoved")),
-                })
-              }}
-              onPlayerReviewChange={(player, reviewStatus) => {
-                updatePlayerMutation.mutate({
-                  playerId: player.id,
-                  request: { review_status: reviewStatus },
-                }, {
-                  onSuccess: () => toast.success(t("tournament.admin.teams.playerReviewUpdated")),
-                })
-              }}
-              onTeamInfoUpdate={(team, request) => {
-                updateTeamInfoMutation.mutate({
-                  request,
-                  teamId: team.id,
-                }, {
-                  onSuccess: () => toast.success(t("tournament.admin.teams.teamInfoUpdated")),
-                })
-              }}
-              onTeamStatusChange={(team, status) => {
-                updateTeamMutation.mutate({
-                  request: { status },
-                  teamId: team.id,
-                }, {
-                  onSuccess: () => toast.success(t("tournament.admin.teams.teamStatusUpdated")),
-                })
-              }}
-              teams={teams}
-            />
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="relative w-full max-w-md">
+                  <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    aria-label={t("tournament.common.quickSearch")}
+                    className="pl-9"
+                    placeholder={t("tournament.common.teamPlayerSearchPlaceholder")}
+                    value={searchTerm}
+                    onChange={(event) => {
+                      setSearchTerm(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">{filteredTeams.length} / {teams.length}</p>
+              </div>
+
+              <TeamManagementTable
+                isRemovingPlayer={kickMutation.isPending}
+                isUpdatingPlayer={updatePlayerMutation.isPending}
+                isUpdatingTeam={updateTeamMutation.isPending}
+                isUpdatingTeamInfo={updateTeamInfoMutation.isPending}
+                isUploadingTeamAvatar={uploadTeamAvatarMutation.isPending}
+                onKickPlayer={(team, player) => {
+                  kickMutation.mutate({
+                    playerId: player.id,
+                    teamId: team.id,
+                  }, {
+                    onSuccess: () => toast.success(t("tournament.admin.teams.playerRemoved")),
+                  })
+                }}
+                onPlayerReviewChange={(player, reviewStatus) => {
+                  updatePlayerMutation.mutate({
+                    playerId: player.id,
+                    request: { review_status: reviewStatus },
+                  }, {
+                    onSuccess: () => toast.success(t("tournament.admin.teams.playerReviewUpdated")),
+                  })
+                }}
+                onTeamInfoUpdate={(team, request) => {
+                  updateTeamInfoMutation.mutate({
+                    request,
+                    teamId: team.id,
+                  }, {
+                    onSuccess: () => toast.success(t("tournament.admin.teams.teamInfoUpdated")),
+                  })
+                }}
+                onTeamAvatarUpload={async (team, file) => {
+                  const updated = await uploadTeamAvatarMutation.mutateAsync({
+                    file,
+                    teamId: team.id,
+                  })
+                  toast.success(t("tournament.admin.teams.avatarUploaded"))
+                  return updated
+                }}
+                onTeamStatusChange={(team, status) => {
+                  updateTeamMutation.mutate({
+                    request: { status },
+                    teamId: team.id,
+                  }, {
+                    onSuccess: () => toast.success(t("tournament.admin.teams.teamStatusUpdated")),
+                  })
+                }}
+                defaultTeamAvatar={tournamentQuery.data?.default_team_avatar}
+                teams={pagedTeams}
+              />
+
+              <div className="flex items-center justify-end gap-2">
+                <Button disabled={currentPage <= 1} type="button" variant="outline" onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">{currentPage} / {pageCount}</span>
+                <Button disabled={currentPage >= pageCount} type="button" variant="outline" onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>
+                  Next
+                </Button>
+              </div>
+            </>
           ) : null}
         </div>
       ) : null}
@@ -196,21 +252,27 @@ function Metric({ label, value }: { label: string; value: number }) {
 }
 
 function TeamManagementTable({
+  defaultTeamAvatar,
   isRemovingPlayer,
   isUpdatingPlayer,
   isUpdatingTeam,
   isUpdatingTeamInfo,
+  isUploadingTeamAvatar,
   onKickPlayer,
+  onTeamAvatarUpload,
   onPlayerReviewChange,
   onTeamInfoUpdate,
   onTeamStatusChange,
   teams,
 }: {
+  defaultTeamAvatar?: string | null
   isRemovingPlayer: boolean
   isUpdatingPlayer: boolean
   isUpdatingTeam: boolean
   isUpdatingTeamInfo: boolean
+  isUploadingTeamAvatar: boolean
   onKickPlayer: (team: TournamentTeam, player: TournamentPlayer) => void
+  onTeamAvatarUpload: (team: TournamentTeam, file: File) => Promise<TournamentTeam>
   onPlayerReviewChange: (player: TournamentPlayer, reviewStatus: "review_pending" | "review_passed" | "review_failed") => void
   onTeamInfoUpdate: (team: TournamentTeam, request: UpdateTournamentTeamInfoRequest) => void
   onTeamStatusChange: (team: TournamentTeam, status: number) => void
@@ -240,10 +302,7 @@ function TeamManagementTable({
               <TableRow className="bg-muted/25 hover:bg-muted/35" key={`team-${team.id}`}>
                 <TableCell colSpan={2}>
                   <div className="flex items-center gap-3">
-                    <Avatar className="size-10 rounded-lg">
-                      <AvatarImage src={team.avatar ?? undefined} />
-                      <AvatarFallback className="rounded-lg">{getTeamName(team).slice(0, 1)}</AvatarFallback>
-                    </Avatar>
+                    <TeamFlag className="h-10" name={getTeamName(team)} src={team.avatar ?? defaultTeamAvatar} />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{getTeamName(team)}</span>
@@ -263,19 +322,17 @@ function TeamManagementTable({
                   <span className="text-xs text-muted-foreground">{t("tournament.admin.teams.teamRow")}</span>
                 </TableCell>
                 <TableCell>
-                  <Select disabled={isUpdatingTeam} onValueChange={(value) => onTeamStatusChange(team, Number(value))} value={String(team.status ?? 0)}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teamStatuses.map((status) => (
-                        <SelectItem key={status} value={String(status)}>{teamStatusLabel(status, t)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Badge variant="outline">{teamStatusLabel(team.status ?? 0, t)}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <TeamInfoDialog isPending={isUpdatingTeamInfo} onSubmit={(request) => onTeamInfoUpdate(team, request)} team={team} />
+                  <TeamInfoDialog
+                    isAvatarUploadPending={isUploadingTeamAvatar}
+                    isPending={isUpdatingTeamInfo || isUpdatingTeam}
+                    onAvatarUpload={(file) => onTeamAvatarUpload(team, file)}
+                    onStatusChange={(status) => onTeamStatusChange(team, status)}
+                    onSubmit={(request) => onTeamInfoUpdate(team, request)}
+                    team={team}
+                  />
                 </TableCell>
               </TableRow>,
               ...(players.length > 0
@@ -338,13 +395,15 @@ function PlayerTableRow({
               <Link className="truncate font-medium hover:text-primary" to={`/user/${player.user_id}`}>{name}</Link>
               {player.is_captain ? <Badge variant="outline">{t("tournament.common.captain")}</Badge> : null}
             </div>
-            <p className="text-xs text-muted-foreground">UID {player.user_id} / osu {player.user?.osu_uid ?? "-"}</p>
+            <p className="text-xs text-muted-foreground">osu_uid {player.user?.osu_uid ?? "-"}</p>
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <p>QQ {player.contact_qq || "-"}</p>
-        <p className="text-xs text-muted-foreground">Discord {player.contact_discord || "-"}</p>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Badge variant="outline">QQ {player.contact_qq || "-"}</Badge>
+          <Badge variant="outline">Discord {player.contact_discord || "-"}</Badge>
+        </div>
       </TableCell>
       <TableCell>
         <Select disabled={isUpdatingPlayer} onValueChange={(value) => onReviewChange(value as typeof reviewStatus)} value={reviewStatus}>
@@ -358,9 +417,7 @@ function PlayerTableRow({
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell>
-        <Badge variant="outline">{reviewStatusLabel(reviewStatus, t)}</Badge>
-      </TableCell>
+      <TableCell />
       <TableCell className="text-right">
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -387,11 +444,17 @@ function PlayerTableRow({
 }
 
 function TeamInfoDialog({
+  isAvatarUploadPending,
   isPending,
+  onAvatarUpload,
+  onStatusChange,
   onSubmit,
   team,
 }: {
+  isAvatarUploadPending: boolean
   isPending: boolean
+  onAvatarUpload: (file: File) => Promise<TournamentTeam>
+  onStatusChange: (status: number) => void
   onSubmit: (request: UpdateTournamentTeamInfoRequest) => void
   team: TournamentTeam
 }) {
@@ -407,35 +470,51 @@ function TeamInfoDialog({
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <TeamInfoForm key={`${team.id}-${team.updated_time ?? ""}`} isPending={isPending} onSubmit={onSubmit} team={team} />
+        <TeamInfoForm
+          key={`${team.id}-${team.updated_time ?? ""}`}
+          isAvatarUploadPending={isAvatarUploadPending}
+          isPending={isPending}
+          onAvatarUpload={onAvatarUpload}
+          onStatusChange={onStatusChange}
+          onSubmit={onSubmit}
+          team={team}
+        />
       </DialogContent>
     </Dialog>
   )
 }
 
 function TeamInfoForm({
+  isAvatarUploadPending,
   isPending,
+  onAvatarUpload,
+  onStatusChange,
   onSubmit,
   team,
 }: {
+  isAvatarUploadPending: boolean
   isPending: boolean
+  onAvatarUpload: (file: File) => Promise<TournamentTeam>
+  onStatusChange: (status: number) => void
   onSubmit: (request: UpdateTournamentTeamInfoRequest) => void
   team: TournamentTeam
 }) {
   const { t } = useTranslation()
   const [name, setName] = useState(team.name)
   const [displayName, setDisplayName] = useState(team.display_name || team.name)
-  const [avatar, setAvatar] = useState(team.avatar ?? "")
   const [isOpen, setIsOpen] = useState(Boolean(team.is_open))
+  const [status, setStatus] = useState(String(team.status ?? 0))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onSubmit({
-      avatar: avatar.trim() || null,
       display_name: displayName.trim(),
       is_open: isOpen,
       name: name.trim(),
     })
+    if (Number(status) !== Number(team.status ?? 0)) {
+      onStatusChange(Number(status))
+    }
   }
 
   return (
@@ -456,16 +535,41 @@ function TeamInfoForm({
           <Input id={`team-${team.id}-display-name`} value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`team-${team.id}-avatar`}>{t("tournament.admin.teams.avatarUrl")}</Label>
-          <Input id={`team-${team.id}-avatar`} value={avatar} onChange={(event) => setAvatar(event.target.value)} />
+          <Label htmlFor={`team-${team.id}-avatar-file`}>{t("tournament.admin.teams.avatarUpload")}</Label>
+          <Input
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            disabled={isAvatarUploadPending}
+            id={`team-${team.id}-avatar-file`}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              event.currentTarget.value = ""
+              if (!file) return
+              void onAvatarUpload(file)
+                .catch(() => undefined)
+            }}
+            type="file"
+          />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={isOpen} onCheckedChange={(checked) => setIsOpen(checked === true)} />
           {t("tournament.admin.teams.publicTeam")}
         </label>
+        <div className="grid gap-2">
+          <Label>{t("tournament.admin.list.status")}</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {teamStatuses.map((teamStatus) => (
+                <SelectItem key={teamStatus} value={String(teamStatus)}>{teamStatusLabel(teamStatus, t)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <DialogFooter>
-        <Button disabled={isPending} type="submit">
+        <Button disabled={isPending || isAvatarUploadPending} type="submit">
           {isPending ? t("tournament.admin.form.saving") : t("tournament.admin.teams.saveChanges")}
         </Button>
       </DialogFooter>
@@ -488,4 +592,23 @@ function reviewStatusLabel(status: "review_pending" | "review_passed" | "review_
 
 function getTeamName(team: TournamentTeam) {
   return team.display_name || team.name || `Team ${team.id}`
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function getTeamSearchText(team: TournamentTeam) {
+  return [
+    team.name,
+    team.display_name,
+    String(team.id),
+    ...(team.players ?? []).flatMap((player) => [
+      player.user_name_snapshot,
+      player.user?.user_name,
+      player.user?.osu_uid ? String(player.user.osu_uid) : "",
+      player.contact_discord,
+      player.contact_qq,
+    ]),
+  ].filter(Boolean).join(" ")
 }

@@ -3,6 +3,7 @@ export const QUAL_RANK_MODE_RANK_SUM = 1
 
 export type TournamentUser = {
   avatar?: string | null
+  osu_uid?: number | null
   user_id: number
   user_name: string
 }
@@ -17,8 +18,11 @@ export type TournamentStaff = {
 export type TournamentStaffRole = "host" | "pooler" | "referee" | "streamer" | "commentator"
 
 export type CreateTournamentStaffRequest = {
+  avatar?: string | null
+  osu_uid?: number | string | null
   role: TournamentStaffRole
-  user_id: number
+  user_id?: number
+  user_name?: string
 }
 
 export type TournamentRound = {
@@ -37,6 +41,7 @@ export type Tournament = {
   banner?: string | null
   created_by?: number | null
   created_time?: string
+  default_team_avatar?: string | null
   desc_en?: string | null
   desc_zh?: string | null
   id: number
@@ -134,6 +139,7 @@ export type TournamentMatch = {
   mp_id?: number | null
   result_note?: string | null
   result_type?: "normal" | "wbd" | "ff" | string
+  roll_winner_id?: number | null
   round?: TournamentRound
   round_id: number
   round_no?: number | null
@@ -146,12 +152,10 @@ export type TournamentMatch = {
   status: number
   team1?: TournamentTeam | null
   team1_id?: number | null
-  team1_roll?: number | null
   team1_score: number
   team1_timeout_used?: number
   team2?: TournamentTeam | null
   team2_id?: number | null
-  team2_roll?: number | null
   team2_score: number
   team2_timeout_used?: number
   winner?: TournamentTeam | null
@@ -183,12 +187,12 @@ export type CreateTournamentRoundRequest = {
 export type UpdateTournamentRoundRequest = Partial<CreateTournamentRoundRequest>
 
 export type CreateTournamentRoundMapRequest = {
-  artist: string
   beatmap_url?: string
-  map_id: number
-  mapper: string
   set_id?: number | null
-  title: string
+  artist?: string
+  map_id?: number
+  mapper?: string
+  title?: string
   type: string
 }
 
@@ -205,12 +209,11 @@ export type UpdateTournamentMatchRequest = {
   mp_id?: number | null
   result_note?: string | null
   result_type?: "normal" | "wbd" | "ff"
+  roll_winner_id?: number | null
   scheduled_time?: string | null
   status?: number
-  team1_roll?: number | null
   team1_score?: number
   team1_timeout_used?: number
-  team2_roll?: number | null
   team2_score?: number
   team2_timeout_used?: number
   winner_id?: number | null
@@ -238,7 +241,9 @@ export type TournamentRefereeData = {
     close?: string
     createRoom?: string
     invite?: string[]
+    notify?: string
     rollMessage?: string
+    scoreReport?: string
     settings?: string
     start?: string
     timer?: string
@@ -249,8 +254,7 @@ export type TournamentRefereeData = {
 }
 
 export type RecordTournamentRollRequest = {
-  team1_roll: number
-  team2_roll: number
+  winner_team_id?: number
 }
 
 export type TournamentMatchActionRequest = {
@@ -275,11 +279,39 @@ export type TournamentGame = {
   map_id: number
   match_id: number
   order: number
+  player1?: TournamentPlayer | null
   player1_id: number
   player1_score: number
+  player2?: TournamentPlayer | null
   player2_id: number
   player2_score: number
   winner_team: 1 | 2 | number
+}
+
+export type TournamentPerformanceEntry = {
+  game_id: number
+  match_id: number
+  player?: TournamentPlayer | null
+  rank: number
+  score: number
+  side: 1 | 2 | number
+  team: Pick<TournamentTeam, "avatar" | "display_name" | "id" | "name">
+}
+
+export type TournamentPerformanceMap = {
+  entries: TournamentPerformanceEntry[]
+  key: string
+  map: TournamentMappoolMap | null
+}
+
+export type TournamentPerformanceStage = {
+  key: string
+  label: string
+  maps: TournamentPerformanceMap[]
+}
+
+export type TournamentPerformance = {
+  stages: TournamentPerformanceStage[]
 }
 
 export type TournamentSection = {
@@ -426,14 +458,12 @@ export type UpdateTournamentQualScoreRequest = {
 }
 
 export type CreateTournamentTeamRequest = {
-  avatar?: string | null
   display_name?: string
   is_open: boolean
   name: string
 }
 
 export type UpdateTournamentTeamInfoRequest = {
-  avatar?: string | null
   display_name?: string
   is_open?: boolean
   name: string

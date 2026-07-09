@@ -1,30 +1,34 @@
 import type { FormEvent } from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { ArrowLeft, Check, ClipboardText, DiceFive, Sparkle, Timer } from "@phosphor-icons/react"
+import { ArrowLeft, Check, DownloadSimple, Prohibit, ShieldCheck, Sparkle, Sword, Timer } from "@phosphor-icons/react"
 import { Link, useParams } from "react-router-dom"
 import {
   useCreateTournamentMatchActionMutation,
+  useFetchTournamentMatchScoresMutation,
   useRecordTournamentRollMutation,
   useRecordTournamentTimeoutMutation,
   useTournamentDetailQuery,
   useTournamentRefereeDataQuery,
+  useUpdateTournamentMatchMutation,
   useUpdateTournamentMatchActionMutation,
-  useUpdateTournamentGameScoreMutation,
+  type TournamentMappoolMap,
   type TournamentGame,
+  type TournamentMatch,
+  type TournamentMatchAction,
 } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
-import { ActionRow, CommandLine, Field, TeamCard } from "./components"
+import { cn } from "@/lib/utils"
+import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
+import { ActionRow, CommandLine, TeamCard } from "./components"
 import type { ActionType } from "./types"
-import { getHighRollTeamId, getNextAction, isMapDisabled, mapTitle, teamName, teamNameById } from "./utils"
+import { getNextAction, getRollWinnerTeamId, isMapDisabled, teamName, teamNameById } from "./utils"
 
 export function TournamentRefereePage() {
   const { t } = useTranslation()
@@ -35,20 +39,21 @@ export function TournamentRefereePage() {
   const refereeQuery = useTournamentRefereeDataQuery(tid, matchId)
   const recordRollMutation = useRecordTournamentRollMutation(tournamentId, safeMatchId)
   const createActionMutation = useCreateTournamentMatchActionMutation(tournamentId, safeMatchId)
+  const fetchScoresMutation = useFetchTournamentMatchScoresMutation(tournamentId)
   const updateActionMutation = useUpdateTournamentMatchActionMutation(tournamentId, safeMatchId)
+  const updateMatchMutation = useUpdateTournamentMatchMutation(tournamentId)
   const timeoutMutation = useRecordTournamentTimeoutMutation(tournamentId, safeMatchId)
-  const updateGameMutation = useUpdateTournamentGameScoreMutation(tournamentId, safeMatchId)
 
   const match = refereeQuery.data?.match
-  const [team1Roll, setTeam1Roll] = useState("")
-  const [team2Roll, setTeam2Roll] = useState("")
-  const [actionType, setActionType] = useState<ActionType>("protect")
-  const [actionTeamId, setActionTeamId] = useState("")
+  const [rollWinnerTeamId, setRollWinnerTeamId] = useState("")
   const [actionMapId, setActionMapId] = useState("")
-  const [actionNote, setActionNote] = useState("")
-  const [scoreDrafts, setScoreDrafts] = useState<Record<number, { player1_score: string; player2_score: string }>>({})
+  const [mpLink, setMpLink] = useState("")
 
-  const mutationError = recordRollMutation.error ?? createActionMutation.error ?? updateActionMutation.error ?? timeoutMutation.error ?? updateGameMutation.error
+  const mutationError = recordRollMutation.error ?? createActionMutation.error ?? fetchScoresMutation.error ?? updateActionMutation.error ?? updateMatchMutation.error ?? timeoutMutation.error
+
+  useEffect(() => {
+    setMpLink(match?.mp_id ? formatMpLink(match.mp_id) : "")
+  }, [match?.id, match?.mp_id])
 
   if (tournamentQuery.isError || refereeQuery.isError) {
     return <PageState title={t("tournament.referee.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? refereeQuery.error)} />
@@ -59,21 +64,15 @@ export function TournamentRefereePage() {
   }
 
   const actions = refereeQuery.data.actions ?? []
-  const maps = match.round?.mappool ?? []
-  const highRollTeamId = getHighRollTeamId(match)
+  const games = match.games ?? []
+  const gameByMapId = buildGameByMapId(games)
+  const maps = sortMappoolMaps(match.round?.mappool ?? [])
+  const mapLabelById = buildMappoolLabelMap(maps)
+  const savedRollWinnerTeamId = getRollWinnerTeamId(match)
   const nextAction = getNextAction(match, actions)
-  const selectedActionType = actionType || nextAction.action_type
-  const selectedActionTeamId = actionTeamId || (nextAction.team_id ? String(nextAction.team_id) : "") || (match.team1_id ? String(match.team1_id) : "")
-  const team1RollValue = team1Roll || (match.team1_roll == null ? "" : String(match.team1_roll))
-  const team2RollValue = team2Roll || (match.team2_roll == null ? "" : String(match.team2_roll))
-
-  function handleRecordRoll(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    recordRollMutation.mutate(
-      { team1_roll: Number(team1RollValue), team2_roll: Number(team2RollValue) },
-      { onSuccess: () => toast.success(t("tournament.referee.rollSaved")) },
-    )
-  }
+  const selectedActionType = nextAction.action_type
+  const selectedActionTeamId = nextAction.team_id ? String(nextAction.team_id) : ""
+  const rollWinnerValue = rollWinnerTeamId || (savedRollWinnerTeamId ? String(savedRollWinnerTeamId) : "")
 
   function handleCreateAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -83,262 +82,298 @@ export function TournamentRefereePage() {
       {
         action_type: selectedActionType,
         map_id: Number(actionMapId),
-        note: actionNote.trim() || null,
+        note: null,
         team_id: Number(selectedActionTeamId),
       },
       {
         onSuccess: () => {
           setActionMapId("")
-          setActionNote("")
           toast.success(t("tournament.referee.actionSaved"))
         },
       },
     )
   }
 
-  function handleSaveScore(game: TournamentGame) {
-    const draft = scoreDrafts[game.id]
-    updateGameMutation.mutate(
-      {
-        gameId: game.id,
-        request: {
-          player1_id: game.player1_id,
-          player1_score: Number(draft?.player1_score ?? game.player1_score ?? 0),
-          player2_id: game.player2_id,
-          player2_score: Number(draft?.player2_score ?? game.player2_score ?? 0),
-        },
-      },
-      { onSuccess: () => toast.success(t("tournament.referee.gameScoreSaved")) },
-    )
+  async function handleFetchScores(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!match) return
+    const mpId = parseMpId(mpLink)
+    if (!mpId) {
+      toast.warning(t("tournament.referee.mpLinkInvalid"))
+      return
+    }
+
+    if (mpId !== Number(match.mp_id)) {
+      await updateMatchMutation.mutateAsync({
+        matchId: match.id,
+        request: { mp_id: mpId },
+      })
+    }
+
+    await fetchScoresMutation.mutateAsync(match.id)
+    toast.success(t("tournament.referee.scoresImported"))
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-3 py-6 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <Button asChild className="h-auto px-0 text-muted-foreground" variant="link">
+    <main className="flex h-[calc(100dvh-65px)] w-full max-w-full flex-col overflow-hidden p-1 sm:p-2">
+      <header className="mb-2 flex shrink-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button asChild size="sm" variant="outline">
             <Link to={`/t/${tid}/match/${match.id}`}>
               <ArrowLeft className="size-4" />
               {t("tournament.referee.backToMatch")}
             </Link>
           </Button>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tournamentQuery.data?.name ?? t("tournament.common.tournament")}</p>
-            <h1 className="font-heading text-3xl font-semibold sm:text-4xl">{t("tournament.referee.title", { id: match.id })}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate font-heading text-xl font-semibold">{t("tournament.referee.title", { id: match.id })}</h1>
+            <p className="truncate text-xs text-muted-foreground">{formatRefereeSubtitle(match, t("tournament.referee.noRound"))}</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link to={`/t/${tid}/bracket`}>{t("tournament.common.bracket")}</Link>
+            <Link to={`/t/${tid}/bracket`}>{t("tournament.common.schedule")}</Link>
           </Button>
           <Button asChild size="sm" variant="outline">
             <Link to={`/admin/tournaments/${tournamentQuery.data?.id ?? tid}/bracket`}>{t("tournament.referee.adminMainStage")}</Link>
           </Button>
         </div>
-      </div>
+      </header>
 
       {mutationError ? <MutationErrorAlert error={mutationError} title={t("tournament.referee.operationFailed")} /> : null}
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
-        <TeamCard isHighRoll={highRollTeamId === match.team1_id} match={match} side={t("tournament.match.team", { index: 1 })} team={match.team1} />
-        <div className="flex items-center justify-center">
-          <div className="rounded-full border bg-card px-5 py-3 font-heading text-2xl font-semibold">
-            {match.team1_score ?? 0}:{match.team2_score ?? 0}
-          </div>
+      <section className="grid shrink-0 items-stretch gap-2 lg:grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)]">
+        <TeamCard align="right" defaultTeamAvatar={tournamentQuery.data?.default_team_avatar} team={match.team1} />
+        <div className="flex flex-col items-center justify-center rounded-lg border bg-card px-2 py-1.5 text-center">
+          <p className="flex items-center justify-center gap-2 font-heading text-3xl font-semibold leading-none tabular-nums">
+            <span>{match.team1_score ?? 0}</span>
+            <span className="text-muted-foreground">:</span>
+            <span>{match.team2_score ?? 0}</span>
+          </p>
+          <Badge className="mt-1 h-4 px-1.5 text-[10px]" variant={match.status === 2 ? "default" : "outline"}>
+            {match.status === 2 ? t("tournament.common.done") : match.status === 1 ? t("tournament.referee.inProgress") : t("tournament.teams.open")}
+          </Badge>
         </div>
-        <TeamCard isHighRoll={highRollTeamId === match.team2_id} match={match} side={t("tournament.match.team", { index: 2 })} team={match.team2} />
+        <TeamCard align="left" defaultTeamAvatar={tournamentQuery.data?.default_team_avatar} team={match.team2} />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="flex flex-col gap-4">
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>{t("tournament.referee.timeline")}</CardTitle>
-              <CardAction>
-                <Badge variant="outline">{t("tournament.common.actionCount", { count: actions.length })}</Badge>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-primary/[0.04] px-3 py-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Sparkle className="size-4 text-primary" weight="bold" />
-                  <span className="font-medium">{t("tournament.referee.nextAction")}</span>
-                  <span className="text-muted-foreground">{nextAction.label}</span>
-                </div>
-                {nextAction.team_id ? <Badge variant="secondary">{teamNameById(match, nextAction.team_id)}</Badge> : <Badge variant="outline">{t("tournament.referee.waitingForRoll")}</Badge>}
-              </div>
-              <form className="mb-4 grid gap-3 lg:grid-cols-[8rem_minmax(10rem,1fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_auto]" onSubmit={handleCreateAction}>
-                <Field label={t("tournament.referee.action")}>
-                  <Select value={selectedActionType} onValueChange={(value) => setActionType(value as ActionType)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="protect">{t("tournament.referee.protect")}</SelectItem>
-                      <SelectItem value="ban">{t("tournament.referee.ban")}</SelectItem>
-                      <SelectItem value="pick">{t("tournament.referee.pick")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("tournament.referee.team")}>
-                  <Select value={selectedActionTeamId} onValueChange={setActionTeamId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t("tournament.referee.selectTeam")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {match.team1_id ? <SelectItem value={String(match.team1_id)}>{teamName(match.team1)}</SelectItem> : null}
-                      {match.team2_id ? <SelectItem value={String(match.team2_id)}>{teamName(match.team2)}</SelectItem> : null}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("tournament.referee.map")}>
-                  <Select value={actionMapId} onValueChange={setActionMapId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t("tournament.referee.selectMap")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {maps.map((map) => (
-                        <SelectItem disabled={isMapDisabled(selectedActionType, map, actions)} key={map.id} value={String(map.id)}>
-                          {map.type} · {map.artist} - {map.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("tournament.referee.note")}>
-                  <Input value={actionNote} onChange={(event) => setActionNote(event.target.value)} />
-                </Field>
-                <Button className="self-end" disabled={createActionMutation.isPending || !selectedActionTeamId || !actionMapId} type="submit">
+      <section className="mt-2 grid min-h-0 flex-1 gap-2 xl:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)]">
+        <div className="min-h-0 min-w-0">
+          <Card className="h-full min-h-0 [--card-spacing:--spacing(1.5)]" size="sm">
+            <CardContent className="flex min-h-0 flex-1 flex-col gap-2 px-2 pb-2 pt-1">
+              <form className="grid shrink-0 min-w-0 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_5rem_auto]" onSubmit={handleCreateAction}>
+                <p className="flex min-w-0 items-center gap-1.5 truncate border-l-2 border-primary bg-primary/[0.04] px-2 py-1.5 text-xs font-medium">
+                  <Sparkle className="size-3.5 shrink-0 text-primary" weight="bold" />
+                  <span className="truncate">{formatNextAction(nextAction, match, t(`tournament.referee.next.${nextAction.labelKey}`), t("tournament.referee.selectRollWinnerFirst"))}</span>
+                </p>
+                <Select value={actionMapId} onValueChange={setActionMapId}>
+                  <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
+                    <SelectValue placeholder={t("tournament.referee.selectMap")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {maps.map((map) => (
+                      <SelectItem disabled={isMapDisabled(selectedActionType, map, actions)} key={map.id} value={String(map.id)}>
+                        {getMappoolLabel(map, mapLabelById)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button className="h-7 whitespace-nowrap px-2 text-xs" disabled={createActionMutation.isPending || !selectedActionTeamId || !actionMapId} size="sm" type="submit">
                   <Check className="size-4" weight="bold" />
-                  {t("tournament.common.save")}
+                  {t("tournament.referee.saveAction")}
                 </Button>
               </form>
-
-              {actions.length === 0 ? (
-                <AppAlert title={t("tournament.referee.noActionsTitle")}>{t("tournament.referee.noActionsDescription")}</AppAlert>
-              ) : (
-                <div className="space-y-3">
-                  {actions.map((action) => (
-                    <ActionRow
-                      action={action}
-                      actions={actions}
-                      key={`${action.id}-${action.updated_time ?? ""}`}
-                      maps={maps}
-                      match={match}
-                      onAutosave={(request) => updateActionMutation.mutate({ actionId: action.id, request })}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>{t("tournament.referee.playedMapsCorrection")}</CardTitle>
-              <CardAction>
-                <Badge variant="outline">{t("tournament.common.games", { count: match.games?.length ?? 0 })}</Badge>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {!match.games?.length ? (
-                <AppAlert title={t("tournament.referee.noPlayedMapsTitle")}>{t("tournament.referee.noPlayedMapsDescription")}</AppAlert>
-              ) : (
-                <div className="space-y-3">
-                  {match.games.map((game) => (
-                    <div className="rounded-lg border bg-background p-3" key={game.id}>
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <Badge variant="outline">{game.map?.type ?? t("tournament.common.game", { order: game.order })}</Badge>
-                          <p className="mt-1 truncate font-medium">{mapTitle(game.map)}</p>
-                        </div>
-                        <Badge variant={game.winner_team === 1 ? "default" : "secondary"}>{game.winner_team === 1 ? teamName(match.team1) : teamName(match.team2)}</Badge>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-                        <Field label={teamName(match.team1)}>
-                          <Input
-                            type="number"
-                            value={scoreDrafts[game.id]?.player1_score ?? String(game.player1_score ?? 0)}
-                            onChange={(event) => setScoreDrafts((drafts) => ({ ...drafts, [game.id]: { ...(drafts[game.id] ?? { player2_score: "" }), player1_score: event.target.value } }))}
-                          />
-                        </Field>
-                        <Field label={teamName(match.team2)}>
-                          <Input
-                            type="number"
-                            value={scoreDrafts[game.id]?.player2_score ?? String(game.player2_score ?? 0)}
-                            onChange={(event) => setScoreDrafts((drafts) => ({ ...drafts, [game.id]: { ...(drafts[game.id] ?? { player1_score: "" }), player2_score: event.target.value } }))}
-                          />
-                        </Field>
-                        <Button className="self-end" disabled={updateGameMutation.isPending} type="button" onClick={() => handleSaveScore(game)}>{t("tournament.common.save")}</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                {actions.length === 0 ? (
+                  <AppAlert title={t("tournament.referee.noActionsTitle")}>{t("tournament.referee.noActionsDescription")}</AppAlert>
+                ) : (
+                  <div className="w-full overflow-hidden rounded-md border">
+                    {actions.map((action) => (
+                      <ActionRow
+                        action={action}
+                        actions={actions}
+                        game={action.map_id ? gameByMapId.get(Number(action.map_id)) : undefined}
+                        key={`${action.id}-${action.updated_time ?? ""}`}
+                        maps={maps}
+                        match={match}
+                        onAutosave={(request) => updateActionMutation.mutate({ actionId: action.id, request })}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <aside className="space-y-4">
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>{t("tournament.referee.rollAndTimeout")}</CardTitle>
-              <CardAction>
-                <DiceFive className="size-5 text-primary" weight="bold" />
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-3" onSubmit={handleRecordRoll}>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label={teamName(match.team1)}>
-                    <Input required type="number" value={team1RollValue} onChange={(event) => setTeam1Roll(event.target.value)} />
-                  </Field>
-                  <Field label={teamName(match.team2)}>
-                    <Input required type="number" value={team2RollValue} onChange={(event) => setTeam2Roll(event.target.value)} />
-                  </Field>
+        <aside className="grid min-h-0 min-w-0 gap-2 xl:grid-rows-[auto_minmax(0,1fr)]">
+          <div className="grid min-h-0 min-w-0 gap-2 lg:grid-cols-[minmax(0,4fr)_minmax(0,3fr)]">
+            <Card className="min-w-0 [--card-spacing:--spacing(1.5)]" size="sm">
+              <CardContent className="px-2 pb-2 pt-1">
+                <div className="space-y-1.5">
+                  <CommandLine label={t("tournament.referee.scoreReport")} value={refereeQuery.data.commands.scoreReport} />
+                  <CommandLine label={t("tournament.referee.createRoom")} value={refereeQuery.data.commands.createRoom} />
+                  <CommandLine label={t("tournament.referee.settings")} value={refereeQuery.data.commands.settings} />
+                  {refereeQuery.data.commands.invite?.map((command) => (
+                    <CommandLine key={command} label={t("tournament.referee.invitePlayers")} value={command} />
+                  ))}
+                  <CommandLine label={t("tournament.referee.notifyPlayers")} value={refereeQuery.data.commands.notify} />
+                  <CommandLine label={t("tournament.referee.close")} value={refereeQuery.data.commands.close} />
                 </div>
-                <Button disabled={recordRollMutation.isPending} type="submit">{t("tournament.referee.saveRoll")}</Button>
-              </form>
-              <Separator className="my-4" />
-              <div className="grid gap-2">
-                <Button disabled={timeoutMutation.isPending || Boolean(match.team1_timeout_used)} type="button" variant="outline" onClick={() => timeoutMutation.mutate(1, { onSuccess: () => toast.success(t("tournament.referee.timeoutRecorded")) })}>
-                  <Timer className="size-4" />
-                  {t("tournament.referee.teamTimeout", { team: teamName(match.team1) })}
-                </Button>
-                <Button disabled={timeoutMutation.isPending || Boolean(match.team2_timeout_used)} type="button" variant="outline" onClick={() => timeoutMutation.mutate(2, { onSuccess: () => toast.success(t("tournament.referee.timeoutRecorded")) })}>
-                  <Timer className="size-4" />
-                  {t("tournament.referee.teamTimeout", { team: teamName(match.team2) })}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>{t("tournament.referee.osuCommands")}</CardTitle>
-              <CardAction>
-                <ClipboardText className="size-5 text-primary" weight="bold" />
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <CommandLine label={t("tournament.referee.createRoom")} value={refereeQuery.data.roomName ? refereeQuery.data.commands.createRoom : undefined} />
-                <CommandLine label={t("tournament.referee.settings")} value={refereeQuery.data.commands.settings} />
-                <CommandLine label={t("tournament.referee.timer")} value={refereeQuery.data.commands.timer} />
-                <CommandLine label={t("tournament.referee.start")} value={refereeQuery.data.commands.start} />
-                <CommandLine label={t("tournament.referee.abort")} value={refereeQuery.data.commands.abort} />
-                <CommandLine label={t("tournament.referee.close")} value={refereeQuery.data.commands.close} />
-              </div>
-              {refereeQuery.data.commands.invite?.length ? (
-                <>
-                  <Separator className="my-4" />
-                  <Textarea readOnly className="font-mono text-xs" value={refereeQuery.data.commands.invite.join("\n")} />
-                </>
-              ) : null}
+            <Card className="min-h-0 [--card-spacing:--spacing(1.5)]" size="sm">
+              <CardContent className="space-y-3 px-2 pb-2 pt-1">
+                <form className="flex items-center justify-between gap-3" onSubmit={handleFetchScores}>
+                  <span className="shrink-0 text-xs font-medium">{t("tournament.referee.mpLink")}</span>
+                  <div className="flex min-w-0 flex-1 justify-end gap-1.5">
+                    <Input
+                      className="h-7 min-w-0 max-w-56 flex-1 text-xs"
+                      inputMode="url"
+                      placeholder={t("tournament.referee.mpLinkPlaceholder")}
+                      value={mpLink}
+                      onChange={(event) => setMpLink(event.target.value)}
+                    />
+                    <Button
+                      className="h-7 whitespace-nowrap px-2 text-xs"
+                      disabled={fetchScoresMutation.isPending || updateMatchMutation.isPending || !parseMpId(mpLink)}
+                      size="sm"
+                      type="submit"
+                    >
+                      <DownloadSimple className="size-4" weight="bold" />
+                      {t("tournament.referee.fetchScores")}
+                    </Button>
+                  </div>
+                </form>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="shrink-0 text-xs font-medium">{t("tournament.referee.rollWinner")}</span>
+                  <div className="w-32 min-w-0">
+                    <Select
+                      disabled={recordRollMutation.isPending}
+                      value={rollWinnerValue}
+                      onValueChange={(value) => {
+                        setRollWinnerTeamId(value)
+                        recordRollMutation.mutate(
+                          { winner_team_id: Number(value) },
+                          { onSuccess: () => toast.success(t("tournament.referee.rollSaved")) },
+                        )
+                      }}
+                    >
+                      <SelectTrigger size="xs" className="w-full [&>span]:truncate">
+                        <SelectValue placeholder={t("tournament.referee.selectRollWinner")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {match.team1_id ? <SelectItem value={String(match.team1_id)}>{teamName(match.team1)}</SelectItem> : null}
+                        {match.team2_id ? <SelectItem value={String(match.team2_id)}>{teamName(match.team2)}</SelectItem> : null}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="shrink-0 text-xs font-medium">{t("tournament.common.timeout")}</span>
+                  <div className="grid min-w-0 max-w-64 flex-1 grid-cols-2 gap-1.5">
+                    <Button className="h-7 min-w-0 px-2 text-xs" disabled={timeoutMutation.isPending || Boolean(match.team1_timeout_used)} size="sm" type="button" variant="outline" onClick={() => timeoutMutation.mutate(1, { onSuccess: () => toast.success(t("tournament.referee.timeoutRecorded")) })}>
+                      <Timer className="size-3.5 shrink-0" />
+                      <span className="truncate">{teamName(match.team1)}</span>
+                    </Button>
+                    <Button className="h-7 min-w-0 px-2 text-xs" disabled={timeoutMutation.isPending || Boolean(match.team2_timeout_used)} size="sm" type="button" variant="outline" onClick={() => timeoutMutation.mutate(2, { onSuccess: () => toast.success(t("tournament.referee.timeoutRecorded")) })}>
+                      <Timer className="size-3.5 shrink-0" />
+                      <span className="truncate">{teamName(match.team2)}</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="min-h-0 [--card-spacing:--spacing(1.5)]" size="sm">
+            <CardContent className="min-h-0 flex-1 overflow-hidden px-2 pb-2 pt-1">
+              {maps.length === 0 ? (
+                <AppAlert title={t("tournament.qualifier.noMaps")} />
+              ) : (
+                <MappoolStatusTable actions={actions} labelById={mapLabelById} maps={maps} />
+              )}
             </CardContent>
           </Card>
         </aside>
       </section>
     </main>
   )
+}
+
+function formatRefereeSubtitle(match: TournamentMatch, fallbackRound: string) {
+  const roundName = match.round?.name ?? fallbackRound
+  return `${roundName} · ${teamName(match.team1)} vs ${teamName(match.team2)}`
+}
+
+function formatNextAction(nextAction: ReturnType<typeof getNextAction>, match: TournamentMatch, label: string, fallback: string) {
+  return nextAction.team_id ? `${label} · ${teamNameById(match, nextAction.team_id)}` : fallback
+}
+
+function MappoolStatusTable({ actions, labelById, maps }: { actions: TournamentMatchAction[]; labelById: Map<number, string>; maps: TournamentMappoolMap[] }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="h-full min-h-0 overflow-auto">
+      <table className="w-full table-fixed text-xs">
+        <tbody className="divide-y">
+        {maps.map((map) => {
+          const mapActions = actions.filter((item) => Number(item.map_id) === Number(map.id))
+          const isProtected = mapActions.some((item) => item.action_type === "protect")
+          const action = [...mapActions].reverse().find((item) => item.action_type === "ban" || item.action_type === "pick")
+          const actionType = action?.action_type === "ban" || action?.action_type === "pick" ? action.action_type : null
+          const StatusIcon = actionType === "ban" ? Prohibit : actionType === "pick" ? Sword : null
+
+          return (
+            <tr className={cn(
+              actionType === "ban" && "bg-rose-500/5 text-muted-foreground",
+              actionType === "pick" && "bg-sky-500/5",
+            )} key={map.id}>
+              <td className="w-14 px-2 py-1.5 align-middle">
+                <span className="block text-center font-mono text-[11px] font-semibold text-muted-foreground">{getMappoolLabel(map, labelById)}</span>
+              </td>
+              <td className="min-w-0 px-2 py-1.5 align-middle">
+                <p className={cn("truncate font-medium", actionType === "ban" ? "line-through decoration-muted-foreground/70" : null)}>
+                  {map.artist} - {map.title}
+                </p>
+              </td>
+              <td className="w-24 px-2 py-1.5 align-middle">
+                <span className={cn("inline-flex w-full items-center justify-end gap-1 font-medium", mapStatusClass(actionType))}>
+                  {isProtected ? <ShieldCheck className="size-3.5 text-emerald-700 dark:text-emerald-300" weight="bold" /> : null}
+                  {StatusIcon ? <StatusIcon className="size-3.5" weight="bold" /> : null}
+                  {actionType ? t(`tournament.referee.${actionType}`) : isProtected ? null : t("tournament.referee.unused")}
+                </span>
+              </td>
+            </tr>
+          )
+        })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function mapStatusClass(actionType: ActionType | null) {
+  if (actionType === "protect") return "text-emerald-700 dark:text-emerald-300"
+  if (actionType === "ban") return "text-rose-700 dark:text-rose-300"
+  if (actionType === "pick") return "text-sky-700 dark:text-sky-300"
+  return "text-muted-foreground"
+}
+
+function parseMpId(value: string) {
+  const match = value.trim().match(/(?:osu\.ppy\.sh\/(?:mp|community\/matches)\/)?(\d{5,})/)
+  return match ? Number(match[1]) : null
+}
+
+function formatMpLink(mpId: number) {
+  return `https://osu.ppy.sh/mp/${mpId}`
+}
+
+function buildGameByMapId(games: TournamentGame[]) {
+  const gameByMapId = new Map<number, TournamentGame>()
+  for (const game of games) {
+    if (!game.map_id) continue
+    gameByMapId.set(Number(game.map_id), game)
+  }
+  return gameByMapId
 }

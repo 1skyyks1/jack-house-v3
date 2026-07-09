@@ -19,6 +19,7 @@ import type {
   TournamentMarkdownPreviewResult,
   TournamentMatch,
   TournamentMappoolMap,
+  TournamentPerformance,
   TournamentQualImportList,
   TournamentQualMap,
   TournamentQualScore,
@@ -57,6 +58,17 @@ export async function getTournamentById(tournamentId: string): Promise<Tournamen
 
 export async function updateTournament(tournamentId: string, request: UpdateTournamentRequest): Promise<Tournament> {
   return await http.put(`/t/${tournamentId}`, request) as unknown as Tournament
+}
+
+export async function uploadTournamentDefaultTeamAvatar(tournamentId: string, file: File): Promise<Tournament> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  return await http.post(`/t/${tournamentId}/default-team-avatar`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }) as unknown as Tournament
 }
 
 export async function getTournamentSections(tournamentId: string): Promise<TournamentSection[]> {
@@ -101,6 +113,10 @@ export async function previewTournamentMarkdown(tournamentId: string, request: T
 
 export async function getTournamentBracket(tournamentId: string): Promise<TournamentMatch[]> {
   return await http.get(`/t/${tournamentId}/bracket`) as unknown as TournamentMatch[]
+}
+
+export async function getTournamentPerformance(tournamentId: string): Promise<TournamentPerformance> {
+  return await http.get(`/t/${tournamentId}/performance`) as unknown as TournamentPerformance
 }
 
 export async function generateTournamentBracket(tournamentId: string): Promise<unknown> {
@@ -221,6 +237,17 @@ export async function updateTournamentTeamInfo(tournamentId: string, teamId: num
   return await http.put(`/t/${tournamentId}/team/${teamId}/info`, request) as unknown as TournamentTeam
 }
 
+export async function uploadTournamentTeamAvatar(tournamentId: string, teamId: number, file: File): Promise<TournamentTeam> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  return await http.post(`/t/${tournamentId}/team/${teamId}/avatar`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }) as unknown as TournamentTeam
+}
+
 export async function transferTournamentCaptain(tournamentId: string, teamId: number, request: TransferTournamentCaptainRequest): Promise<TournamentTeam> {
   return await http.post(`/t/${tournamentId}/team/${teamId}/transfer-captain`, request) as unknown as TournamentTeam
 }
@@ -269,6 +296,11 @@ export async function calculateTournamentQualRanking(tournamentId: string): Prom
 
 export async function lockTournamentQualRanking(tournamentId: string): Promise<Tournament> {
   const response = await http.post(`/t/${tournamentId}/qualifier/lock`) as unknown as { tournament?: Tournament }
+  return response.tournament as Tournament
+}
+
+export async function unlockTournamentQualRanking(tournamentId: string): Promise<Tournament> {
+  const response = await http.post(`/t/${tournamentId}/qualifier/unlock`) as unknown as { tournament?: Tournament }
   return response.tournament as Tournament
 }
 

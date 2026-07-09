@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, FloppyDisk } from "@phosphor-icons/react"
+import { FloppyDisk } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { useForm } from "react-hook-form"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { useCreateTournamentMutation } from "@/entities/tournament"
 import { TournamentSettingsForm } from "@/features/tournament/admin/TournamentSettingsForm"
@@ -14,6 +14,7 @@ import {
 } from "@/features/tournament/admin/TournamentSettingsFormModel"
 import { AdminPage } from "@/features/admin-shell"
 import { Button } from "@/components/ui/button"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 export function AdminTournamentNewPage() {
   const { t } = useTranslation()
@@ -38,18 +39,13 @@ export function AdminTournamentNewPage() {
     <AdminPage
       actions={(
         <>
-          <Button asChild type="button" variant="outline">
-            <Link to="/admin/tournaments">
-              <ArrowLeft className="size-4" />
-              {t("tournament.admin.common.back")}
-            </Link>
-          </Button>
           <Button disabled={createMutation.isPending} form={formId} type="submit">
             <FloppyDisk className="size-4" weight="bold" />
             {createMutation.isPending ? t("tournament.admin.form.createPending") : t("tournament.admin.form.createSubmit")}
           </Button>
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.list.newTournament")} />}
     >
       <TournamentSettingsForm
         error={createMutation.error}

@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   getPackTypeLabel,
+  getPackTagLabel,
   getVisiblePackTagGroups,
   filterPackTagIdsForType,
   useCreatePackMutation,
@@ -491,7 +492,7 @@ function TagSelector({ isError, isLoading, onToggleTag, packType, selectedTags, 
                   type="button"
                   variant={selectedTags.includes(tag.tag_id) ? "default" : "outline"}
                 >
-                  {tag.tag_name}
+                  {getPackTagLabel(tag)}
                 </Button>
               ))}
             </div>

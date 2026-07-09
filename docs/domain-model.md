@@ -104,4 +104,4 @@
 - 赛事 API 根路径为 `/t`，页面路由为 `/t` 和 `/admin/tournaments/*`。
 - 赛事已接入公开页、组队、资格赛、正赛、裁判工作台和后台管理入口。
 - 关键领域包括 `Tournament`、`TTeam`、`TPlayer`、`TStaff`、`TSection`、`TRound`、`TMappool`、`TQualMappool`、`TQualScore`、`TMatch`、`TMatchAction`、`TAuditLog`。
-- 详细规则、权限、状态机和数据结构见 [tournament-system.md](file:///Users/bytedance/jackhouse/jack-house-v3/docs/tournament-system.md)、[tournament-implementation-spec.md](./tournament-implementation-spec.md) 和 [tournament-technical-plan.md](./tournament-technical-plan.md)。
+- 详细规则、权限、状态机和数据结构见 [tournament-system.md](./tournament-system.md)；正赛流转见 [tournament-bracket-flow.md](./tournament-bracket-flow.md)。

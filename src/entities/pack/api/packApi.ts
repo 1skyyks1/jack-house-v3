@@ -57,6 +57,10 @@ export async function refreshOsuPack(request: RefreshOsuPackRequest): Promise<vo
   await http.put(`/pack/osu/${request.beatmapsetId}`)
 }
 
+export async function deletePack(packId: number | string): Promise<void> {
+  await http.delete(`/pack/${packId}`)
+}
+
 export async function getTagList(): Promise<PackTag[]> {
   const response = await http.get("/tag")
   return unwrapData<PackTag[]>(response)

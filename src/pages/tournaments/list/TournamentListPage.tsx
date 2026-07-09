@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { getTournamentPublicPath } from "../_shared/tournamentVisuals"
 
 export function TournamentListPage() {
   const { t } = useTranslation()
@@ -16,7 +17,7 @@ export function TournamentListPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-3 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <header>
         <h1 className="font-heading text-3xl font-semibold">{t("tournament.list.title")}</h1>
       </header>
@@ -33,7 +34,7 @@ export function TournamentListPage() {
             <Link
               className="group overflow-hidden rounded-lg border bg-card transition hover:border-primary/40"
               key={tournament.id}
-              to={`/t/${tournament.acronym || tournament.id}`}
+              to={getTournamentPublicPath(tournament)}
             >
               {tournament.banner ? (
                 <img alt="" className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]" src={tournament.banner} />

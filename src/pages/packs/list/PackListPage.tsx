@@ -35,6 +35,7 @@ import {
   getPackDisplayTitle,
   getPackExternalLinks,
   getPackRankStatus,
+  getPackTagLabel,
   getPackTypeLabel,
   usePackListQuery,
   usePackTagsQuery,
@@ -326,7 +327,7 @@ function TagFilterGroup({ isError, isLoading, onToggleTag, packType, selectedTag
                   key={tag.tag_id}
                   onClick={() => onToggleTag(tag.tag_id)}
                 >
-                  {tag.tag_name}
+                  {getPackTagLabel(tag)}
                 </FilterButton>
               ))}
             </div>

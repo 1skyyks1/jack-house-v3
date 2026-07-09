@@ -58,6 +58,7 @@ export function AppShell() {
   const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/")
   const isHomeRoute = location.pathname === "/"
   const isTournamentBracketRoute = /^\/t\/[^/]+\/bracket\/?$/.test(location.pathname)
+  const isTournamentRefereeRoute = /^\/t\/[^/]+\/referee\/[^/]+\/?$/.test(location.pathname)
   const headerScrolled = isHomeRoute ? homeSectionIndex > 0 : hasScrolled
   const useOverlayHeader = !isAdminRoute && !headerScrolled
 
@@ -116,7 +117,7 @@ export function AppShell() {
           isAdminRoute
             ? "border-b border-border/80 bg-background/94 backdrop-blur-lg dark:bg-background/92"
             : headerScrolled
-            ? "border-b border-border/60 bg-background/82 shadow-[0_12px_44px_rgba(15,23,42,0.1)] backdrop-blur-2xl supports-backdrop-filter:bg-background/72 dark:border-white/10 dark:bg-background/78 dark:supports-backdrop-filter:bg-background/66 dark:shadow-[0_12px_44px_rgba(0,0,0,0.34)]"
+            ? "border-b border-border/60 bg-background/82 backdrop-blur-2xl supports-backdrop-filter:bg-background/72 dark:border-white/10 dark:bg-background/78 dark:supports-backdrop-filter:bg-background/66"
             : isHomeRoute
               ? "border-b border-transparent bg-transparent"
               : "border-b border-transparent bg-transparent",
@@ -279,7 +280,7 @@ export function AppShell() {
           "w-full",
           isAdminRoute
             ? "min-h-0 flex-1 overflow-hidden px-0 py-0"
-            : isHomeRoute || isTournamentBracketRoute
+            : isHomeRoute || isTournamentBracketRoute || isTournamentRefereeRoute
               ? "px-0 py-0"
               : "mx-auto max-w-7xl px-3 py-6 sm:px-6",
         )}

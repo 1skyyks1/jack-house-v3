@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChartBar, ClockCounterClockwise, Eye, FileArrowUp, FileText, GearSix, IdentificationBadge, Plus, Trophy, UsersThree } from "@phosphor-icons/react"
+import { ChartBar, ClockCounterClockwise, GearSix, Plus, Trophy, UsersThree } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { getTournamentStatus, useTournamentListQuery, type Tournament } from "@/entities/tournament"
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getErrorMessage, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 function useColumns(): Array<ColumnDef<Tournament>> {
   const { t } = useTranslation()
@@ -21,7 +23,7 @@ function useColumns(): Array<ColumnDef<Tournament>> {
     accessorKey: "name",
     cell: ({ row }) => (
       <div>
-        <p className="font-medium">{row.original.name}</p>
+        <Link className="font-medium hover:underline" to={getTournamentPublicPath(row.original)}>{row.original.name}</Link>
         <p className="text-xs text-muted-foreground">{row.original.acronym}</p>
       </div>
     ),
@@ -52,21 +54,9 @@ function useColumns(): Array<ColumnDef<Tournament>> {
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to={`/admin/tournaments/${row.original.id}/content`}>
-            <FileText className="size-4" />
-            {t("tournament.admin.common.content")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
           <Link to={`/admin/tournaments/${row.original.id}/teams`}>
             <UsersThree className="size-4" />
             {t("tournament.common.teams")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link to={`/admin/tournaments/${row.original.id}/import`}>
-            <FileArrowUp className="size-4" />
-            {t("tournament.admin.common.import")}
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">
@@ -76,27 +66,15 @@ function useColumns(): Array<ColumnDef<Tournament>> {
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to={`/admin/tournaments/${row.original.id}/staff`}>
-            <IdentificationBadge className="size-4" />
-            {t("tournament.admin.common.staff")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
           <Link to={`/admin/tournaments/${row.original.id}/audit`}>
             <ClockCounterClockwise className="size-4" />
             {t("tournament.admin.common.audit")}
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to={`/t/${row.original.acronym || row.original.id}`}>
-            <Eye className="size-4" />
-            {t("tournament.admin.common.view")}
-          </Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
           <Link to={`/admin/tournaments/${row.original.id}/bracket`}>
             <Trophy className="size-4" />
-            {t("tournament.common.bracket")}
+            {t("tournament.common.schedule")}
           </Link>
         </Button>
       </div>
@@ -126,6 +104,7 @@ export function AdminTournamentsPage() {
           </Link>
         </Button>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb />}
     >
       <AdminTable
         columns={columns}

@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle, ClipboardText, Eye, UploadSimple } from "@phosphor-icons/react"
+import { CheckCircle, ClipboardText, Eye, UploadSimple } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const samplePayload: TournamentHistoricalImportRequest = {
   batch_id: "JHC2024-history-import-001",
@@ -112,15 +114,9 @@ export function AdminTournamentImportPage() {
     <AdminPage
       actions={(
         <>
-          <Button asChild type="button" variant="outline">
-            <Link to="/admin/tournaments">
-              <ArrowLeft className="size-4" />
-              {t("tournament.admin.common.back")}
-            </Link>
-          </Button>
           {tournamentQuery.data ? (
             <Button asChild type="button" variant="outline">
-              <Link to={`/t/${tournamentQuery.data.acronym || tournamentQuery.data.id}/teams`}>
+              <Link to={`${getTournamentPublicPath(tournamentQuery.data)}/teams`}>
                 <Eye className="size-4" />
                 {t("tournament.admin.import.viewTeams")}
               </Link>
@@ -128,6 +124,7 @@ export function AdminTournamentImportPage() {
           ) : null}
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.import")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
       {tournamentQuery.isLoading ? <PageState title={t("tournament.admin.common.loadingTournament")} description={t("tournament.admin.common.loadingTournamentMetadata")} /> : null}
 
@@ -283,9 +280,9 @@ function ImportResult({ result }: { result: TournamentHistoricalImportResult }) 
           <ResultMetric label={t("tournament.admin.import.placeholderUsers")} value={String(createdUsers.length)} />
         </div>
 
-        <div className="space-y-2">
+        <div className="divide-y text-sm">
           {result.teams.map((team) => (
-            <div className="rounded-lg border p-3" key={`${team.display_name}-${team.team_id ?? "dry"}`}>
+            <div className="py-3" key={`${team.display_name}-${team.team_id ?? "dry"}`}>
               <div className="flex items-center justify-between gap-2">
                 <p className="font-medium">{team.display_name}</p>
                 <Badge variant="outline">{t("tournament.admin.import.playerCount", { count: team.player_count })}</Badge>

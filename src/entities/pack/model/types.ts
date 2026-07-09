@@ -162,6 +162,22 @@ export function getPackRankStatus(status: PackRankStatus | null) {
   }
 }
 
+const packTagLabels: Record<number, { en: string; zh: string }> = {
+  1: { en: "Full Jack", zh: "满叠" },
+  2: { en: "Dense Jack", zh: "大叠" },
+  3: { en: "Middle Jack", zh: "中叠" },
+  4: { en: "Light Jack", zh: "小叠" },
+  5: { en: "Anchor Jack", zh: "纵叠" },
+  6: { en: "QuadStream", zh: "四押切" },
+  7: { en: "MiniJack", zh: "子弹叠" },
+}
+
+export function getPackTagLabel(tag: Pick<PackTag, "tag_id" | "tag_name">) {
+  const label = packTagLabels[tag.tag_id]
+  if (!label) return tag.tag_name
+  return i18n.language === "en" ? label.en : label.zh
+}
+
 export function getPackExternalLinks(osuBid: number | null) {
   if (!osuBid) return []
 

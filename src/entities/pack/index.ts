@@ -1,7 +1,8 @@
-export { createPack, getOsuPackPreview, getPackById, getPackList, getTagList, importOsuPack } from "./api/packApi"
+export { createPack, deletePack, getOsuPackPreview, getPackById, getPackList, getTagList, importOsuPack } from "./api/packApi"
 export {
   packQueryKeys,
   useCreatePackMutation,
+  useDeletePackMutation,
   useImportOsuPackMutation,
   useOsuPackPreviewMutation,
   usePackDetailQuery,
@@ -17,6 +18,7 @@ export {
   getPackDisplayTitle,
   getPackExternalLinks,
   getPackRankStatus,
+  getPackTagLabel,
   getPackTypeLabel,
   getVisiblePackTagGroups,
   toFiniteNumber,

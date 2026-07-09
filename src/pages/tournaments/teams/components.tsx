@@ -10,6 +10,7 @@ import { isPlayerCaptain, isTeamCaptain, isTeamMutable } from "./utils"
 
 export function TeamSection({
   action,
+  highlightedTeamId,
   myTeamId,
   onKick,
   onLeave,
@@ -22,6 +23,7 @@ export function TeamSection({
   userId,
 }: {
   action?: (team: TournamentTeam) => ReactNode
+  highlightedTeamId?: number | null
   myTeamId?: number
   onKick?: (team: TournamentTeam, player: TournamentPlayer) => void
   onLeave?: (team: TournamentTeam) => void
@@ -39,6 +41,7 @@ export function TeamSection({
         {teams.map((team) => (
           <TeamCard
             action={action}
+            isHighlighted={highlightedTeamId === team.id}
             isMyTeam={myTeamId === team.id}
             key={team.id}
             onKick={onKick}
@@ -59,6 +62,7 @@ export function TeamSection({
 
 function TeamCard({
   action,
+  isHighlighted,
   isMyTeam,
   onKick,
   onLeave,
@@ -71,6 +75,7 @@ function TeamCard({
   userId,
 }: {
   action?: (team: TournamentTeam) => ReactNode
+  isHighlighted: boolean
   isMyTeam: boolean
   onKick?: (team: TournamentTeam, player: TournamentPlayer) => void
   onLeave?: (team: TournamentTeam) => void
@@ -91,7 +96,14 @@ function TeamCard({
   const isPrivate = !team.is_open
 
   return (
-    <article className={cn("relative min-h-20 overflow-hidden rounded-lg border bg-card px-4 py-3 pr-28 shadow-sm transition hover:border-primary/30", isMyTeam && "border-primary/50 ring-1 ring-primary/20")}>
+    <article
+      className={cn(
+        "relative min-h-20 overflow-hidden rounded-lg border bg-card px-4 py-3 pr-28 shadow-sm transition hover:border-primary/30",
+        isMyTeam && "border-primary/50 ring-1 ring-primary/20",
+        isHighlighted && "border-primary ring-2 ring-primary/30",
+      )}
+      id={`team-card-${team.id}`}
+    >
       <TeamAvatarPanel players={players} />
       <div className="relative z-10 flex min-h-14 min-w-0 flex-col justify-center gap-2">
         <div className="flex items-start justify-between gap-3">

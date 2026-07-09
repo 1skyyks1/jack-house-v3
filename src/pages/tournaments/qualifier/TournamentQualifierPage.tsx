@@ -1,4 +1,4 @@
-import { ArrowSquareOut, ListNumbers, MapTrifold } from "@phosphor-icons/react"
+import { ArrowSquareOut, ListNumbers, MagnifyingGlass, MapTrifold } from "@phosphor-icons/react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
@@ -14,8 +14,10 @@ import {
 } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentMapCoverUrl } from "../_shared/tournamentVisuals"
 
@@ -34,6 +36,8 @@ export function TournamentQualifierPage() {
   const { t } = useTranslation()
   const { tid } = useParams()
   const [activeTab, setActiveTab] = useState(TOTAL_TAB)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [locatedTeamId, setLocatedTeamId] = useState<number | null>(null)
   const tournamentQuery = useTournamentDetailQuery(tid)
   const mappoolQuery = useTournamentQualMappoolQuery(tid)
   const rankingQuery = useTournamentQualRankingQuery(tid)
@@ -63,12 +67,28 @@ export function TournamentQualifierPage() {
   const isLoading = rankingQuery.isLoading || (needsScores && scoresQuery.isLoading)
   const scoreLabel = activeTab === TOTAL_TAB && isRankSumMode ? t("tournament.qualifier.rankScore") : t("tournament.common.score")
 
+  const locateEntry = (value: string) => {
+    setSearchTerm(value)
+    const query = normalizeSearch(value)
+    if (!query) {
+      setLocatedTeamId(null)
+      return
+    }
+    const matchedEntry = activeEntries.find((entry) => normalizeSearch(getTeamSearchText(entry.team)).includes(query))
+    setLocatedTeamId(matchedEntry?.team.id ?? null)
+    if (matchedEntry) {
+      window.setTimeout(() => {
+        document.getElementById(`qual-ranking-team-${matchedEntry.team.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 0)
+    }
+  }
+
   if (tournamentQuery.isError || mappoolQuery.isError || rankingQuery.isError || scoresQuery.isError) {
     return <PageState title={t("tournament.qualifier.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? mappoolQuery.error ?? rankingQuery.error ?? scoresQuery.error)} />
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-3 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <TournamentBreadcrumb current={t("tournament.common.qualifier")} tournament={tournament} tournamentId={tid} />
 
       <div>
@@ -80,11 +100,21 @@ export function TournamentQualifierPage() {
 
       <MappoolStrip isLoading={mappoolQuery.isLoading} maps={maps} />
 
-      <section className="rounded-lg border bg-card p-4 sm:p-5">
+      <section className="border-t pt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ListNumbers className="size-5 text-muted-foreground" weight="bold" />
             <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.ranking")}</h2>
+          </div>
+          <div className="relative w-full max-w-xs">
+            <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label={t("tournament.common.quickSearch")}
+              className="pl-9"
+              placeholder={t("tournament.common.teamPlayerSearchPlaceholder")}
+              value={searchTerm}
+              onChange={(event) => locateEntry(event.target.value)}
+            />
           </div>
         </div>
 
@@ -113,7 +143,7 @@ export function TournamentQualifierPage() {
               </div>
             ) : null}
             {activeEntries.map((entry) => (
-              <RankingRow entry={entry} key={entry.team.id} />
+              <RankingRow entry={entry} isHighlighted={locatedTeamId === entry.team.id} key={entry.team.id} />
             ))}
           </div>
         </div>
@@ -122,11 +152,27 @@ export function TournamentQualifierPage() {
   )
 }
 
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function getTeamSearchText(team: TournamentTeam) {
+  return [
+    team.name,
+    team.display_name,
+    ...(team.players ?? []).flatMap((player) => [
+      player.user_name_snapshot,
+      player.user?.user_name,
+      String(player.user_id),
+    ]),
+  ].filter(Boolean).join(" ")
+}
+
 function MappoolStrip({ isLoading, maps }: { isLoading: boolean; maps: TournamentQualMap[] }) {
   const { t } = useTranslation()
 
   return (
-    <section className="rounded-lg border bg-card p-4">
+    <section>
       <div className="flex items-center gap-2">
         <MapTrifold className="size-5 text-muted-foreground" weight="bold" />
         <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.mappool")}</h2>
@@ -182,9 +228,15 @@ function RankingHeader({ scoreLabel }: { scoreLabel: string }) {
   )
 }
 
-function RankingRow({ entry }: { entry: RankingEntry }) {
+function RankingRow({ entry, isHighlighted }: { entry: RankingEntry; isHighlighted: boolean }) {
   return (
-    <article className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 bg-background px-3 py-2 md:grid-cols-[4rem_minmax(0,1.1fr)_minmax(0,1.6fr)_8rem] md:gap-3 md:px-4 md:py-3">
+    <article
+      className={cn(
+        "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 bg-background px-3 py-2 md:grid-cols-[4rem_minmax(0,1.1fr)_minmax(0,1.6fr)_8rem] md:gap-3 md:px-4 md:py-3",
+        isHighlighted && "bg-primary/10 ring-1 ring-inset ring-primary/30",
+      )}
+      id={`qual-ranking-team-${entry.team.id}`}
+    >
       <div className="min-w-0 md:block">
         <span className="font-heading text-sm font-semibold text-muted-foreground">#{entry.rank}</span>
       </div>

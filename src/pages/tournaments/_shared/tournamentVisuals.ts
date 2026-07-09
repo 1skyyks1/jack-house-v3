@@ -6,7 +6,12 @@ type TournamentVisualMap = Pick<TournamentQualMap | TournamentMappoolMap, "map_i
 
 export function getTournamentPublicPath(tournament?: Pick<Tournament, "acronym" | "id"> | null) {
   if (!tournament) return "/t"
-  return `/t/${tournament.acronym || tournament.id}`
+  return `/t/${getTournamentPublicId(tournament)}`
+}
+
+export function getTournamentPublicId(tournament?: Pick<Tournament, "acronym" | "id"> | null) {
+  if (!tournament) return ""
+  return tournament.acronym ? tournament.acronym.toLowerCase() : String(tournament.id)
 }
 
 export function getOsuBeatmapsetCoverUrl(setId?: number | null, size: "card" | "cover" = "card") {

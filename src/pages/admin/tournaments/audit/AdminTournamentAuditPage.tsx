@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ArrowClockwise, ClockCounterClockwise, FunnelSimple } from "@phosphor-icons/react"
+import { ArrowClockwise, ClockCounterClockwise, Eye, FunnelSimple } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import {
@@ -11,6 +11,7 @@ import { AdminPage } from "@/features/admin-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -23,8 +24,9 @@ import {
 } from "@/components/ui/pagination"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { getErrorMessage, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
+import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
 const pageSize = 30
 const entityOptions = ["team", "player", "staff", "section", "qualifier", "qualifier_import", "qualifier_score", "bracket", "match", "referee_action"]
@@ -86,9 +88,6 @@ export function AdminTournamentAuditPage() {
       actions={(
         <>
           <Button asChild size="sm" variant="outline">
-            <Link to="/admin/tournaments">{t("tournament.admin.common.back")}</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
             <Link to={`/admin/tournaments/${tid}/qualifier`}>{t("tournament.admin.audit.qualifier")}</Link>
           </Button>
           <Button disabled={auditQuery.isFetching} size="sm" type="button" variant="outline" onClick={() => auditQuery.refetch()}>
@@ -97,6 +96,7 @@ export function AdminTournamentAuditPage() {
           </Button>
         </>
       )}
+      breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.audit")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
       <Card size="sm">
         <CardHeader className="border-b">
@@ -181,20 +181,24 @@ export function AdminTournamentAuditPage() {
                   <TableCell>{formatDate(log.created_time)}</TableCell>
                   <TableCell>
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{log.operator?.user_name ?? "-"}</p>
-                      <p className="text-xs text-muted-foreground">{log.operator_id ?? "-"}</p>
+                      {log.operator ? (
+                        <Link className="truncate font-medium hover:text-primary" to={`/user/${log.operator.user_id}`}>
+                          {log.operator.user_name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">-</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{log.entity_type}</Badge>
-                    <p className="mt-1 text-xs text-muted-foreground">ID {log.entity_id ?? "-"}</p>
                   </TableCell>
                   <TableCell className="font-medium">{log.action}</TableCell>
-                  <TableCell className="max-w-72 whitespace-normal">
-                    <JsonPreview value={log.old_value_json} />
+                  <TableCell>
+                    <JsonValueDialog title={t("tournament.admin.audit.oldValue")} value={log.old_value_json} />
                   </TableCell>
-                  <TableCell className="max-w-72 whitespace-normal">
-                    <JsonPreview value={log.new_value_json} />
+                  <TableCell>
+                    <JsonValueDialog title={t("tournament.admin.audit.newValue")} value={log.new_value_json} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -247,14 +251,30 @@ export function AdminTournamentAuditPage() {
         </Pagination>
       ) : null}
 
-      <AppAlert title={t("tournament.admin.audit.scopeTitle")}>{t("tournament.admin.audit.scopeDescription")}</AppAlert>
     </AdminPage>
   )
 }
 
-function JsonPreview({ value }: { value?: string | null }) {
+function JsonValueDialog({ title, value }: { title: string; value?: string | null }) {
+  const { t } = useTranslation()
   const text = formatJsonPreview(value)
-  return <pre className="line-clamp-4 whitespace-pre-wrap break-words rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">{text}</pre>
+  const isEmpty = text === "-"
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button disabled={isEmpty} size="sm" type="button" variant="outline">
+          <Eye className="size-4" />
+          {isEmpty ? t("tournament.admin.audit.noValue") : t("tournament.admin.audit.viewValue")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <pre className="max-h-[65dvh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-xs text-muted-foreground">{text}</pre>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function formatJsonPreview(value?: string | null) {

@@ -2,10 +2,6 @@
 
 只保留会影响后续开发边界的问题。已决策内容应移到 `decision-log.md` 或专题文档。
 
-## 赛事系统
-
-- 32 强双败对阵图优先评估 `@g-loot/react-tournament-brackets`，是否能满足 JHC 样式、移动端和交互要求？
-
 ## 富文本
 
 - 是否保存 Tiptap JSON，还是长期只存 HTML？
