@@ -35,7 +35,11 @@ jobs:
           pnpm --dir jack-house-analytics --filter @jack-house-analytics/core pack --pack-destination "$GITHUB_WORKSPACE/.packed/jack-house-analytics"
           pnpm --dir jack-house-analytics --filter @jack-house-analytics/react pack --pack-destination "$GITHUB_WORKSPACE/.packed/jack-house-analytics"
       - name: Install
-        run: pnpm --dir jack-house-v3 install --frozen-lockfile
+        # Analytics packages are built from the latest checked-out source, so their
+        # tarball integrity can change without a package version change.
+        run: |
+          pnpm --dir jack-house-v3 install --lockfile-only --no-frozen-lockfile
+          pnpm --dir jack-house-v3 install --frozen-lockfile
       - name: Lint
         run: pnpm --dir jack-house-v3 lint
       - name: Build
