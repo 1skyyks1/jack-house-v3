@@ -1,9 +1,9 @@
 import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, Trophy, UserCircle } from "@phosphor-icons/react"
-import { useEffect, useState } from "react"
+import { lazy, Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
-import { AuthDialog, authQueryKeys, useAuthStore, useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
+import { authQueryKeys, useAuthStore, useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
 import { logoutSession } from "@/features/auth/api/authApi"
 import { hasAdminPermission } from "@/features/admin-permissions"
 import jackHouseDarkLogo from "@/assets/pic/jackHouseDark.webp"
@@ -38,6 +38,8 @@ const publicNavItems = [
   { to: "/about", labelKey: "common.about", icon: InfoIcon, end: false },
 ] as const
 
+const AuthDialog = lazy(() => import("@/features/auth/ui/AuthDialog").then((module) => ({ default: module.AuthDialog })))
+
 export function AppShell() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -47,6 +49,7 @@ export function AppShell() {
   const isLogged = useAuthStore((state) => state.isLogged)
   const logout = useAuthStore((state) => state.logout)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
+  const showLoginDialog = useAuthStore((state) => state.showLoginDialog)
   const setSession = useAuthStore((state) => state.setSession)
   const authUserId = useAuthStore((state) => state.userId)
   const currentUserQuery = useCurrentUserQuery()
@@ -287,7 +290,11 @@ export function AppShell() {
       >
         <Outlet />
       </main>
-      <AuthDialog />
+      {showLoginDialog ? (
+        <Suspense fallback={null}>
+          <AuthDialog />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

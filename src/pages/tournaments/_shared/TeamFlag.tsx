@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 export function TeamFlag({
@@ -10,12 +10,9 @@ export function TeamFlag({
   name: string
   src?: string | null
 }) {
-  const [hasError, setHasError] = useState(false)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const hasError = Boolean(src && failedSrc === src)
   const fallback = name.trim().slice(0, 1) || "?"
-
-  useEffect(() => {
-    setHasError(false)
-  }, [src])
 
   return (
     <div className={cn("relative flex aspect-[11/8] shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted text-xs font-semibold text-muted-foreground", className)}>
@@ -25,7 +22,7 @@ export function TeamFlag({
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
           src={src}
-          onError={() => setHasError(true)}
+          onError={() => setFailedSrc(src)}
         />
       ) : (
         <span>{fallback}</span>

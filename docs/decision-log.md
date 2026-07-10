@@ -98,11 +98,11 @@
 - 支持私密队伍和公开队伍两种组队方式，两种都在组队大厅展示；私密队伍需要邀请码加入，公开队伍不需要邀请码。
 - 队长可以重置邀请码。
 - 队长可踢队员，队员可退出队伍，但仅限报名期。
-- staff 继续采用多行多角色模型，`(tournament_id, user_id, role)` 唯一；所有 staff 默认公开展示并按 role 分组。当前角色为 `host`、`pooler`、`referee`、`streamer`、`commentator`。
+- staff 继续采用多行多角色模型，`(tournament_id, user_id, role)` 唯一；所有 staff 默认公开展示并按 role 分组。当前角色为 `host`、`pooler`、`custom_mapper`、`tester`、`referee`、`streamer`、`commentator`。
 - 创建赛事需要全站 admin 权限，不设计独立赛事内管理员角色；创建者自动成为 creator host。
 - 只有 creator host 可以删除赛事和添加其他 host；普通 host 不拥有这两个权限。
 - 只有 staff 才能看到赛事后台；不存在隐藏后台协作人员。
-- 第一版默认所有 staff 都不允许参赛，降低权限和利益冲突复杂度。
+- `tester`、`streamer`、`commentator` 可以同时是 player；`host`、`pooler`、`custom_mapper`、`referee` 与 player 保持互斥。
 - 资格赛和正赛成绩都通过 osu match 信息获取；常规拉取权限仅 referee 和 host，手动修正作为异常处理。
 - 资格赛每队只绑定一个 osu MP；队伍可在同一个 MP 中打两轮，最终每张图取两轮最高分，总分为每图最高分相加。
 - qualifier MP ID 只允许 referee/host 填写或修改，队长不能提交。

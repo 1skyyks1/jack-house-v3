@@ -24,6 +24,8 @@ import { formatTournamentScheduleTimeUtc, fromUtcDateTimeInputValue, toUtcDateTi
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
+const EMPTY_MATCHES: TournamentMatch[] = []
+
 export function AdminTournamentBracketPage() {
   const { t } = useTranslation()
   const { tid } = useParams()
@@ -34,7 +36,7 @@ export function AdminTournamentBracketPage() {
 
   const tournamentQuery = useTournamentDetailQuery(tid)
   const bracketQuery = useTournamentBracketQuery(tid)
-  const matches = bracketQuery.data ?? []
+  const matches = bracketQuery.data ?? EMPTY_MATCHES
   const matchNumbers = useMemo(() => createTournamentMatchNumbers(matches), [matches])
   const scheduleGroups = useMemo(() => groupMatchesForAdminSchedule(matches), [matches])
   const selectedGroup = scheduleGroups.find((group) => group.key === selectedGroupKey) ?? scheduleGroups[0]

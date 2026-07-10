@@ -32,7 +32,7 @@ Controller 只做参数读取和 response；业务规则进入 service；写操�
 - `tournamentService`：赛事创建、更新、删除、acronym 解析、状态推导。
 - `contentService`：赛事内容、Markdown/HTML、sanitizer、富文本引用。
 - `teamService`：报名窗口、创建队伍、加入/退出、队长、邀请码、锁定。
-- `staffService`：staff role、creator host、参赛互斥、权限判断。
+- `staffService`：staff role、creator host、player 兼任规则、权限判断。
 - `qualifierService`：资格赛图池、MP 绑定、拉分、两轮取高、锁榜。
 - `bracketService`：32 强 bracket 生成、source graph、结果推进、reset final。
 - `refereeActionService` / referee controller：roll、protect、ban、pick、比分导入、手动修正。

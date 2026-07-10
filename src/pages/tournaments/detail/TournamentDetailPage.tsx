@@ -2,15 +2,16 @@ import { BracketsCurly, CalendarBlank, ChartBar, ChatText, ClipboardText, Info, 
 import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
-import { useTournamentDetailQuery, useTournamentQualMappoolQuery, useTournamentSectionsQuery, type TournamentSection, type TournamentStaff } from "@/entities/tournament"
+import { TOURNAMENT_STAFF_ROLES, useTournamentDetailQuery, useTournamentQualMappoolQuery, useTournamentSectionsQuery, type TournamentSection, type TournamentStaff } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { RichTextRenderer, RichTextToc } from "@/features/rich-text/renderer"
 import type { TocItem } from "@/features/rich-text/model/types"
 import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentHeroImage, getTournamentPublicPath } from "../_shared/tournamentVisuals"
+import { TournamentPageHeader, type TournamentNavigationItem } from "./TournamentPageHeader"
+import "./tournament-detail.css"
 
 export function TournamentDetailPage() {
   const { i18n, t } = useTranslation()
@@ -61,72 +62,36 @@ export function TournamentDetailPage() {
     : firstText(tournament.desc_zh, tournament.desc_en)
   const staffByRole = new Map<string, TournamentStaff[]>()
   for (const staff of tournament.staff ?? []) {
-    const next = staffByRole.get(staff.role) ?? []
-    next.push(staff)
-    staffByRole.set(staff.role, next)
+    staffByRole.set(staff.role, [...(staffByRole.get(staff.role) ?? []), staff])
   }
+  const staffEntries = Array.from(staffByRole.entries()).sort(([left], [right]) => roleSortIndex(left) - roleSortIndex(right))
+  const navigationItems: TournamentNavigationItem[] = [
+    { href: `${publicTournamentPath}/bracket`, icon: BracketsCurly, label: t("tournament.common.schedule") },
+    { href: `${publicTournamentPath}/mappool`, icon: MapTrifold, label: t("tournament.common.mappool") },
+    { href: `${publicTournamentPath}/leaderboard`, icon: Trophy, label: t("tournament.common.leaderboard") },
+    { href: `${publicTournamentPath}/teams`, icon: UsersThree, label: t("tournament.common.teams") },
+    { href: `${publicTournamentPath}/qualifier`, icon: ChartBar, label: t("tournament.common.qualifier") },
+  ]
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <TournamentBreadcrumb current={tournament.acronym || tournament.name} />
+    <main className="tournament-detail-page mx-auto flex w-full max-w-7xl flex-col">
+      <div className="mb-4">
+        <TournamentBreadcrumb current={tournament.acronym || tournament.name} />
+      </div>
 
-      <section className="relative min-h-[22rem] overflow-hidden rounded-lg border bg-card text-white">
-        {heroImage ? (
-          <img alt="" className="absolute inset-0 size-full object-cover" src={heroImage} />
-        ) : (
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
-        )}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.84))]" />
-        <div className="relative z-10 flex min-h-[22rem] flex-col justify-end p-6 sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div className="min-w-0">
-              <h1 className="max-w-4xl font-heading text-4xl font-semibold sm:text-5xl">{tournament.name}</h1>
-              {description ? (
-                <p className="mt-4 max-w-3xl text-base leading-7 text-white/82">
-                  {description}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Button asChild>
-                <Link to={`${publicTournamentPath}/bracket`}>
-                  <BracketsCurly className="size-4" weight="bold" />
-                  {t("tournament.common.schedule")}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={`${publicTournamentPath}/mappool`}>
-                  <MapTrifold className="size-4" weight="bold" />
-                  {t("tournament.common.mappool")}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={`${publicTournamentPath}/leaderboard`}>
-                  <Trophy className="size-4" weight="bold" />
-                  {t("tournament.common.leaderboard")}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={`${publicTournamentPath}/teams`}>
-                  <UsersThree className="size-4" weight="bold" />
-                  {t("tournament.common.teams")}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={`${publicTournamentPath}/qualifier`}>
-                  <ChartBar className="size-4" weight="bold" />
-                  {t("tournament.common.qualifier")}
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TournamentPageHeader
+        acronym={tournament.acronym}
+        description={description}
+        heroImage={heroImage}
+        name={tournament.name}
+        navigationItems={navigationItems}
+        navigationLabel={t("tournament.common.tournament")}
+      />
 
-      <StaffSection entries={Array.from(staffByRole.entries())} />
+      <StaffSection entries={staffEntries} />
 
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
-        <div className="space-y-4">
+      <section className={cn(tocItems.length > 0 && "grid gap-12 lg:grid-cols-[minmax(0,1fr)_17rem]")}>
+        <div>
           {contentSections.length > 0 ? contentSections.map((section) => (
             <TournamentContentSection
               contentHtml={section.contentHtml}
@@ -137,67 +102,87 @@ export function TournamentDetailPage() {
               type={section.type}
             />
           )) : (
-            <div className="rounded-lg border bg-card p-5">
+            <div className="py-10">
               <AppAlert title={t("tournament.detail.rulesMissingTitle")} />
             </div>
           )}
         </div>
-        <aside className="hidden lg:block">
-          <div className="sticky top-20">
-            <RichTextToc items={tocItems} />
-          </div>
-        </aside>
+        {tocItems.length > 0 ? (
+          <aside className="hidden py-10 lg:block">
+            <div className="tournament-detail-toc sticky pl-4">
+              <RichTextToc items={tocItems} />
+            </div>
+          </aside>
+        ) : null}
       </section>
     </main>
   )
 }
 
-function getSectionAnchorId(sectionId: number) {
-  return `tournament-section-${sectionId}`
-}
-
-function TournamentContentSection({
-  contentHtml,
-  id,
-  onTocChange,
-  title,
-  type,
-}: {
+function TournamentContentSection({ contentHtml, id, onTocChange, title, type }: {
   contentHtml: string
   id: number
   onTocChange: (sectionId: number, items: TocItem[]) => void
   title: string
   type: string
 }) {
-  const handleTocChange = useCallback((items: TocItem[]) => {
-    onTocChange(id, items)
-  }, [id, onTocChange])
-
+  const handleTocChange = useCallback((items: TocItem[]) => onTocChange(id, items), [id, onTocChange])
   return (
-    <article className="rounded-lg border bg-card p-5">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="font-heading text-xl font-semibold" id={getSectionAnchorId(id)}>{title}</h2>
-        <SectionTypeIcon type={type} />
+    <article className="py-10 sm:py-12">
+      <div className="mb-7 flex items-center gap-3">
+        <span className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <SectionTypeIcon type={type} />
+        </span>
+        <h2 className="tournament-detail-anchor font-heading text-2xl font-semibold tracking-tight" id={getSectionAnchorId(id)}>{title}</h2>
       </div>
-      <Separator className="my-4" />
-      <RichTextRenderer content={contentHtml} onTocChange={handleTocChange} />
+      <RichTextRenderer className="tournament-detail-rich-text" content={contentHtml} onTocChange={handleTocChange} />
     </article>
+  )
+}
+
+function StaffSection({ entries }: { entries: Array<[string, TournamentStaff[]]> }) {
+  const { t } = useTranslation()
+  return (
+    <section aria-labelledby="tournament-staff-heading" className="py-9 sm:py-11">
+      <div className="mb-5">
+        <h2 className="font-heading text-2xl font-semibold" id="tournament-staff-heading">{t("tournament.common.staff")}</h2>
+      </div>
+      {entries.length > 0 ? (
+        <div className="space-y-5">
+          {entries.map(([role, staff]) => (
+            <div className="sm:grid sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-start sm:gap-5" key={role}>
+              <p className="pt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t(`tournament.admin.staff.roles.${role}`)}</p>
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-3 sm:mt-0">
+                {staff.map((item) => (
+                  <Link className="flex min-w-0 items-center gap-2.5 text-sm transition hover:text-primary" key={item.id} to={`/user/${item.user_id}`}>
+                    <Avatar className="size-7">
+                      <AvatarImage src={item.user?.avatar ?? undefined} />
+                      <AvatarFallback>{(item.user?.user_name ?? "?").slice(0, 1)}</AvatarFallback>
+                    </Avatar>
+                    <span className="whitespace-nowrap">{item.user?.user_name ?? t("tournament.common.user", { id: item.user_id })}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : <p className="text-sm text-muted-foreground">{t("tournament.common.noStaff")}</p>}
+    </section>
   )
 }
 
 function SectionTypeIcon({ type }: { type: string }) {
   switch (type) {
-    case "description":
-      return <Info className="size-5 text-muted-foreground" weight="bold" />
-    case "faq":
-      return <ChatText className="size-5 text-muted-foreground" weight="bold" />
-    case "prize":
-      return <Trophy className="size-5 text-muted-foreground" weight="bold" />
-    case "rules":
-      return <ClipboardText className="size-5 text-muted-foreground" weight="bold" />
-    default:
-      return <CalendarBlank className="size-5 text-muted-foreground" weight="bold" />
+    case "description": return <Info className="size-4" weight="bold" />
+    case "faq": return <ChatText className="size-4" weight="bold" />
+    case "prize": return <Trophy className="size-4" weight="bold" />
+    case "rules": return <ClipboardText className="size-4" weight="bold" />
+    default: return <CalendarBlank className="size-4" weight="bold" />
   }
+}
+
+function getSectionAnchorId(sectionId: number) {
+  return `tournament-section-${sectionId}`
 }
 
 function firstText(...values: Array<null | string | undefined>) {
@@ -206,48 +191,19 @@ function firstText(...values: Array<null | string | undefined>) {
 
 function getLocalizedSectionContent(section: TournamentSection | undefined, language: string) {
   if (!section) return { contentHtml: "", title: "" }
-
   if (language.startsWith("en")) {
     return {
       contentHtml: firstText(section.content_html_en, section.content_html_zh, section.content_html),
       title: firstText(section.title_en, section.title_zh, section.title),
     }
   }
-
   return {
     contentHtml: firstText(section.content_html_zh, section.content_html_en, section.content_html),
     title: firstText(section.title_zh, section.title_en, section.title),
   }
 }
 
-function StaffSection({ entries }: { entries: Array<[string, TournamentStaff[]]> }) {
-  const { t } = useTranslation()
-
-  return (
-    <section className="rounded-lg border bg-card p-5">
-      <h2 className="font-heading text-xl font-semibold">{t("tournament.common.staff")}</h2>
-      {entries.length > 0 ? (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {entries.map(([role, staff]) => (
-            <div key={role}>
-              <p className="text-xs font-semibold uppercase text-muted-foreground">{role}</p>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
-                {staff.map((item) => (
-                  <Link className="flex min-w-0 items-center gap-2 text-sm hover:text-primary" key={item.id} to={`/user/${item.user_id}`}>
-                    <Avatar className="size-7">
-                      <AvatarImage src={item.user?.avatar ?? undefined} />
-                      <AvatarFallback>{(item.user?.user_name ?? "?").slice(0, 1)}</AvatarFallback>
-                    </Avatar>
-                    <span className="truncate">{item.user?.user_name ?? t("tournament.common.user", { id: item.user_id })}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-sm text-muted-foreground">{t("tournament.common.noStaff")}</p>
-      )}
-    </section>
-  )
+function roleSortIndex(role: string) {
+  const index = TOURNAMENT_STAFF_ROLES.indexOf(role as typeof TOURNAMENT_STAFF_ROLES[number])
+  return index === -1 ? TOURNAMENT_STAFF_ROLES.length : index
 }

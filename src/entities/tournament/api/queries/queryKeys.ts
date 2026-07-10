@@ -1,0 +1,24 @@
+import type { TournamentAuditLogQuery } from "../../model/types"
+
+export const tournamentQueryKeys = {
+  auditLog: (tournamentId: string, auditId: number) => ["tournament", "audit-log", tournamentId, auditId] as const,
+  auditLogs: (tournamentId: string, params: TournamentAuditLogQuery) => ["tournament", "audit-logs", tournamentId, params] as const,
+  bracket: (tournamentId: string) => ["tournament", "bracket", tournamentId] as const,
+  detail: (tournamentId: string) => ["tournament", "detail", tournamentId] as const,
+  list: ["tournament", "list"] as const,
+  manageSections: (tournamentId: string) => ["tournament", "sections", "manage", tournamentId] as const,
+  match: (tournamentId: string, matchId: string) => ["tournament", "match", tournamentId, matchId] as const,
+  performance: (tournamentId: string) => ["tournament", "performance", tournamentId] as const,
+  qualImports: (tournamentId: string, page: number, pageSize: number) => [...tournamentQueryKeys.qualImportsRoot(tournamentId), page, pageSize] as const,
+  qualImportsRoot: (tournamentId: string) => ["tournament", "qualifier", "imports", tournamentId] as const,
+  qualMappool: (tournamentId: string) => ["tournament", "qualifier", "mappool", tournamentId] as const,
+  qualRanking: (tournamentId: string) => ["tournament", "qualifier", "ranking", tournamentId] as const,
+  qualScores: (tournamentId: string) => ["tournament", "qualifier", "scores", tournamentId] as const,
+  referee: (tournamentId: string, matchId: string) => ["tournament", "referee", tournamentId, matchId] as const,
+  root: ["tournament"] as const,
+  roundMappool: (tournamentId: string, roundId: number | string) => ["tournament", "round", "mappool", tournamentId, roundId] as const,
+  rounds: (tournamentId: string) => ["tournament", "rounds", tournamentId] as const,
+  sections: (tournamentId: string) => ["tournament", "sections", tournamentId] as const,
+  staff: (tournamentId: string) => ["tournament", "staff", tournamentId] as const,
+  teams: (tournamentId: string) => ["tournament", "teams", tournamentId] as const,
+}

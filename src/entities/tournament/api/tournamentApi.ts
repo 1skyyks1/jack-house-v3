@@ -10,6 +10,7 @@ import type {
   FetchTournamentQualScoresRequest,
   JoinTournamentTeamRequest,
   Tournament,
+  TournamentAuditLog,
   TournamentAuditLogList,
   TournamentAuditLogQuery,
   TournamentGoogleFormImportRequest,
@@ -81,6 +82,10 @@ export async function getTournamentManageSections(tournamentId: string): Promise
 
 export async function getTournamentAuditLogs(tournamentId: string, params?: TournamentAuditLogQuery): Promise<TournamentAuditLogList> {
   return await http.get(`/t/${tournamentId}/audit-logs`, { params }) as unknown as TournamentAuditLogList
+}
+
+export async function getTournamentAuditLog(tournamentId: string, auditId: number): Promise<TournamentAuditLog> {
+  return await http.get(`/t/${tournamentId}/audit-logs/${auditId}`) as unknown as TournamentAuditLog
 }
 
 export async function getTournamentStaff(tournamentId: string): Promise<TournamentStaff[]> {

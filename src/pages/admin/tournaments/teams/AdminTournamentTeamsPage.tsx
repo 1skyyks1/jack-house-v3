@@ -53,6 +53,7 @@ import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 const teamStatuses = [0, 1, 2, 3] as const
 const reviewStatuses = ["review_pending", "review_passed", "review_failed"] as const
 const PAGE_SIZE = 10
+const EMPTY_TEAMS: TournamentTeam[] = []
 
 export function AdminTournamentTeamsPage() {
   const { t } = useTranslation()
@@ -67,7 +68,7 @@ export function AdminTournamentTeamsPage() {
   const approveAllMutation = useApproveAllTournamentTeamsMutation(tid ?? "")
   const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
-  const teams = teamsQuery.data ?? []
+  const teams = teamsQuery.data ?? EMPTY_TEAMS
   const filteredTeams = useMemo(() => {
     const query = normalizeSearch(searchTerm)
     if (!query) return teams

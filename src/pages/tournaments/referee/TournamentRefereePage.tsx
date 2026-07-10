@@ -1,5 +1,5 @@
 import type { FormEvent } from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { ArrowLeft, Check, DownloadSimple, Prohibit, ShieldCheck, Sparkle, Sword, Timer } from "@phosphor-icons/react"
@@ -47,13 +47,13 @@ export function TournamentRefereePage() {
   const match = refereeQuery.data?.match
   const [rollWinnerTeamId, setRollWinnerTeamId] = useState("")
   const [actionMapId, setActionMapId] = useState("")
-  const [mpLink, setMpLink] = useState("")
+  const [mpLinkDraft, setMpLinkDraft] = useState<{ key: string; value: string } | null>(null)
 
   const mutationError = recordRollMutation.error ?? createActionMutation.error ?? fetchScoresMutation.error ?? updateActionMutation.error ?? updateMatchMutation.error ?? timeoutMutation.error
-
-  useEffect(() => {
-    setMpLink(match?.mp_id ? formatMpLink(match.mp_id) : "")
-  }, [match?.id, match?.mp_id])
+  const mpLinkKey = `${match?.id ?? safeMatchId}:${match?.mp_id ?? ""}`
+  const mpLink = mpLinkDraft?.key === mpLinkKey
+    ? mpLinkDraft.value
+    : match?.mp_id ? formatMpLink(match.mp_id) : ""
 
   if (tournamentQuery.isError || refereeQuery.isError) {
     return <PageState title={t("tournament.referee.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? refereeQuery.error)} />
@@ -232,7 +232,7 @@ export function TournamentRefereePage() {
                       inputMode="url"
                       placeholder={t("tournament.referee.mpLinkPlaceholder")}
                       value={mpLink}
-                      onChange={(event) => setMpLink(event.target.value)}
+                      onChange={(event) => setMpLinkDraft({ key: mpLinkKey, value: event.target.value })}
                     />
                     <Button
                       className="h-7 whitespace-nowrap px-2 text-xs"

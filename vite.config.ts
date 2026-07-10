@@ -6,6 +6,12 @@ import tailwindcss from "@tailwindcss/vite"
 // https://vite.dev/config/
 export default defineConfig({
   build: {
+    modulePreload: {
+      resolveDependencies(_filename, dependencies, context) {
+        if (context.hostType !== "html") return dependencies
+        return dependencies.filter((dependency) => !/(?:^|\/)(?:AuthDialog|schemas|dialog-|input-|label-|separator-|tabs-)/.test(dependency))
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

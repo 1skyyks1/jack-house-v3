@@ -8,14 +8,19 @@ export type TournamentUser = {
   user_name: string
 }
 
+export const TOURNAMENT_STAFF_ROLES = ["host", "pooler", "custom_mapper", "tester", "referee", "streamer", "commentator"] as const
+export type TournamentStaffRole = typeof TOURNAMENT_STAFF_ROLES[number]
+
 export type TournamentStaff = {
   id: number
-  role: "host" | "pooler" | "referee" | "streamer" | "commentator" | string
+  role: TournamentStaffRole | string
   user?: TournamentUser
   user_id: number
 }
 
-export type TournamentStaffRole = "host" | "pooler" | "referee" | "streamer" | "commentator"
+export function isPlayerCompatibleTournamentStaffRole(role: string) {
+  return role === "tester" || role === "streamer" || role === "commentator"
+}
 
 export type CreateTournamentStaffRequest = {
   avatar?: string | null

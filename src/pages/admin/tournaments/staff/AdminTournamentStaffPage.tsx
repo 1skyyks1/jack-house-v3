@@ -8,6 +8,7 @@ import {
   useDeleteTournamentStaffMutation,
   useTournamentDetailQuery,
   useTournamentStaffQuery,
+  TOURNAMENT_STAFF_ROLES,
   type TournamentStaff,
   type TournamentStaffRole,
 } from "@/entities/tournament"
@@ -40,8 +41,6 @@ import {
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
-
-const staffRoles: TournamentStaffRole[] = ["host", "pooler", "referee", "streamer", "commentator"]
 
 const emptyStaff: TournamentStaff[] = []
 
@@ -186,7 +185,7 @@ export function AdminTournamentStaffPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {staffRoles.map((staffRole) => (
+                    {TOURNAMENT_STAFF_ROLES.map((staffRole) => (
                       <SelectItem key={staffRole} value={staffRole}>{t(`tournament.admin.staff.roles.${staffRole}`)}</SelectItem>
                     ))}
                   </SelectContent>
@@ -209,7 +208,7 @@ export function AdminTournamentStaffPage() {
 
           <div className="space-y-4">
             {staff.length === 0 ? <AppAlert title={t("tournament.admin.staff.noStaffTitle")}>{t("tournament.admin.staff.noStaffDescription")}</AppAlert> : null}
-            {staffRoles.map((staffRole) => {
+            {TOURNAMENT_STAFF_ROLES.map((staffRole) => {
               const roleStaff = groupedStaff.get(staffRole) ?? []
               return (
                 <Card key={staffRole}>

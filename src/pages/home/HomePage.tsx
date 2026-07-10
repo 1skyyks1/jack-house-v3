@@ -228,7 +228,14 @@ function HomeSectionPanel({ entry, index }: HomeSectionPanelProps) {
       data-home-section
       data-index={index}
     >
-      <img alt="" className="absolute inset-0 -z-30 size-full object-cover" src={entry.imageUrl} />
+      <img
+        alt=""
+        className="absolute inset-0 -z-30 size-full object-cover"
+        decoding="async"
+        fetchPriority={index === 0 ? "high" : "auto"}
+        loading={index === 0 ? "eager" : "lazy"}
+        src={entry.imageUrl}
+      />
       <div className="absolute inset-0 -z-20 bg-black/60" />
       <div className="mx-auto flex h-[100lvh] w-full max-w-[1420px] flex-col items-center justify-center px-3 pt-24 pb-8 text-center sm:px-6 lg:px-8 lg:pt-28 lg:pb-10">
         <div className="space-y-5">

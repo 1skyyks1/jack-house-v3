@@ -1,0 +1,18 @@
+.tournament-detail-page {
+  --tournament-sticky-offset: 11.5rem;
+}
+
+.tournament-detail-anchor,
+.rich-text.tournament-detail-rich-text :is(h1, h2, h3, h4) {
+  scroll-margin-top: var(--tournament-sticky-offset);
+}
+
+.tournament-detail-toc {
+  top: var(--tournament-sticky-offset);
+}
+
+@media (min-width: 40rem) {
+  .tournament-detail-page {
+    --tournament-sticky-offset: 9rem;
+  }
+}

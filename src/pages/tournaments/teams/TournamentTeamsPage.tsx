@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import { toast } from "sonner"
 import {
+  isPlayerCompatibleTournamentStaffRole,
   useCreateTournamentTeamMutation,
   useJoinTournamentTeamMutation,
   useKickTournamentPlayerMutation,
@@ -220,10 +221,12 @@ export function TournamentTeamsPage() {
   const teams = teamsQuery.data ?? []
   const currentUserId = userId ? Number(userId) : null
   const myTeam = currentUserId ? teams.find((team) => team.players?.some((player) => Number(player.user_id) === currentUserId)) : undefined
-  const isCurrentUserStaff = Boolean(currentUserId && tournament?.staff?.some((staff) => Number(staff.user_id) === currentUserId))
+  const hasBlockingStaffRole = Boolean(currentUserId && tournament?.staff?.some((staff) => (
+    Number(staff.user_id) === currentUserId && !isPlayerCompatibleTournamentStaffRole(staff.role)
+  )))
   const registrationStatus = getRegistrationStatus(tournament, t)
   const registrationBlockReason = registrationStatus.blockReason
-    ?? (isLogged && isCurrentUserStaff
+    ?? (isLogged && hasBlockingStaffRole
       ? t("tournament.teams.staffCannotRegister")
       : isLogged && myTeam
       ? t("tournament.teams.alreadyInTeam")

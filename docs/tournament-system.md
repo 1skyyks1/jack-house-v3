@@ -44,7 +44,8 @@
 - host 可以管理赛事后台、队伍审查、资格赛、正赛和 staff。
 - pooler 管理正赛图池。
 - referee 管理比赛、MP、拉分、WBD/FF、裁判操作。
-- streamer/commentator 主要用于公开展示和排班，不默认获得后台写权限。
+- custom mapper/tester/streamer/commentator 主要用于公开展示和排班，不默认获得后台写权限。
+- tester/streamer/commentator 可以同时作为 player；其余 staff role 与 player 身份互斥。
 - 全站 admin 可以作为紧急管理权限，但不自动成为赛事公开 staff。
 - 赛事写操作必须由后端鉴权；前端隐藏按钮只是体验优化。
 - 涉及 host override、admin override、队伍锁定后修改、成绩修正和 bracket 推进的操作应写入赛事审计日志。

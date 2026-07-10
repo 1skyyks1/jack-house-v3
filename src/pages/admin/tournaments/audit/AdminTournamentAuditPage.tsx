@@ -3,6 +3,7 @@ import { ArrowClockwise, ClockCounterClockwise, Eye, FunnelSimple } from "@phosp
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import {
+  useTournamentAuditLogQuery,
   useTournamentAuditLogsQuery,
   useTournamentDetailQuery,
   type TournamentAuditLogQuery,
@@ -195,10 +196,10 @@ export function AdminTournamentAuditPage() {
                   </TableCell>
                   <TableCell className="font-medium">{log.action}</TableCell>
                   <TableCell>
-                    <JsonValueDialog title={t("tournament.admin.audit.oldValue")} value={log.old_value_json} />
+                    <JsonValueDialog auditId={log.id} field="old_value_json" title={t("tournament.admin.audit.oldValue")} tournamentId={tid} />
                   </TableCell>
                   <TableCell>
-                    <JsonValueDialog title={t("tournament.admin.audit.newValue")} value={log.new_value_json} />
+                    <JsonValueDialog auditId={log.id} field="new_value_json" title={t("tournament.admin.audit.newValue")} tournamentId={tid} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -255,16 +256,31 @@ export function AdminTournamentAuditPage() {
   )
 }
 
-function JsonValueDialog({ title, value }: { title: string; value?: string | null }) {
+function JsonValueDialog({
+  auditId,
+  field,
+  title,
+  tournamentId,
+}: {
+  auditId: number
+  field: "new_value_json" | "old_value_json"
+  title: string
+  tournamentId?: string
+}) {
   const { t } = useTranslation()
-  const text = formatJsonPreview(value)
-  const isEmpty = text === "-"
+  const [open, setOpen] = useState(false)
+  const detailQuery = useTournamentAuditLogQuery(tournamentId, auditId, open)
+  const text = detailQuery.isError
+    ? getErrorMessage(detailQuery.error)
+    : detailQuery.isLoading
+      ? "…"
+      : formatJsonPreview(detailQuery.data?.[field])
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={isEmpty} size="sm" type="button" variant="outline">
+        <Button size="sm" type="button" variant="outline">
           <Eye className="size-4" />
-          {isEmpty ? t("tournament.admin.audit.noValue") : t("tournament.admin.audit.viewValue")}
+          {t("tournament.admin.audit.viewValue")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
