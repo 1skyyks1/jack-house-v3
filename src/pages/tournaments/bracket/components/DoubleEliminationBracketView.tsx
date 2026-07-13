@@ -189,9 +189,8 @@ function TournamentBracketMatch({ bottomParty, bottomWon, match, onMatchClick, t
         onMatchClick({ bottomWon, event, match, topWon })
       }}
     >
-      <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+      <div className="flex items-center text-[11px] font-medium text-muted-foreground">
         <span className="truncate">{match.name}</span>
-        <span>{match.state === "SCORE_DONE" ? "DONE" : "OPEN"}</span>
       </div>
       <BracketPartyLine isWinner={topWon} name={topParty.name} score={topParty.resultText} />
       <BracketPartyLine isWinner={bottomWon} name={bottomParty.name} score={bottomParty.resultText} />

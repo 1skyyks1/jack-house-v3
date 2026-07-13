@@ -22,10 +22,22 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
+import { getMatchStage } from "../_shared/tournamentRoundStages"
 import { ActionRow, CommandLine, TeamCard } from "./components"
 import type { ActionType } from "./types"
 import { getNextAction, getRollWinnerTeamId, isMapDisabled, teamName, teamNameById } from "./utils"
@@ -47,6 +59,7 @@ export function TournamentRefereePage() {
   const match = refereeQuery.data?.match
   const [rollWinnerTeamId, setRollWinnerTeamId] = useState("")
   const [actionMapId, setActionMapId] = useState("")
+  const [wbdWinnerTeamId, setWbdWinnerTeamId] = useState("")
   const [mpLinkDraft, setMpLinkDraft] = useState<{ key: string; value: string } | null>(null)
 
   const mutationError = recordRollMutation.error ?? createActionMutation.error ?? fetchScoresMutation.error ?? updateActionMutation.error ?? updateMatchMutation.error ?? timeoutMutation.error
@@ -73,6 +86,9 @@ export function TournamentRefereePage() {
   const selectedActionType = nextAction.action_type
   const selectedActionTeamId = nextAction.team_id ? String(nextAction.team_id) : ""
   const rollWinnerValue = rollWinnerTeamId || (savedRollWinnerTeamId ? String(savedRollWinnerTeamId) : "")
+  const adminBracketStage = getMatchStage(match)
+  const wbdWinner = Number(wbdWinnerTeamId) === Number(match.team1_id) ? match.team1 : Number(wbdWinnerTeamId) === Number(match.team2_id) ? match.team2 : null
+  const wbdFirstTo = getWbdFirstTo(match)
 
   function handleCreateAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -134,7 +150,9 @@ export function TournamentRefereePage() {
             <Link to={`/t/${tid}/bracket`}>{t("tournament.common.schedule")}</Link>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link to={`/admin/tournaments/${tournamentQuery.data?.id ?? tid}/bracket`}>{t("tournament.referee.adminMainStage")}</Link>
+            <Link to={`/admin/tournaments/${tournamentQuery.data?.id ?? tid}/bracket${adminBracketStage ? `#${adminBracketStage}` : ""}`}>
+              {t("tournament.referee.adminMainStage")}
+            </Link>
           </Button>
         </div>
       </header>
@@ -282,6 +300,59 @@ export function TournamentRefereePage() {
                     </Button>
                   </div>
                 </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="shrink-0 text-xs font-medium">{t("tournament.referee.wbdWinner")}</span>
+                  <div className="flex min-w-0 max-w-64 flex-1 justify-end gap-1.5">
+                    <Select disabled={updateMatchMutation.isPending} value={wbdWinnerTeamId} onValueChange={setWbdWinnerTeamId}>
+                      <SelectTrigger size="xs" className="min-w-0 flex-1 [&>span]:truncate">
+                        <SelectValue placeholder={t("tournament.referee.selectWbdWinner")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {match.team1_id ? <SelectItem value={String(match.team1_id)}>{teamName(match.team1)}</SelectItem> : null}
+                        {match.team2_id ? <SelectItem value={String(match.team2_id)}>{teamName(match.team2)}</SelectItem> : null}
+                      </SelectContent>
+                    </Select>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="h-7 whitespace-nowrap px-2 text-xs" disabled={updateMatchMutation.isPending || !wbdWinner} size="sm" type="button" variant="outline">
+                          {t("tournament.referee.setWbd")}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("tournament.referee.confirmWbdTitle")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("tournament.referee.confirmWbdDescription", { score: wbdFirstTo, team: teamName(wbdWinner) })}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={updateMatchMutation.isPending}>{t("tournament.common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            disabled={updateMatchMutation.isPending || !wbdWinner}
+                            onClick={() => updateMatchMutation.mutate(
+                              {
+                                matchId: match.id,
+                                request: {
+                                  result_type: "wbd",
+                                  winner_id: Number(wbdWinnerTeamId),
+                                  winner_overridden: 1,
+                                },
+                              },
+                              {
+                                onSuccess: () => {
+                                  setWbdWinnerTeamId("")
+                                  toast.success(t("tournament.referee.wbdRecorded"))
+                                },
+                              },
+                            )}
+                          >
+                            {t("tournament.referee.confirmWbd")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -308,6 +379,14 @@ function formatRefereeSubtitle(match: TournamentMatch, fallbackRound: string) {
 
 function formatNextAction(nextAction: ReturnType<typeof getNextAction>, match: TournamentMatch, label: string, fallback: string) {
   return nextAction.team_id ? `${label} · ${teamNameById(match, nextAction.team_id)}` : fallback
+}
+
+function getWbdFirstTo(match: TournamentMatch) {
+  const stage = getMatchStage(match)
+  if (stage === "ro32" || stage === "ro16") return 5
+  if (stage === "qf" || stage === "sf") return 6
+  if (stage === "f" || stage === "gf") return 7
+  return Number(match.round?.first_to) || 0
 }
 
 function MappoolStatusTable({ actions, labelById, maps }: { actions: TournamentMatchAction[]; labelById: Map<number, string>; maps: TournamentMappoolMap[] }) {

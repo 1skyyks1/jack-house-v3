@@ -76,7 +76,7 @@ function MatchScore({ match }: { match: TournamentMatch }) {
   const team1Won = match.winner_id === match.team1_id
   const team2Won = match.winner_id === match.team2_id
   return (
-    <div className="flex flex-col items-center justify-center border-y py-3 tabular-nums lg:border-y-0 lg:py-0">
+    <div className="flex flex-col items-center justify-center py-3 tabular-nums lg:py-0">
       <div className="flex items-center justify-center gap-2">
         <span className={cn("font-heading text-4xl font-semibold leading-none", team1Won && "text-primary")}>{match.team1_score ?? 0}</span>
         <span className="font-heading text-2xl text-muted-foreground">:</span>

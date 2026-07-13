@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { ArrowSquareOut, BracketsCurly, Check, ImagesSquare, PencilSimple, X } from "@phosphor-icons/react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
   useGenerateTournamentBracketMutation,
   useTournamentBracketQuery,
@@ -29,8 +29,9 @@ const EMPTY_MATCHES: TournamentMatch[] = []
 export function AdminTournamentBracketPage() {
   const { t } = useTranslation()
   const { tid } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const tournamentId = tid ?? ""
-  const [selectedGroupKey, setSelectedGroupKey] = useState("")
   const [editingScheduleMatchId, setEditingScheduleMatchId] = useState<number | null>(null)
   const [scheduleDraftUtc, setScheduleDraftUtc] = useState("")
 
@@ -39,10 +40,18 @@ export function AdminTournamentBracketPage() {
   const matches = bracketQuery.data ?? EMPTY_MATCHES
   const matchNumbers = useMemo(() => createTournamentMatchNumbers(matches), [matches])
   const scheduleGroups = useMemo(() => groupMatchesForAdminSchedule(matches), [matches])
-  const selectedGroup = scheduleGroups.find((group) => group.key === selectedGroupKey) ?? scheduleGroups[0]
+  const hashGroupKey = location.hash.slice(1).trim().toLowerCase()
+  const selectedGroup = scheduleGroups.find((group) => group.key === hashGroupKey)
+    ?? scheduleGroups.find((group) => group.matches.some((match) => match.status !== 2))
+    ?? scheduleGroups.at(-1)
   const generateBracketMutation = useGenerateTournamentBracketMutation(tournamentId)
   const updateMatchMutation = useUpdateTournamentMatchMutation(tournamentId)
   const publicTournamentPath = tournamentQuery.data ? getTournamentPublicPath(tournamentQuery.data) : `/t/${tournamentId}`
+
+  useEffect(() => {
+    if (!selectedGroup || hashGroupKey === selectedGroup.key) return
+    navigate(`${location.pathname}${location.search}#${selectedGroup.key}`, { replace: true })
+  }, [hashGroupKey, location.pathname, location.search, navigate, selectedGroup])
 
   function startEditingSchedule(match: TournamentMatch) {
     setEditingScheduleMatchId(match.id)
@@ -81,43 +90,45 @@ export function AdminTournamentBracketPage() {
   return (
     <AdminPage
       actions={(
-        <div className="flex w-full flex-wrap items-start justify-between gap-3">
-          {scheduleGroups.length > 0 ? (
-            <Tabs className="min-w-0" value={selectedGroup?.key ?? ""} onValueChange={setSelectedGroupKey}>
-              <div className="-mx-1 overflow-x-auto overflow-y-visible px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <TabsList className="max-w-none flex-nowrap justify-start gap-2 overflow-visible rounded-none bg-transparent p-0">
-                  {scheduleGroups.map((group) => (
-                    <TabsTrigger className="shrink-0 flex-none border bg-background data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" key={group.key} value={group.key}>
-                      {group.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-            </Tabs>
-          ) : <span />}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/admin/tournaments/${tournamentId}/mappool`}>
-                <ImagesSquare className="size-4" />
-                {t("tournament.qualifier.mappool")}
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link to={`${publicTournamentPath}/bracket`}>{t("tournament.admin.bracket.publicBracket")}</Link>
-            </Button>
-            <Button
-              disabled={generateBracketMutation.isPending}
-              size="sm"
-              type="button"
-              onClick={() => generateBracketMutation.mutate(undefined, { onSuccess: () => toast.success(t("tournament.admin.bracket.bracketGenerated")) })}
-            >
-              <BracketsCurly className="size-4" weight="bold" />
-              {t("tournament.admin.bracket.generateBracket")}
-            </Button>
-          </div>
-        </div>
+        <>
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/admin/tournaments/${tournamentId}/mappool`}>
+              <ImagesSquare className="size-4" />
+              {t("tournament.qualifier.mappool")}
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to={`${publicTournamentPath}/bracket`}>{t("tournament.admin.bracket.publicBracket")}</Link>
+          </Button>
+          <Button
+            disabled={generateBracketMutation.isPending}
+            size="sm"
+            type="button"
+            onClick={() => generateBracketMutation.mutate(undefined, { onSuccess: () => toast.success(t("tournament.admin.bracket.bracketGenerated")) })}
+          >
+            <BracketsCurly className="size-4" weight="bold" />
+            {t("tournament.admin.bracket.generateBracket")}
+          </Button>
+        </>
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.common.schedule")} tournament={tournamentQuery.data} tournamentId={tid} />}
+      headerCenter={scheduleGroups.length > 0 ? (
+        <Tabs
+          className="min-w-0 max-w-full"
+          value={selectedGroup?.key ?? ""}
+          onValueChange={(value) => navigate(`${location.pathname}${location.search}#${value}`)}
+        >
+          <div className="-mx-1 overflow-x-auto overflow-y-visible px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="max-w-none flex-nowrap justify-start gap-2 overflow-visible rounded-none bg-transparent p-0">
+              {scheduleGroups.map((group) => (
+                <TabsTrigger className="shrink-0 flex-none border bg-background data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" key={group.key} value={group.key}>
+                  {group.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </Tabs>
+      ) : <span />}
     >
       {generateBracketMutation.isError || updateMatchMutation.isError ? <MutationErrorAlert error={generateBracketMutation.error ?? updateMatchMutation.error} title={t("tournament.admin.bracket.operationFailed")} /> : null}
 
