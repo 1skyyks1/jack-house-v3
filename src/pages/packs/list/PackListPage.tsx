@@ -45,7 +45,7 @@ import {
   type PackTag,
   type PackTypeFilter,
 } from "@/entities/pack"
-import { getErrorMessage } from "@/shared/components"
+import { getErrorMessage, InlineSkeleton } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import {
   filterTagIdsByType,
@@ -286,7 +286,7 @@ function TagFilterGroup({ isError, isLoading, onToggleTag, packType, selectedTag
   if (isLoading) {
     return (
       <FilterGroup icon={Tag} label={t("pack.list.tags")}>
-        <span className="text-sm text-muted-foreground">{t("pack.list.loadingTags")}</span>
+        <InlineSkeleton count={5} />
       </FilterGroup>
     )
   }

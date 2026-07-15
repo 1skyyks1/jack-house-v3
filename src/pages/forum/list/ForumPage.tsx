@@ -32,7 +32,7 @@ import {
   type PostTypeFilter,
 } from "@/entities/post"
 import { i18n, type AppLocale } from "@/shared/i18n/client"
-import { getErrorMessage } from "@/shared/components"
+import { getErrorMessage, ListSkeleton } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/shared/lib/date"
 
@@ -219,7 +219,7 @@ function ForumSearchBox({
         <Command shouldFilter={false}>
           <CommandList>
             {isSearching ? (
-              <div className="px-3 py-6 text-center text-sm text-muted-foreground">{t("forum.searching")}</div>
+              <ListSkeleton className="p-3" count={3} />
             ) : searchError ? (
               <CommandEmpty>{getErrorMessage(searchError)}</CommandEmpty>
             ) : results.length === 0 ? (

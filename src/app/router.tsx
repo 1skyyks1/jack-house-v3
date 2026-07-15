@@ -27,6 +27,7 @@ import {
   ForumEditorPage,
   ForumPage,
   HomePage,
+  MappackCreatorPage,
   NewPackPage,
   NotFoundPage,
   OAuthCompletePage,
@@ -66,6 +67,10 @@ export const router = createBrowserRouter([
       {
         path: "about",
         element: lazyElement(<AboutPage />),
+      },
+      {
+        path: "tool/omc",
+        element: lazyElement(<MappackCreatorPage />),
       },
       {
         path: "forum",

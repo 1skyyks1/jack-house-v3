@@ -25,6 +25,7 @@ export const EventDetailPage = lazy(() => import("@/pages/events/detail/EventDet
 export const ForumPage = lazy(() => import("@/pages/forum/list/ForumPage").then((module) => ({ default: module.ForumPage })))
 export const ForumEditorPage = lazy(() => import("@/pages/forum/editor/ForumEditorPage").then((module) => ({ default: module.ForumEditorPage })))
 export const HomePage = lazy(() => import("@/pages/home/HomePage").then((module) => ({ default: module.HomePage })))
+export const MappackCreatorPage = lazy(() => import("@/pages/tools/mappack-creator/MappackCreatorPage").then((module) => ({ default: module.MappackCreatorPage })))
 export const NewPackPage = lazy(() => import("@/pages/packs/new/NewPackPage").then((module) => ({ default: module.NewPackPage })))
 export const NotFoundPage = lazy(() => import("@/pages/misc/not-found/NotFoundPage").then((module) => ({ default: module.NotFoundPage })))
 export const OAuthCompletePage = lazy(() => import("@/pages/auth/OAuthCompletePage").then((module) => ({ default: module.OAuthCompletePage })))

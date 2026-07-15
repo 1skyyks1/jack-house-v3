@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, CardGridSkeleton, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { TeamFlag } from "@/pages/tournaments/_shared/TeamFlag"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
@@ -135,7 +135,7 @@ export function AdminTournamentTeamsPage() {
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.common.teams")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      {teamsQuery.isLoading || tournamentQuery.isLoading ? <PageState title={t("tournament.admin.teams.loading")} description={t("tournament.admin.teams.loadingDescription")} /> : null}
+      {teamsQuery.isLoading || tournamentQuery.isLoading ? <CardGridSkeleton count={6} /> : null}
 
       {approveAllMutation.isError ? <MutationErrorAlert className="mb-4" error={approveAllMutation.error} title={t("tournament.admin.teams.approveAllFailed")} /> : null}
       {updateTeamMutation.isError ? <MutationErrorAlert className="mb-4" error={updateTeamMutation.error} title={t("tournament.admin.teams.updateTeamFailed")} /> : null}
@@ -144,7 +144,7 @@ export function AdminTournamentTeamsPage() {
       {updatePlayerMutation.isError ? <MutationErrorAlert className="mb-4" error={updatePlayerMutation.error} title={t("tournament.admin.teams.updatePlayerFailed")} /> : null}
       {kickMutation.isError ? <MutationErrorAlert className="mb-4" error={kickMutation.error} title={t("tournament.admin.teams.removePlayerFailed")} /> : null}
 
-      {!teamsQuery.isLoading ? (
+      {!teamsQuery.isLoading && !tournamentQuery.isLoading ? (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
             <Metric label={t("tournament.common.teams")} value={teams.length} />

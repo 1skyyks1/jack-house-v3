@@ -43,7 +43,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, CardGridSkeleton, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { TeamSection } from "./components"
 import { getRegistrationStatus, isPlayerCaptain } from "./utils"
@@ -276,7 +276,7 @@ export function TournamentTeamsPage() {
         <MutationErrorAlert error={createMutation.error ?? joinMutation.error ?? leaveMutation.error ?? submitMutation.error ?? updateTeamInfoMutation.error ?? uploadTeamAvatarMutation.error ?? transferCaptainMutation.error ?? resetInviteMutation.error ?? kickMutation.error} />
       ) : null}
 
-      {teamsQuery.isLoading ? <PageState title={t("tournament.teams.loading")} description={null} /> : null}
+      {teamsQuery.isLoading ? <CardGridSkeleton count={4} /> : null}
       {!teamsQuery.isLoading && teams.length === 0 ? (
         <AppAlert title={t("tournament.teams.emptyTitle")} />
       ) : null}

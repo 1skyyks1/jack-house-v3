@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTournamentBracketQuery, useTournamentDetailQuery } from "@/entities/tournament"
 import { Button } from "@/components/ui/button"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage, PageSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { DoubleEliminationBracketView, ScheduleRoundJumpNav, ScheduleView } from "./components"
@@ -55,7 +55,7 @@ export function TournamentBracketPage() {
       </div>
 
       <div className={cn("w-full px-3 sm:px-6 lg:px-8", viewMode === "list" && "mx-auto max-w-6xl")}>
-        {bracketQuery.isLoading ? <PageState title={t("tournament.bracket.loading")} description={t("tournament.bracket.loadingDescription")} /> : null}
+        {bracketQuery.isLoading ? <PageSkeleton className="py-4" /> : null}
         {!bracketQuery.isLoading && matches.length === 0 ? (
           <AppAlert title={t("tournament.bracket.emptyTitle")}>{t("tournament.bracket.emptyDescription")}</AppAlert>
         ) : null}

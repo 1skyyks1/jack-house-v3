@@ -42,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { FormFieldError, FormPageSkeleton, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 import { usePageParam } from "../_shared/usePageParam"
 
@@ -314,7 +314,7 @@ function UserEditorPanel({ mode, onClose }: UserEditorPanelProps) {
       </div>
 
       {isEditing && userQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("admin.users.editor.loading")}</p>
+        <FormPageSkeleton />
       ) : userQuery.isError ? (
         <MutationErrorAlert error={userQuery.error} />
       ) : (

@@ -8,6 +8,7 @@ import { enPost, zhPost } from "./resources/post"
 import { enRichText, zhRichText } from "./resources/richText"
 import { enTournament, zhTournament } from "./resources/tournament"
 import { enUser, zhUser } from "./resources/user"
+import { enMappackCreator, zhMappackCreator } from "./resources/mappackCreator"
 
 export const zhTranslation = {
   ...zhBase,
@@ -20,6 +21,7 @@ export const zhTranslation = {
   ...zhUser,
   ...zhRichText,
   ...zhTournament,
+  ...zhMappackCreator,
 } as const
 
 export const enTranslation = {
@@ -33,6 +35,7 @@ export const enTranslation = {
   ...enUser,
   ...enRichText,
   ...enTournament,
+  ...enMappackCreator,
 } as const
 
 export const resources = {

@@ -6,7 +6,7 @@ import { TOURNAMENT_STAFF_ROLES, useTournamentDetailQuery, useTournamentQualMapp
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RichTextRenderer, RichTextToc } from "@/features/rich-text/renderer"
 import type { TocItem } from "@/features/rich-text/model/types"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, DetailPageSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentHeroImage, getTournamentPublicPath } from "../_shared/tournamentVisuals"
@@ -51,7 +51,7 @@ export function TournamentDetailPage() {
   }
 
   if (tournamentQuery.isLoading || !tournamentQuery.data) {
-    return <PageState title={t("tournament.common.loadingTournament")} description={t("tournament.common.loadingTournamentDescription")} />
+    return <DetailPageSkeleton />
   }
 
   const tournament = tournamentQuery.data

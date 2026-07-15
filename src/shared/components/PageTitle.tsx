@@ -27,6 +27,7 @@ function getRouteTitle(pathname: string, t: (key: string) => string) {
   if (pathname.startsWith("/post/")) return t("common.post")
   if (pathname === "/pack" || pathname.startsWith("/pack/")) return t("common.pack")
   if (pathname === "/newPack") return t("pack.new.breadcrumb")
+  if (pathname === "/tool/omc") return t("mappackCreator.title")
   if (pathname.startsWith("/event/")) return t("admin.nav.events")
   if (pathname === "/t" || pathname.startsWith("/t/")) return getTournamentTitle(pathname, t)
   if (pathname === "/user/edit") return t("common.editProfile")

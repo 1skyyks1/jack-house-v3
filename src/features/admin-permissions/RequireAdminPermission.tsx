@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useLocation } from "react-router-dom"
-import { PageState } from "@/shared/components"
+import { PageSkeleton, PageState } from "@/shared/components"
 import { useAuthStore, usePermissionsQuery } from "@/features/auth"
 import { hasAdminPermission, type AdminPermissionKey } from "./model/permissions"
 
@@ -30,7 +30,7 @@ export function RequireAdminPermission({ children, permission }: RequireAdminPer
   }
 
   if (permissionsQuery.isLoading) {
-    return <PageState title={t("admin.permissions.checkingTitle")} description={t("admin.permissions.checkingDescription")} />
+    return <PageSkeleton />
   }
 
   if (permissionsQuery.isError) {

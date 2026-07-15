@@ -17,7 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { DetailPageSkeleton, AppAlert, getErrorMessage, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { TeamFlag } from "../_shared/TeamFlag"
@@ -37,7 +37,7 @@ export function TournamentMatchPage() {
   }
 
   if (tournamentQuery.isLoading || matchQuery.isLoading || !matchQuery.data) {
-    return <PageState title={t("tournament.match.loading")} description={t("tournament.match.loadingDescription")} />
+    return <DetailPageSkeleton />
   }
 
   const tournament = tournamentQuery.data

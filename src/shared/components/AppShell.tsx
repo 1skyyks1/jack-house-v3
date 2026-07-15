@@ -1,4 +1,4 @@
-import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, Trophy, UserCircle } from "@phosphor-icons/react"
+import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, Toolbox, Trophy, UserCircle } from "@phosphor-icons/react"
 import { lazy, Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
@@ -35,6 +35,7 @@ const publicNavItems = [
   { to: "/forum", labelKey: "common.forum", icon: NewspaperIcon, end: false },
   { to: "/t", labelKey: "common.tournaments", icon: Trophy, end: false },
   { to: "/pack", labelKey: "common.pack", icon: StackIcon, end: false },
+  { to: "/tool/omc", labelKey: "mappackCreator.nav", icon: Toolbox, end: false },
   { to: "/about", labelKey: "common.about", icon: InfoIcon, end: false },
 ] as const
 
@@ -144,7 +145,7 @@ export function AppShell() {
                 <Button
                   aria-label={t("common.menu")}
                   className={cn(
-                    "md:hidden",
+                    "lg:hidden",
                     useOverlayHeader
                       ? "border border-border/60 bg-background/55 text-foreground hover:bg-background/75 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                       : "text-muted-foreground hover:text-foreground",
@@ -184,7 +185,7 @@ export function AppShell() {
                 </div>
               </SheetContent>
             </Sheet>
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="hidden items-center gap-1 lg:flex">
               {publicNavItems.map((item) => {
                 const Icon = item.icon
                 return (

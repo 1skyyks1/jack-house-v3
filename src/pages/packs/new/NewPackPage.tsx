@@ -33,7 +33,7 @@ import {
   type PackType,
 } from "@/entities/pack"
 import { cn } from "@/lib/utils"
-import { FormFieldError, MutationErrorAlert } from "@/shared/components"
+import { FormFieldError, InlineSkeleton, MutationErrorAlert } from "@/shared/components"
 
 type CreateMode = "manual" | "osu"
 
@@ -464,7 +464,12 @@ function TagSelector({ isError, isLoading, onToggleTag, packType, selectedTags, 
   }
 
   if (isLoading) {
-    return <TagState title={t("pack.new.tagsTitle")} description={t("pack.list.loadingTags")} />
+    return (
+      <section className="rounded-lg border bg-background p-4">
+        <h2 className="font-heading text-xl font-semibold">{t("pack.new.tagsTitle")}</h2>
+        <InlineSkeleton className="mt-4" count={6} />
+      </section>
+    )
   }
 
   if (isError) {

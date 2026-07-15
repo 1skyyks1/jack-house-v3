@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage, MutationErrorAlert, PageSkeleton, PageState } from "@/shared/components"
 import { DateTimePicker } from "@/shared/components/DateTimePicker"
 import { teamName } from "./utils"
 import { getMainStageLabel, getMatchStage, getStageSortIndex, type MainStageKey } from "@/pages/tournaments/_shared/tournamentRoundStages"
@@ -84,6 +84,14 @@ export function AdminTournamentBracketPage() {
         title={t("tournament.admin.bracket.loadFailed")}
         description={getErrorMessage(tournamentQuery.error ?? bracketQuery.error)}
       />
+    )
+  }
+
+  if (tournamentQuery.isLoading || bracketQuery.isLoading) {
+    return (
+      <AdminPage breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.common.schedule")} tournament={tournamentQuery.data} tournamentId={tid} />}>
+        <PageSkeleton />
+      </AdminPage>
     )
   }
 

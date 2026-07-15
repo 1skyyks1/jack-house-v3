@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 
@@ -255,7 +256,7 @@ function ChartCard({
         <Badge variant="outline">{badge}</Badge>
       </div>
       <div className={cn("p-4 xl:min-h-0 xl:flex-1", isLoading && "opacity-70")}>
-        {isLoading ? <DashboardChartState label={loadingLabel} /> : children}
+        {isLoading ? <Skeleton className="h-[220px] w-full rounded-md xl:h-full" aria-label={loadingLabel} /> : children}
       </div>
     </div>
   )

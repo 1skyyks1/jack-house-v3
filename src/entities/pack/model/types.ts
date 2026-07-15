@@ -191,25 +191,56 @@ export function getPackExternalLinks(osuBid: number | null) {
 
 export function getDifficultyColor(value: number | string | null | undefined) {
   const difficulty = toFiniteNumber(value, 0)
-  const clampedDifficulty = Math.max(1, Math.min(8, difficulty))
+  if (difficulty < 0.1) return "#AAAAAA"
+  if (difficulty >= 9) return "#000000"
+
   const segments = [
-    { value: 1, color: "#2558fa" },
-    { value: 2, color: "#4bfaa1" },
-    { value: 3, color: "#facc15" },
-    { value: 4, color: "#fb923c" },
-    { value: 5, color: "#ef4444" },
-    { value: 6, color: "#ec4899" },
-    { value: 7, color: "#a855f7" },
-    { value: 8, color: "#7c3aed" },
+    { value: 0.1, color: "#4290FB" },
+    { value: 1.25, color: "#4FC0FF" },
+    { value: 2, color: "#4FFFD5" },
+    { value: 2.5, color: "#7CFF4F" },
+    { value: 3.3, color: "#F6F05C" },
+    { value: 4.2, color: "#FF8068" },
+    { value: 4.9, color: "#FF4E6F" },
+    { value: 5.8, color: "#C645B8" },
+    { value: 6.7, color: "#6563DE" },
+    { value: 7.7, color: "#18158E" },
+    { value: 9, color: "#000000" },
   ]
 
   for (let index = 0; index < segments.length - 1; index += 1) {
     const start = segments[index]
     const end = segments[index + 1]
 
-    if (clampedDifficulty >= start.value && clampedDifficulty <= end.value) {
-      const progress = (clampedDifficulty - start.value) / (end.value - start.value)
-      return interpolateHexColor(start.color, end.color, progress)
+    if (difficulty >= start.value && difficulty <= end.value) {
+      const progress = (difficulty - start.value) / (end.value - start.value)
+      return interpolateGammaHexColor(start.color, end.color, progress)
+    }
+  }
+
+  return segments[segments.length - 1].color
+}
+
+export function getDifficultyTextColor(value: number | string | null | undefined) {
+  const difficulty = toFiniteNumber(value, 0)
+  if (difficulty < 6.5) return "#000000"
+  if (difficulty < 9) return "#F6F05C"
+
+  const segments = [
+    { value: 9, color: "#F6F05C" },
+    { value: 9.9, color: "#FF8068" },
+    { value: 10.6, color: "#FF4E6F" },
+    { value: 11.5, color: "#C645B8" },
+    { value: 12.4, color: "#6563DE" },
+  ]
+
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const start = segments[index]
+    const end = segments[index + 1]
+
+    if (difficulty >= start.value && difficulty <= end.value) {
+      const progress = (difficulty - start.value) / (end.value - start.value)
+      return interpolateGammaHexColor(start.color, end.color, progress)
     }
   }
 
@@ -239,11 +270,16 @@ export function filterPackTagIdsForType(tagIds: number[], tags: PackTag[], packT
   return tagIds.filter((tagId) => visibleTagIds.has(tagId))
 }
 
-function interpolateHexColor(startHex: string, endHex: string, progress: number) {
+function interpolateGammaHexColor(startHex: string, endHex: string, progress: number) {
+  const gamma = 2.2
   const start = hexToRgb(startHex)
   const end = hexToRgb(endHex)
-  const rgb = start.map((channel, index) => Math.round(channel + (end[index] - channel) * progress))
-  return `#${rgb.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`
+  const rgb = start.map((channel, index) => {
+    const startChannel = channel ** gamma
+    const endChannel = end[index] ** gamma
+    return Math.round((startChannel + (endChannel - startChannel) * progress) ** (1 / gamma))
+  })
+  return `#${rgb.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`.toUpperCase()
 }
 
 function hexToRgb(hex: string) {

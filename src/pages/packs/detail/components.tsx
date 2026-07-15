@@ -22,6 +22,7 @@ import sayobotIcon from "@/assets/pic/sayobot.ico"
 import osuLogoIcon from "@/assets/pic/osu/osuLogo.png"
 import {
   getDifficultyColor,
+  getDifficultyTextColor,
   getPackCoverUrl,
   getPackExternalLinks,
   getPackRankStatus,
@@ -60,7 +61,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { AppAlert, MutationErrorAlert } from "@/shared/components"
+import { AppAlert, InlineSkeleton, MutationErrorAlert } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 
 const packDownloadIcons: Record<string, string> = {
@@ -271,7 +272,7 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
 
         {isEditingTags ? (
           <div className="mt-4 space-y-4">
-            {tagsQuery.isLoading ? <p className="text-sm text-muted-foreground">{t("pack.list.loadingTags")}</p> : null}
+            {tagsQuery.isLoading ? <InlineSkeleton count={6} /> : null}
             {tagsQuery.isError ? <AppAlert tone="destructive">{t("pack.list.tagsUnavailable")}</AppAlert> : null}
             {getVisiblePackTagGroups(tagsQuery.data ?? [], pack.type).map((group) => (
               <div key={group.label}>
@@ -407,12 +408,19 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
                     )
                   })}
                 </div>
-                <div className="mt-2 h-5 text-sm text-white/88">
+                <div className="mt-2 min-h-5 text-sm text-white/88">
                   {selectedMap ? (
                     <>
                       {selectedMap.version}
-                      <span className="ml-2 font-semibold" style={{ color: getDifficultyColor(selectedMap.rating) }}>
-                        ★{selectedRating}
+                      <span
+                        className="ml-2 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold leading-none"
+                        style={{
+                          backgroundColor: getDifficultyColor(selectedMap.rating),
+                          color: getDifficultyTextColor(selectedMap.rating),
+                        }}
+                      >
+                        <span aria-hidden="true">★</span>
+                        <span>{selectedRating}</span>
                       </span>
                     </>
                   ) : null}

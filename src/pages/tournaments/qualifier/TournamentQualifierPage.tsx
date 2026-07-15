@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, CardGridSkeleton, getErrorMessage, ListSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { getTournamentMapCoverUrl } from "../_shared/tournamentVisuals"
@@ -136,7 +136,7 @@ export function TournamentQualifierPage() {
         <div className="mt-4 overflow-hidden rounded-lg border">
           <RankingHeader scoreLabel={scoreLabel} />
           <div className="divide-y">
-            {isLoading ? <p className="p-4 text-sm text-muted-foreground">{t("tournament.qualifier.loadingRanking")}</p> : null}
+            {isLoading ? <ListSkeleton className="p-4" count={5} /> : null}
             {!isLoading && activeEntries.length === 0 ? (
               <div className="p-4">
                 <AppAlert title={t("tournament.qualifier.noRankingTitle")}>{t("tournament.qualifier.noRankingDescription")}</AppAlert>
@@ -178,7 +178,7 @@ function MappoolStrip({ isLoading, maps }: { isLoading: boolean; maps: Tournamen
         <h2 className="font-heading text-xl font-semibold">{t("tournament.qualifier.mappool")}</h2>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? <p className="text-sm text-muted-foreground">{t("tournament.qualifier.loadingMaps")}</p> : null}
+        {isLoading ? <CardGridSkeleton className="col-span-full sm:grid-cols-2 lg:grid-cols-4" count={4} /> : null}
         {!isLoading && maps.length === 0 ? <p className="text-sm text-muted-foreground">{t("tournament.qualifier.noMaps")}</p> : null}
         {maps.map((map) => {
           const coverUrl = getTournamentMapCoverUrl(map)

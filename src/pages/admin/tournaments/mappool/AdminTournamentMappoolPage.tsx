@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage, MutationErrorAlert, PageSkeleton, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 import { Field } from "@/pages/admin/tournaments/bracket/components"
 import { defaultMapForm, MAIN_STAGE_MAP_TYPES, type MapFormState } from "@/pages/admin/tournaments/bracket/model"
@@ -50,6 +50,14 @@ export function AdminTournamentMappoolPage() {
 
   if (tournamentQuery.isError || roundsQuery.isError) {
     return <PageState title={t("tournament.admin.bracket.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? roundsQuery.error)} />
+  }
+
+  if (tournamentQuery.isLoading || roundsQuery.isLoading) {
+    return (
+      <AdminPage breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.qualifier.mappool")} tournament={tournamentQuery.data} tournamentId={tid} />}>
+        <PageSkeleton />
+      </AdminPage>
+    )
   }
 
   function handleCreateMap(event: FormEvent<HTMLFormElement>) {

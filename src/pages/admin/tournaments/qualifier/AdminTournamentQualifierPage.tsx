@@ -38,9 +38,10 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { getErrorMessage, ListSkeleton, MutationErrorAlert, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
@@ -281,6 +282,7 @@ export function AdminTournamentQualifierPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {mappoolQuery.isLoading ? <TableSkeletonRows columns={4} /> : null}
                   {mappool.map((map) => (
                     <TableRow key={map.id}>
                       <TableCell>{t("tournament.qualifier.stage", { stage: map.index })}</TableCell>
@@ -319,6 +321,7 @@ export function AdminTournamentQualifierPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {scoresQuery.isLoading ? <TableSkeletonRows columns={5} /> : null}
                   {scores.slice(0, 80).map((score) => (
                     <TableRow key={score.id}>
                       <TableCell>{score.map ? `Stage ${score.map.index}` : score.map_id}</TableCell>
@@ -426,6 +429,7 @@ export function AdminTournamentQualifierPage() {
               </CardAction>
             </CardHeader>
             <CardContent>
+              {importsQuery.isLoading ? <ListSkeleton count={4} /> : null}
               <div className="divide-y">
                 {imports.map((item) => (
                   <article className="py-3" key={item.id}>
@@ -448,6 +452,16 @@ export function AdminTournamentQualifierPage() {
       </section>
     </AdminPage>
   )
+}
+
+function TableSkeletonRows({ columns }: { columns: number }) {
+  return Array.from({ length: 5 }).map((_, rowIndex) => (
+    <TableRow key={rowIndex}>
+      {Array.from({ length: columns }).map((__, columnIndex) => (
+        <TableCell key={columnIndex}><Skeleton className="h-4 w-full max-w-32 rounded-md" /></TableCell>
+      ))}
+    </TableRow>
+  ))
 }
 
 function MetricCard({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {

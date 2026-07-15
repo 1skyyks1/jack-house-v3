@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { FormFieldError, getErrorMessage, ListSkeleton, MutationErrorAlert, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 import { usePageParam } from "../_shared/usePageParam"
 
@@ -275,7 +275,7 @@ function AssignBadgeDialog({ onOpenChange, target }: AssignBadgeDialogProps) {
           />
           <div className="scrollbar-soft max-h-56 overflow-auto rounded-md border bg-card">
             {query && usersQuery.isLoading ? (
-              <p className="p-3 text-sm text-muted-foreground">{t("admin.badges.assignDialog.searching")}</p>
+              <ListSkeleton className="p-3" count={4} />
             ) : query && usersQuery.data && usersQuery.data.data.length > 0 ? (
               usersQuery.data.data.map((user) => (
                 <Label className="flex cursor-pointer items-center gap-2 border-b px-3 py-2 text-sm last:border-b-0 hover:bg-accent" key={user.user_id}>

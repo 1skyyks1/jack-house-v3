@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage, MutationErrorAlert, PageSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
 import { getMatchStage } from "../_shared/tournamentRoundStages"
@@ -73,7 +73,7 @@ export function TournamentRefereePage() {
   }
 
   if (tournamentQuery.isLoading || refereeQuery.isLoading || !refereeQuery.data || !match) {
-    return <PageState title={t("tournament.referee.loading")} description={t("tournament.referee.loadingDescription")} />
+    return <PageSkeleton />
   }
 
   const actions = refereeQuery.data.actions ?? []

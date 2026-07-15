@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, FormPageSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TeamFlag } from "@/pages/tournaments/_shared/TeamFlag"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
@@ -94,7 +94,7 @@ export function AdminTournamentSettingsPage() {
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.settings")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      {tournamentQuery.isLoading ? <PageState title={t("tournament.admin.common.loadingTournament")} description={t("tournament.admin.form.loadingSettings")} /> : null}
+      {tournamentQuery.isLoading ? <FormPageSkeleton /> : null}
       {!tournamentQuery.isLoading && !tournamentQuery.data ? <AppAlert title={t("tournament.admin.common.tournamentNotFound")} /> : null}
       {tournamentQuery.data ? (
         <div className="space-y-4">

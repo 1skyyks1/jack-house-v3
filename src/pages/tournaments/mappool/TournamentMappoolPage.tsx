@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ArrowSquareOut, MapTrifold } from "@phosphor-icons/react"
+import { ArrowSquareOut } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import {
@@ -9,8 +9,7 @@ import {
 } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { groupRoundsByMainStage, type StageRoundGroup } from "../_shared/tournamentRoundStages"
 import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
@@ -67,14 +66,7 @@ function MainStageMappoolTabs({ isLoading, stages }: { isLoading: boolean; stage
   }, [stages])
 
   if (isLoading) {
-    return (
-      <section className="py-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapTrifold className="size-5" weight="bold" />
-          {t("tournament.qualifier.loadingMaps")}
-        </div>
-      </section>
-    )
+    return <CardGridSkeleton className="mt-4 lg:grid-cols-2" count={4} />
   }
 
   if (stages.length === 0 || !selectedStage) {
@@ -100,13 +92,9 @@ function MainStageMappoolTabs({ isLoading, stages }: { isLoading: boolean; stage
         </div>
       </Tabs>
 
-      <div className="mt-4 space-y-3">
-        {groupMappoolMapsForStage(selectedStage.maps).map((group) => (
-          <div className={getMappoolGroupGridClass(group.maps.length)} key={group.key}>
-            {group.maps.map(({ label, map }) => (
-              <MainStageMapCard key={map.id} label={label} map={map} />
-            ))}
-          </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        {labelMappoolMapsForStage(selectedStage.maps).map(({ label, map }) => (
+          <MainStageMapCard key={map.id} label={label} map={map} />
         ))}
       </div>
     </section>
@@ -146,30 +134,4 @@ function MainStageMapCard({ label, map }: { label: string; map: TournamentMappoo
 function labelMappoolMapsForStage(maps: TournamentMappoolMap[]) {
   const labelById = buildMappoolLabelMap(maps)
   return sortMappoolMaps(maps).map((map) => ({ label: getMappoolLabel(map, labelById), map }))
-}
-
-function groupMappoolMapsForStage(maps: TournamentMappoolMap[]) {
-  const groups: Array<{ key: string; maps: ReturnType<typeof labelMappoolMapsForStage> }> = []
-
-  for (const item of labelMappoolMapsForStage(maps)) {
-    const groupKey = item.label.replace(/\d+$/, "") || item.label
-    const group = groups.find((candidate) => candidate.key === groupKey)
-    if (group) {
-      group.maps.push(item)
-    } else {
-      groups.push({ key: groupKey, maps: [item] })
-    }
-  }
-
-  return groups
-}
-
-function getMappoolGroupGridClass(count: number) {
-  return cn(
-    "grid gap-3",
-    count <= 1 && "sm:grid-cols-[minmax(16rem,28rem)] sm:justify-center",
-    count === 2 && "sm:grid-cols-2",
-    count === 3 && "sm:grid-cols-2 lg:grid-cols-3",
-    count >= 4 && "sm:grid-cols-2 lg:grid-cols-4",
-  )
 }

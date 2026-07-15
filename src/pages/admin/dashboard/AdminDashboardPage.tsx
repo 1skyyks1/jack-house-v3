@@ -11,6 +11,7 @@ import {
   type DashboardUserGrowthPoint as ApiDashboardUserGrowthPoint,
 } from "@/entities/dashboard"
 import { AdminPage } from "@/features/admin-shell"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint, DashboardUserGrowthPoint } from "./DashboardCharts"
 
 const analyticsDays = 30
@@ -56,11 +57,11 @@ export function AdminDashboardPage() {
             </div>
           </section>
         ) : chartLoading ? (
-          <DashboardChartFallback label={t("admin.dashboard.loadingAnalytics")} />
+          <DashboardLoadingSkeleton />
         ) : !hasDashboardCharts ? (
           <DashboardChartFallback label={t("admin.dashboard.noTrafficData")} />
         ) : (
-          <Suspense fallback={<DashboardChartFallback label={t("admin.dashboard.loadingAnalytics")} />}>
+          <Suspense fallback={<DashboardLoadingSkeleton />}>
             <DashboardCharts
               dailyData={analyticsError ? [] : dailyData}
               hasDailyLoginUsers={hasDailyLoginUsers}
@@ -73,6 +74,23 @@ export function AdminDashboardPage() {
         )}
       </div>
     </AdminPage>
+  )
+}
+
+function DashboardLoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading" className="space-y-4 xl:grid xl:h-full xl:min-h-0 xl:grid-rows-2 xl:gap-4 xl:space-y-0">
+      <section className="grid gap-4 xl:min-h-0 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton className="h-64 rounded-xl xl:h-full" key={index} />
+        ))}
+      </section>
+      <section className="grid gap-4 xl:min-h-0 xl:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <Skeleton className="h-64 rounded-xl xl:h-full" key={index} />
+        ))}
+      </section>
+    </div>
   )
 }
 

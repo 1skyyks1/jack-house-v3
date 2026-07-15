@@ -24,6 +24,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getErrorMessage, PageState } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
@@ -177,6 +178,13 @@ export function AdminTournamentAuditPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {auditQuery.isLoading ? Array.from({ length: 6 }).map((_, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {Array.from({ length: 6 }).map((__, columnIndex) => (
+                    <TableCell key={columnIndex}><Skeleton className="h-4 w-full max-w-32 rounded-md" /></TableCell>
+                  ))}
+                </TableRow>
+              )) : null}
               {logs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell>{formatDate(log.created_time)}</TableCell>
@@ -272,9 +280,7 @@ function JsonValueDialog({
   const detailQuery = useTournamentAuditLogQuery(tournamentId, auditId, open)
   const text = detailQuery.isError
     ? getErrorMessage(detailQuery.error)
-    : detailQuery.isLoading
-      ? "…"
-      : formatJsonPreview(detailQuery.data?.[field])
+    : formatJsonPreview(detailQuery.data?.[field])
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -287,7 +293,13 @@ function JsonValueDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <pre className="max-h-[65dvh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-xs text-muted-foreground">{text}</pre>
+        {detailQuery.isLoading ? (
+          <div className="space-y-2 rounded-lg bg-muted p-3">
+            {Array.from({ length: 8 }).map((_, index) => <Skeleton className="h-3 rounded-sm" key={index} />)}
+          </div>
+        ) : (
+          <pre className="max-h-[65dvh] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-xs text-muted-foreground">{text}</pre>
+        )}
       </DialogContent>
     </Dialog>
   )

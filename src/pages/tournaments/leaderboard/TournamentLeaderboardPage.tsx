@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { ArrowSquareOut, ChartBar, Medal } from "@phosphor-icons/react"
+import { ArrowSquareOut, Medal } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { buildMappoolLabelMap, compareMappoolMaps, getMappoolLabel } from "../_shared/tournamentMappool"
 import { getTournamentMapCoverUrl, getTournamentPublicPath } from "../_shared/tournamentVisuals"
@@ -64,12 +64,7 @@ export function TournamentLeaderboardPage() {
       <TournamentBreadcrumb current={t("tournament.common.leaderboard")} tournament={tournamentQuery.data} tournamentId={tid} />
 
       {leaderboardQuery.isLoading ? (
-        <section className="py-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ChartBar className="size-5" weight="bold" />
-            {t("tournament.leaderboard.loading")}
-          </div>
-        </section>
+        <CardGridSkeleton count={4} />
       ) : stages.length === 0 || !selectedStage || !selectedMap ? (
         <AppAlert title={t("tournament.leaderboard.emptyTitle")}>{t("tournament.leaderboard.emptyDescription")}</AppAlert>
       ) : (

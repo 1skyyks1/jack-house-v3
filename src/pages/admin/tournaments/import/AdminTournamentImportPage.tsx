@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, FormPageSkeleton, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
@@ -126,9 +126,8 @@ export function AdminTournamentImportPage() {
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.import")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      {tournamentQuery.isLoading ? <PageState title={t("tournament.admin.common.loadingTournament")} description={t("tournament.admin.common.loadingTournamentMetadata")} /> : null}
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
+      {tournamentQuery.isLoading ? <FormPageSkeleton /> : (
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -256,7 +255,8 @@ export function AdminTournamentImportPage() {
 
           {lastResult ? <ImportResult result={lastResult} /> : null}
         </div>
-      </div>
+        </div>
+      )}
     </AdminPage>
   )
 }

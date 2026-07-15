@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 type AdminTableProps<TData> = {
@@ -55,11 +56,15 @@ export function AdminTable<TData>({ columns, data, emptyLabel = "No records", is
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell className="px-3 py-8 text-center text-muted-foreground" colSpan={columns.length}>
-                  {t("admin.table.loading")}
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {columns.map((_, columnIndex) => (
+                    <TableCell className="px-3 py-3" key={columnIndex}>
+                      <Skeleton className={cn("h-4 rounded-md", columnIndex === 0 ? "w-12" : columnIndex === columns.length - 1 ? "ml-auto w-24" : "w-full max-w-40")} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow className="hover:bg-muted/40" key={row.id}>

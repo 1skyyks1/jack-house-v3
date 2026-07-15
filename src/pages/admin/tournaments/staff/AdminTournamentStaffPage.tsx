@@ -38,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { AppAlert, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage, MutationErrorAlert, PageSkeleton, PageState } from "@/shared/components"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
 
@@ -110,11 +110,11 @@ export function AdminTournamentStaffPage() {
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.staff")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      {tournamentQuery.isLoading || staffQuery.isLoading ? <PageState title={t("tournament.admin.staff.loading")} description={t("tournament.admin.staff.loadingDescription")} /> : null}
+      {tournamentQuery.isLoading || staffQuery.isLoading ? <PageSkeleton /> : null}
       {createMutation.isError ? <MutationErrorAlert className="mb-4" error={createMutation.error} title={t("tournament.admin.staff.addFailed")} /> : null}
       {deleteMutation.isError ? <MutationErrorAlert className="mb-4" error={deleteMutation.error} title={t("tournament.admin.staff.removeFailed")} /> : null}
 
-      {!staffQuery.isLoading ? (
+      {!staffQuery.isLoading && !tournamentQuery.isLoading ? (
         <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
           <Card className="self-start">
             <CardHeader>
@@ -141,7 +141,7 @@ export function AdminTournamentStaffPage() {
                 <Label htmlFor="staff-user">{t("tournament.admin.staff.user")}</Label>
                 <Select disabled={usersQuery.isLoading} onValueChange={setUserId} value={userId}>
                   <SelectTrigger className="w-full" id="staff-user">
-                    <SelectValue placeholder={usersQuery.isLoading ? t("tournament.admin.staff.loadingUsers") : t("tournament.admin.staff.selectUser")} />
+                    <SelectValue placeholder={t("tournament.admin.staff.selectUser")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(usersQuery.data?.data ?? []).map((user) => (

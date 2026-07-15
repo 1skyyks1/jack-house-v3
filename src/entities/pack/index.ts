@@ -13,6 +13,7 @@ export {
 } from "./api/packQueries"
 export {
   getDifficultyColor,
+  getDifficultyTextColor,
   filterPackTagIdsForType,
   getPackCoverUrl,
   getPackDisplayTitle,

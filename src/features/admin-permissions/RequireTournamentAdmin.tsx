@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import { useTournamentDetailQuery } from "@/entities/tournament"
-import { PageState } from "@/shared/components"
+import { PageSkeleton, PageState } from "@/shared/components"
 import { useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
 import { hasAdminPermission } from "./model/permissions"
 
@@ -18,7 +18,7 @@ export function RequireTournamentAdmin({ children }: RequireTournamentAdminProps
   const tournamentQuery = useTournamentDetailQuery(tid)
 
   if (currentUserQuery.isLoading || permissionsQuery.isLoading || tournamentQuery.isLoading) {
-    return <PageState title={t("admin.permissions.checkingTitle")} description={t("admin.permissions.checkingDescription")} />
+    return <PageSkeleton />
   }
 
   if (currentUserQuery.isError || permissionsQuery.isError || tournamentQuery.isError) {

@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { AppAlert, FormFieldError, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
+import { AppAlert, FormFieldError, getErrorMessage, MutationErrorAlert, PageSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
@@ -206,9 +206,9 @@ export function AdminTournamentContentPage() {
       )}
       breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.admin.common.content")} tournament={tournamentQuery.data} tournamentId={tid} />}
     >
-      {sectionsQuery.isLoading || tournamentQuery.isLoading ? <PageState title={t("tournament.admin.content.loading")} description={t("tournament.admin.content.loadingDescription")} /> : null}
+      {sectionsQuery.isLoading || tournamentQuery.isLoading ? <PageSkeleton /> : null}
 
-      {!sectionsQuery.isLoading ? (
+      {!sectionsQuery.isLoading && !tournamentQuery.isLoading ? (
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <Card className="self-start">
             <CardHeader className="flex-row items-center justify-between">

@@ -182,15 +182,12 @@ function PostDetailActions({ isDeleting, onDelete, postId }: PostDetailActionsPr
 }
 
 function PostDetailSkeleton() {
-  const { t } = useTranslation()
-
   return (
     <section className="space-y-4">
       <div className="h-5 w-56 animate-pulse rounded bg-muted" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
         <article className="rounded-lg border bg-card p-5">
           <div className="space-y-4 border-b pb-5">
-            <p className="text-sm font-medium text-muted-foreground">{t("post.detail.loading")}</p>
             <div className="h-4 w-24 animate-pulse rounded bg-muted" />
             <div className="h-9 w-2/3 animate-pulse rounded bg-muted" />
             <div className="h-4 w-44 animate-pulse rounded bg-muted" />
