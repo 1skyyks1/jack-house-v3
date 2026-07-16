@@ -135,6 +135,8 @@ export const zhPack = {
       descriptionTitle: "介绍",
       noDescription: "暂无介绍。",
       selectedDifficulty: "选择 {{name}}",
+      analyseWithOma: "使用 OMA 分析所选难度",
+      omaUnavailableHint: "该难度暂无 Beatmap ID，请刷新图包元数据后再试。",
       stats: {
         rating: "星级",
         length: "时长",
@@ -285,6 +287,8 @@ export const enPack = {
       descriptionTitle: "Description",
       noDescription: "No description.",
       selectedDifficulty: "Select {{name}}",
+      analyseWithOma: "Analyse selected difficulty with OMA",
+      omaUnavailableHint: "This difficulty has no Beatmap ID yet. Refresh the pack metadata and try again.",
       stats: {
         rating: "Rating",
         length: "Length",

@@ -35,7 +35,7 @@ const publicNavItems = [
   { to: "/forum", labelKey: "common.forum", icon: NewspaperIcon, end: false },
   { to: "/t", labelKey: "common.tournaments", icon: Trophy, end: false },
   { to: "/pack", labelKey: "common.pack", icon: StackIcon, end: false },
-  { to: "/tool/omc", labelKey: "mappackCreator.nav", icon: Toolbox, end: false },
+  { to: "/tool", labelKey: "tools.nav", icon: Toolbox, end: false },
   { to: "/about", labelKey: "common.about", icon: InfoIcon, end: false },
 ] as const
 

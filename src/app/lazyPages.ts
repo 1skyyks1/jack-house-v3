@@ -1,6 +1,7 @@
 import { lazy } from "react"
 
 export const AboutPage = lazy(() => import("@/pages/misc/about/AboutPage").then((module) => ({ default: module.AboutPage })))
+export const AccuracyCalculatorPage = lazy(() => import("@/pages/tools/accuracy-calculator/AccuracyCalculatorPage").then((module) => ({ default: module.AccuracyCalculatorPage })))
 export const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/announcements/AdminAnnouncementsPage").then((module) => ({ default: module.AdminAnnouncementsPage })))
 export const AdminBadgesPage = lazy(() => import("@/pages/admin/badges/AdminBadgesPage").then((module) => ({ default: module.AdminBadgesPage })))
 export const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage })))
@@ -25,6 +26,7 @@ export const EventDetailPage = lazy(() => import("@/pages/events/detail/EventDet
 export const ForumPage = lazy(() => import("@/pages/forum/list/ForumPage").then((module) => ({ default: module.ForumPage })))
 export const ForumEditorPage = lazy(() => import("@/pages/forum/editor/ForumEditorPage").then((module) => ({ default: module.ForumEditorPage })))
 export const HomePage = lazy(() => import("@/pages/home/HomePage").then((module) => ({ default: module.HomePage })))
+export const ManiaAnalyserPage = lazy(() => import("@/pages/tools/mania-analyser/ManiaAnalyserPage").then((module) => ({ default: module.ManiaAnalyserPage })))
 export const MappackCreatorPage = lazy(() => import("@/pages/tools/mappack-creator/MappackCreatorPage").then((module) => ({ default: module.MappackCreatorPage })))
 export const NewPackPage = lazy(() => import("@/pages/packs/new/NewPackPage").then((module) => ({ default: module.NewPackPage })))
 export const NotFoundPage = lazy(() => import("@/pages/misc/not-found/NotFoundPage").then((module) => ({ default: module.NotFoundPage })))
@@ -42,5 +44,6 @@ export const TournamentMappoolPage = lazy(() => import("@/pages/tournaments/mapp
 export const TournamentQualifierPage = lazy(() => import("@/pages/tournaments/qualifier/TournamentQualifierPage").then((module) => ({ default: module.TournamentQualifierPage })))
 export const TournamentRefereePage = lazy(() => import("@/pages/tournaments/referee/TournamentRefereePage").then((module) => ({ default: module.TournamentRefereePage })))
 export const TournamentTeamsPage = lazy(() => import("@/pages/tournaments/teams/TournamentTeamsPage").then((module) => ({ default: module.TournamentTeamsPage })))
+export const ToolsPage = lazy(() => import("@/pages/tools/index/ToolsPage").then((module) => ({ default: module.ToolsPage })))
 export const UserEditPage = lazy(() => import("@/pages/users/edit/UserEditPage").then((module) => ({ default: module.UserEditPage })))
 export const UserProfilePage = lazy(() => import("@/pages/users/profile/UserProfilePage").then((module) => ({ default: module.UserProfilePage })))

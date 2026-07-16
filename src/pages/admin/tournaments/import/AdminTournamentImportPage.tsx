@@ -63,7 +63,6 @@ export function AdminTournamentImportPage() {
   const [csvText, setCsvText] = useState("")
   const [batchId, setBatchId] = useState("JHC2025-google-form")
   const [lastResult, setLastResult] = useState<TournamentHistoricalImportResult | null>(null)
-  const [parseError, setParseError] = useState<string | null>(null)
 
   if (tournamentQuery.isError) {
     return <PageState title={t("tournament.admin.common.tournamentLoadFailed")} description={getErrorMessage(tournamentQuery.error)} />
@@ -72,11 +71,10 @@ export function AdminTournamentImportPage() {
   const parsePayload = (dryRun: boolean) => {
     try {
       const parsed = JSON.parse(payloadText) as TournamentHistoricalImportRequest
-      setParseError(null)
       return { ...parsed, dry_run: dryRun }
     } catch (error) {
       const message = error instanceof Error ? error.message : t("tournament.admin.import.invalidJson")
-      setParseError(message)
+      toast.error(t("tournament.admin.import.jsonParseFailed"), { description: message })
       return null
     }
   }
@@ -200,7 +198,6 @@ export function AdminTournamentImportPage() {
               <CardTitle>{t("tournament.admin.import.advancedJson")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {parseError ? <AppAlert tone="destructive" title={t("tournament.admin.import.jsonParseFailed")}>{parseError}</AppAlert> : null}
               {importMutation.isError ? <MutationErrorAlert error={importMutation.error} title={t("tournament.admin.import.importFailed")} /> : null}
 
               <div className="space-y-2">

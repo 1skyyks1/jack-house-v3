@@ -2,6 +2,7 @@ import {
   CheckSquare,
   DownloadSimple,
   FolderOpen,
+  GithubLogo,
   MagnifyingGlass,
   Package,
   Question,
@@ -30,6 +31,7 @@ import {
   type LocalBeatmap,
   type PackBuildResult,
 } from "@/features/mappack-creator/model/mappack"
+import { ToolsBreadcrumb } from "../_shared/ToolsBreadcrumb"
 
 const pageSize = 50
 
@@ -55,7 +57,6 @@ export function MappackCreatorPage() {
   const [isScanning, setIsScanning] = useState(false)
   const [isBuilding, setIsBuilding] = useState(false)
   const [progress, setProgress] = useState<ProgressState | null>(null)
-  const [error, setError] = useState("")
   const [result, setResult] = useState<PackBuildResult | null>(null)
 
   const selectedBeatmaps = useMemo(
@@ -82,7 +83,6 @@ export function MappackCreatorPage() {
     const nextFiles = Array.from(event.target.files ?? [])
     if (nextFiles.length === 0) return
 
-    setError("")
     setResult(null)
     setFiles(nextFiles)
     setBeatmaps([])
@@ -100,9 +100,11 @@ export function MappackCreatorPage() {
       const nextEdits = Object.fromEntries(scanned.map((beatmap) => [beatmap.key, createDefaultEdit(beatmap.metadata)]))
       setBeatmaps(scanned)
       setEdits(nextEdits)
-      if (scanned.length === 0) setError(t("mappackCreator.noBeatmaps"))
+      if (scanned.length === 0) toast.error(t("mappackCreator.noBeatmaps"))
     } catch (scanError) {
-      setError(getMessage(scanError, t("mappackCreator.scanFailed")))
+      toast.error(t("mappackCreator.errorTitle"), {
+        description: getMessage(scanError, t("mappackCreator.scanFailed")),
+      })
     } finally {
       setIsScanning(false)
       setProgress(null)
@@ -136,15 +138,14 @@ export function MappackCreatorPage() {
 
   const handleBuild = async () => {
     if (!packTitle.trim() || !packArtist.trim() || !packCreator.trim()) {
-      setError(t("mappackCreator.requiredFields"))
+      toast.error(t("mappackCreator.requiredFields"))
       return
     }
     if (selectedBeatmaps.length === 0) {
-      setError(t("mappackCreator.selectAtLeastOne"))
+      toast.error(t("mappackCreator.selectAtLeastOne"))
       return
     }
 
-    setError("")
     setResult(null)
     setIsBuilding(true)
     setProgress({ current: 0, label: t("mappackCreator.preparing"), total: selectedBeatmaps.length })
@@ -165,7 +166,9 @@ export function MappackCreatorPage() {
       setResult(nextResult)
       toast.success(t("mappackCreator.downloadStarted"))
     } catch (buildError) {
-      setError(getMessage(buildError, t("mappackCreator.buildFailed")))
+      toast.error(t("mappackCreator.errorTitle"), {
+        description: getMessage(buildError, t("mappackCreator.buildFailed")),
+      })
     } finally {
       setIsBuilding(false)
       setProgress(null)
@@ -174,6 +177,13 @@ export function MappackCreatorPage() {
 
   return (
     <section className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <ToolsBreadcrumb current={t("mappackCreator.title")} />
+        <a className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" href="https://github.com/1skyyks1/osu-mappack-creator-v2" rel="noreferrer" target="_blank">
+          <GithubLogo className="size-4" weight="fill" />
+          {t("mappackCreator.sourceLink")}
+        </a>
+      </div>
       <input
         {...({ directory: "", webkitdirectory: "" } as Record<string, string>)}
         className="hidden"
@@ -218,13 +228,6 @@ export function MappackCreatorPage() {
       </div>
 
       {progress ? <ProgressPanel percent={progressPercent} label={progress.label} /> : null}
-      {error ? (
-        <Alert variant="destructive">
-          <X />
-          <AlertTitle>{t("mappackCreator.errorTitle")}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
       {result ? <ResultPanel result={result} /> : null}
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">

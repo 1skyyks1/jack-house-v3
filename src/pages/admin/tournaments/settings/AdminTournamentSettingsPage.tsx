@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AppAlert, FormPageSkeleton, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, FormPageSkeleton, getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 import { TeamFlag } from "@/pages/tournaments/_shared/TeamFlag"
 import { getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { AdminTournamentBreadcrumb } from "../_shared/AdminTournamentBreadcrumb"
@@ -111,7 +111,7 @@ export function AdminTournamentSettingsPage() {
               })
             }}
           />
-          {uploadDefaultTeamAvatarMutation.error ? <AppAlert title={t("tournament.admin.form.defaultTeamAvatarUploadFailed")} tone="destructive">{getErrorMessage(uploadDefaultTeamAvatarMutation.error)}</AppAlert> : null}
+          {uploadDefaultTeamAvatarMutation.error ? <MutationErrorAlert error={uploadDefaultTeamAvatarMutation.error} title={t("tournament.admin.form.defaultTeamAvatarUploadFailed")} /> : null}
           <TournamentSettingsForm
             error={updateMutation.error}
             errorTitle={t("tournament.admin.form.saveFailed")}

@@ -85,3 +85,17 @@ pnpm dev --host 127.0.0.1
 ```sh
 pnpm build
 ```
+
+## 许可证
+
+除非另有说明，由 yks1 编写的源代码和文档采用
+[MIT License](LICENSE) 开放。
+
+Jack House 名称、Logo、视觉识别及原创媒体素材不属于 MIT 授权范围。
+协议适用范围及保留权利详见 [NOTICE.md](NOTICE.md)。
+
+## 引用及相关项目
+
+- [uzxn/acc](https://github.com/uzxn/acc)：段位预设数据及 ACC 计算
+- [LeoBlackMT/osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser)：谱面分析工具组件
+- [1skyyks1/osu-mappack-creator-v2](https://github.com/1skyyks1/osu-mappack-creator-v2)：合包工具

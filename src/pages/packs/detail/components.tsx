@@ -1,4 +1,5 @@
 import {
+  ChartLineUp,
   Clock,
   Columns,
   DownloadSimple,
@@ -459,6 +460,23 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
             <div className="rounded bg-black/45 p-4 text-sm text-white/78">{t("pack.detail.noBeatmapMetadata")}</div>
           )}
           <div className="grid grid-cols-2 gap-2">
+            {selectedMap?.beatmap_id ? (
+              <Button
+                asChild
+                className="col-span-2 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
+                variant="outline"
+              >
+                <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
+                  <ChartLineUp className="size-4" weight="bold" />
+                  {t("pack.detail.analyseWithOma")}
+                </Link>
+              </Button>
+            ) : selectedMap ? (
+              <Button className="col-span-2" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
+                <ChartLineUp className="size-4" weight="bold" />
+                {t("pack.detail.analyseWithOma")}
+              </Button>
+            ) : null}
             {displayedLinks.map((link) => (
               <Button
                 asChild

@@ -130,7 +130,7 @@ export function TournamentSettingsForm({
                   <SelectTrigger aria-invalid={fieldState.invalid} className="w-full" id="tournament-qual-rank-mode">
                     <SelectValue placeholder={t("tournament.admin.form.fields.qualRankMode")} />
                   </SelectTrigger>
-                  <SelectContent position="item-aligned">
+                  <SelectContent>
                     <SelectItem value={String(QUAL_RANK_MODE_TOTAL_SCORE)}>{t("tournament.admin.form.rankModes.totalScore")}</SelectItem>
                     <SelectItem value={String(QUAL_RANK_MODE_RANK_SUM)}>{t("tournament.admin.form.rankModes.rankSum")}</SelectItem>
                   </SelectContent>

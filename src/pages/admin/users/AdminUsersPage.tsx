@@ -316,7 +316,7 @@ function UserEditorPanel({ mode, onClose }: UserEditorPanelProps) {
       {isEditing && userQuery.isLoading ? (
         <FormPageSkeleton />
       ) : userQuery.isError ? (
-        <MutationErrorAlert error={userQuery.error} />
+        <PageState title={t("common.requestFailed")} description={getErrorMessage(userQuery.error)} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           <AdminInput error={form.formState.errors.user_name?.message} label={t("admin.users.editor.username")} {...form.register("user_name")} />

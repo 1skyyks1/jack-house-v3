@@ -9,6 +9,8 @@ import { enRichText, zhRichText } from "./resources/richText"
 import { enTournament, zhTournament } from "./resources/tournament"
 import { enUser, zhUser } from "./resources/user"
 import { enMappackCreator, zhMappackCreator } from "./resources/mappackCreator"
+import { enManiaAnalyser, zhManiaAnalyser } from "./resources/maniaAnalyser"
+import { enAccuracyCalculator, zhAccuracyCalculator } from "./resources/accuracyCalculator"
 
 export const zhTranslation = {
   ...zhBase,
@@ -22,6 +24,8 @@ export const zhTranslation = {
   ...zhRichText,
   ...zhTournament,
   ...zhMappackCreator,
+  ...zhManiaAnalyser,
+  ...zhAccuracyCalculator,
 } as const
 
 export const enTranslation = {
@@ -36,6 +40,8 @@ export const enTranslation = {
   ...enRichText,
   ...enTournament,
   ...enMappackCreator,
+  ...enManiaAnalyser,
+  ...enAccuracyCalculator,
 } as const
 
 export const resources = {

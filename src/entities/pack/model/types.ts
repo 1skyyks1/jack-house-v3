@@ -16,6 +16,7 @@ export type PackUser = {
 }
 
 export type PackMap = {
+  beatmap_id: number | null
   bpm: number | string
   created_time: string
   hp: number | string

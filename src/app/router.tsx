@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom"
 import { LazyRoute } from "./LazyRoute"
 import {
   AboutPage,
+  AccuracyCalculatorPage,
   AdminAnnouncementsPage,
   AdminBadgesPage,
   AdminDashboardPage,
@@ -27,6 +28,7 @@ import {
   ForumEditorPage,
   ForumPage,
   HomePage,
+  ManiaAnalyserPage,
   MappackCreatorPage,
   NewPackPage,
   NotFoundPage,
@@ -44,6 +46,7 @@ import {
   TournamentQualifierPage,
   TournamentRefereePage,
   TournamentTeamsPage,
+  ToolsPage,
   UserEditPage,
   UserProfilePage,
 } from "./lazyPages"
@@ -69,8 +72,24 @@ export const router = createBrowserRouter([
         element: lazyElement(<AboutPage />),
       },
       {
+        path: "tool",
+        element: lazyElement(<ToolsPage />),
+      },
+      {
         path: "tool/omc",
         element: lazyElement(<MappackCreatorPage />),
+      },
+      {
+        path: "tool/acc",
+        element: lazyElement(<AccuracyCalculatorPage />),
+      },
+      {
+        path: "tool/oma",
+        element: lazyElement(<ManiaAnalyserPage />),
+      },
+      {
+        path: "tool/mania-analyser",
+        element: <Navigate replace to="/tool/oma" />,
       },
       {
         path: "forum",

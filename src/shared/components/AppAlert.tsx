@@ -1,7 +1,9 @@
 import { CheckCircle, Info, WarningCircle, XCircle } from "@phosphor-icons/react"
-import type { ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
+import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
+import { i18n } from "@/shared/i18n/client"
 import { getErrorMessage } from "./getErrorMessage"
 
 type AppAlertTone = "default" | "destructive" | "success" | "warning"
@@ -45,10 +47,18 @@ type MutationErrorAlertProps = {
   title?: ReactNode
 }
 
-export function MutationErrorAlert({ className, error, title = "Request failed" }: MutationErrorAlertProps) {
-  return (
-    <AppAlert className={className} tone="destructive" title={title}>
-      {getErrorMessage(error)}
-    </AppAlert>
-  )
+export function MutationErrorAlert({ error, title }: MutationErrorAlertProps) {
+  const message = error ? getErrorMessage(error) : ""
+  const toastTitle = title ?? i18n.t("common.requestFailed")
+  const titleKey = typeof toastTitle === "string" ? toastTitle : "request-failed"
+
+  useEffect(() => {
+    if (!error) return
+    toast.error(toastTitle, {
+      description: message,
+      id: `mutation-error:${titleKey}:${message}`,
+    })
+  }, [error, message, titleKey, toastTitle])
+
+  return null
 }
