@@ -1,0 +1,43 @@
+src/pages/tools/mania-analyser/ManiaAnalyserPage.tsx
+  h_4bc100ba83da7d 1-577
+README_zh.md
+  h_4bc100ba83da7d 97,99-101 gitai:{"mixed_line_ranges":[{"Single":97}],"operations":[]}
+README.md
+  h_4bc100ba83da7d 9,20-21,23-26,28-32,91-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2d276ca06743ec55b38f673752c4e6973447fe18",
+  "prompts": {},
+  "humans": {
+    "h_4bc100ba83da7d": {
+      "author": "1skyyks1 <1417044093@qq.com>"
+    }
+  },
+  "attestation_metadata": {
+    "README_zh.md": [
+      {
+        "hash": "h_4bc100ba83da7d",
+        "line_ranges": [
+          {
+            "Single": 97
+          },
+          {
+            "Range": [
+              99,
+              101
+            ]
+          }
+        ],
+        "mixed_line_ranges": [
+          {
+            "Single": 97
+          }
+        ],
+        "operations": []
+      }
+    ]
+  },
+  "remote_transcripts": {}
+}
