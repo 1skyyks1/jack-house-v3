@@ -20,6 +20,7 @@ import type {
   TournamentMarkdownPreviewResult,
   TournamentMatch,
   TournamentMappoolMap,
+  TournamentMappoolStats,
   TournamentPerformance,
   TournamentQualImportList,
   TournamentQualMap,
@@ -122,6 +123,10 @@ export async function getTournamentBracket(tournamentId: string): Promise<Tourna
 
 export async function getTournamentPerformance(tournamentId: string): Promise<TournamentPerformance> {
   return await http.get(`/t/${tournamentId}/performance`) as unknown as TournamentPerformance
+}
+
+export async function getTournamentMappoolStats(tournamentId: string): Promise<TournamentMappoolStats> {
+  return await http.get(`/t/${tournamentId}/mappool-stats`) as unknown as TournamentMappoolStats
 }
 
 export async function generateTournamentBracket(tournamentId: string): Promise<unknown> {

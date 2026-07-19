@@ -9,6 +9,7 @@ import {
   fetchTournamentMatchScores,
   generateTournamentBracket,
   getTournamentBracket,
+  getTournamentMappoolStats,
   getTournamentMatch,
   getTournamentPerformance,
   getTournamentRefereeData,
@@ -39,6 +40,10 @@ export function useTournamentBracketQuery(tournamentId: string | undefined) {
 
 export function useTournamentPerformanceQuery(tournamentId: string | undefined) {
   return useQuery({ enabled: Boolean(tournamentId), queryFn: () => getTournamentPerformance(tournamentId as string), queryKey: tournamentQueryKeys.performance(tournamentId ?? "") })
+}
+
+export function useTournamentMappoolStatsQuery(tournamentId: string | undefined) {
+  return useQuery({ enabled: Boolean(tournamentId), queryFn: () => getTournamentMappoolStats(tournamentId as string), queryKey: tournamentQueryKeys.mappoolStats(tournamentId ?? "") })
 }
 
 export function useTournamentMatchQuery(tournamentId: string | undefined, matchId: string | undefined) {
@@ -135,6 +140,7 @@ export function useUpdateTournamentMatchMutation(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(variables.matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(variables.matchId)) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
     ]),
   })
 }
@@ -148,6 +154,7 @@ export function useFetchTournamentMatchScoresMutation(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
     ]),
   })
 }
@@ -169,12 +176,24 @@ export function useRecordTournamentRollMutation(tournamentId: string, matchId: s
 
 export function useCreateTournamentMatchActionMutation(tournamentId: string, matchId: string) {
   const queryClient = useQueryClient()
-  return useMutation({ mutationFn: (request: TournamentMatchActionRequest) => createTournamentMatchAction(tournamentId, matchId, request), onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }) })
+  return useMutation({
+    mutationFn: (request: TournamentMatchActionRequest) => createTournamentMatchAction(tournamentId, matchId, request),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+    ]),
+  })
 }
 
 export function useUpdateTournamentMatchActionMutation(tournamentId: string, matchId: string) {
   const queryClient = useQueryClient()
-  return useMutation({ mutationFn: ({ actionId, request }: { actionId: number; request: TournamentMatchActionRequest }) => updateTournamentMatchAction(tournamentId, matchId, actionId, request), onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }) })
+  return useMutation({
+    mutationFn: ({ actionId, request }: { actionId: number; request: TournamentMatchActionRequest }) => updateTournamentMatchAction(tournamentId, matchId, actionId, request),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+    ]),
+  })
 }
 
 export function useRecordTournamentTimeoutMutation(tournamentId: string, matchId: string) {
@@ -197,6 +216,7 @@ export function useUpdateTournamentGameScoreMutation(tournamentId: string, match
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, matchId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
     ]),
   })
 }

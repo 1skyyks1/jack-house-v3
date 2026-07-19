@@ -3,11 +3,15 @@ import { ArrowSquareOut } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import {
+  type TournamentMappoolStatsMap,
+  type TournamentMappoolStatsStage,
   useTournamentDetailQuery,
+  useTournamentMappoolStatsQuery,
   useTournamentRoundsQuery,
   type TournamentMappoolMap,
 } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
@@ -42,15 +46,17 @@ export function TournamentMappoolPage() {
         <TournamentBreadcrumb current={t("tournament.common.mappool")} tournament={tournamentQuery.data} tournamentId={tid} />
       </div>
 
-      <MainStageMappoolTabs isLoading={roundsQuery.isLoading} stages={mappoolStages} />
+      <MainStageMappoolTabs isLoading={roundsQuery.isLoading} stages={mappoolStages} tournamentId={tid} />
     </main>
   )
 }
 
-function MainStageMappoolTabs({ isLoading, stages }: { isLoading: boolean; stages: StageRoundGroup[] }) {
+function MainStageMappoolTabs({ isLoading, stages, tournamentId }: { isLoading: boolean; stages: StageRoundGroup[]; tournamentId?: string }) {
   const { t } = useTranslation()
+  const statsQuery = useTournamentMappoolStatsQuery(tournamentId)
   const [activeStage, setActiveStage] = useState<string>("")
   const selectedStage = stages.find((stage) => stage.key === activeStage) ?? stages[0]
+  const selectedStats = statsQuery.data?.stages.find((stage) => stage.key === selectedStage?.key)
 
   useEffect(() => {
     function syncStageFromHash() {
@@ -97,6 +103,63 @@ function MainStageMappoolTabs({ isLoading, stages }: { isLoading: boolean; stage
           <MainStageMapCard key={map.id} label={label} map={map} />
         ))}
       </div>
+
+      {selectedStats?.is_complete ? (
+        <MappoolStatsTable maps={selectedStage.maps} stage={selectedStats} />
+      ) : null}
+    </section>
+  )
+}
+
+function MappoolStatsTable({ maps, stage }: { maps: TournamentMappoolMap[]; stage: TournamentMappoolStatsStage }) {
+  const { t } = useTranslation()
+  const labelById = buildMappoolLabelMap(maps)
+  const statsByMapId = new Map(stage.maps.map((item) => [item.map.id, item]))
+  const rows: Array<{ label: string; map: TournamentMappoolMap; stats: TournamentMappoolStatsMap }> = sortMappoolMaps(maps)
+    .flatMap((map) => {
+      const stats = statsByMapId.get(map.id) ?? stage.maps.find((item) => item.map.map_id === map.map_id && item.map.type.toUpperCase() === map.type.toUpperCase())
+      return stats ? [{ label: getMappoolLabel(map, labelById), map, stats }] : []
+    })
+
+  if (rows.length === 0) return null
+
+  return (
+    <section className="mt-6">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold">{t("tournament.mappool.statsTitle")}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("tournament.mappool.statsMeta", { count: stage.valid_match_count })}
+          </p>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("tournament.mappool.statsMap")}</TableHead>
+              <TableHead className="text-right">{t("tournament.mappool.statsProtect")}</TableHead>
+              <TableHead className="text-right">{t("tournament.mappool.statsBan")}</TableHead>
+              <TableHead className="text-right">{t("tournament.mappool.statsPick")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map(({ label, map, stats }) => (
+              <TableRow key={map.id}>
+                <TableCell>
+                  <div className="flex min-w-60 items-center gap-3">
+                    <Badge variant="outline">{label}</Badge>
+                    <span className="truncate">{map.artist} - {map.title}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{formatActionStat(stats.protect_count, stats.protect_rate)}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatActionStat(stats.ban_count, stats.ban_rate)}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatActionStat(stats.pick_count, stats.pick_rate)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </section>
   )
 }
@@ -134,4 +197,8 @@ function MainStageMapCard({ label, map }: { label: string; map: TournamentMappoo
 function labelMappoolMapsForStage(maps: TournamentMappoolMap[]) {
   const labelById = buildMappoolLabelMap(maps)
   return sortMappoolMaps(maps).map((map) => ({ label: getMappoolLabel(map, labelById), map }))
+}
+
+function formatActionStat(count: number, rate: number | null) {
+  return `${count} (${rate === null ? "-" : `${Math.round(rate * 100)}%`})`
 }

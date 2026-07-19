@@ -319,6 +319,30 @@ export type TournamentPerformance = {
   stages: TournamentPerformanceStage[]
 }
 
+export type TournamentMappoolStatsMap = {
+  ban_count: number
+  ban_rate: number | null
+  map: TournamentMappoolMap
+  pick_count: number
+  pick_rate: number | null
+  protect_count: number
+  protect_rate: number | null
+}
+
+export type TournamentMappoolStatsStage = {
+  completed_match_count: number
+  is_complete: boolean
+  key: string
+  label: string
+  maps: TournamentMappoolStatsMap[]
+  match_count: number
+  valid_match_count: number
+}
+
+export type TournamentMappoolStats = {
+  stages: TournamentMappoolStatsStage[]
+}
+
 export type TournamentSection = {
   content_html?: string | null
   content_html_en?: string | null
