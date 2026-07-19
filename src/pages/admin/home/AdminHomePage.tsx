@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 
 const adminNavItems: Array<{ key: AdminPermissionKey; to: string }> = [
   { key: "dashboard", to: "/admin/dashboard" },
+  { key: "aiImages", to: "/admin/aimg" },
   { key: "tournaments", to: "/admin/tournaments" },
   { key: "events", to: "/admin/events" },
   { key: "badges", to: "/admin/badges" },

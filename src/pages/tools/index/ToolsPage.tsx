@@ -1,4 +1,4 @@
-import { ArrowRight, Calculator, ChartLineUp, Package } from "@phosphor-icons/react"
+import { ArrowRight, Calculator, ChartLineUp, Package, Sparkle } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { TOOL_CATALOG, type ToolDefinition } from "@/entities/tool"
@@ -7,6 +7,7 @@ const toolIcons: Record<ToolDefinition["icon"], typeof ChartLineUp> = {
   analysis: ChartLineUp,
   calculator: Calculator,
   package: Package,
+  sparkle: Sparkle,
 }
 
 export function ToolsPage() {

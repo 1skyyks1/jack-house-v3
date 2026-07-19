@@ -31,6 +31,7 @@ function getRouteTitle(pathname: string, t: (key: string) => string) {
   if (pathname === "/tool/omc") return t("mappackCreator.title")
   if (pathname === "/tool/oma") return t("maniaAnalyser.title")
   if (pathname === "/tool/acc") return t("accuracyCalculator.title")
+  if (pathname === "/tool/aimg") return t("aiImage.title")
   if (pathname.startsWith("/event/")) return t("admin.nav.events")
   if (pathname === "/t" || pathname.startsWith("/t/")) return getTournamentTitle(pathname, t)
   if (pathname === "/user/edit") return t("common.editProfile")
@@ -52,6 +53,7 @@ function getTournamentTitle(pathname: string, t: (key: string) => string) {
 function getAdminTitle(pathname: string, t: (key: string) => string) {
   if (pathname === "/admin" || pathname === "/admin/dashboard") return t("admin.nav.dashboard")
   if (pathname === "/admin/users") return t("admin.nav.users")
+  if (pathname === "/admin/aimg") return t("admin.nav.aiImages")
   if (pathname === "/admin/announcement") return t("admin.nav.announcement")
   if (pathname === "/admin/posts") return t("admin.nav.posts")
   if (pathname === "/admin/postFiles") return t("admin.nav.postFiles")

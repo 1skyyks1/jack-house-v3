@@ -69,6 +69,27 @@ POSTFILES_GITHUB_STORAGE_BASE_PATH=submissions
 
 投稿文件不会压缩、不会转格式；富文本图片、徽章和活动 stage 背景图会走 `sharp` 优化并默认转 WebP。
 
+## AI 生图环境变量
+
+65535 API Key 只放后端，且必须已加入图片分组：
+
+```env
+AI_IMAGE_API_BASE_URL=https://img-cn.65535.space
+AI_IMAGE_API_KEY=...
+AI_IMAGE_GLOBAL_CONCURRENCY=4
+AI_IMAGE_DAILY_LIMIT_USER=10
+AI_IMAGE_DAILY_LIMIT_ORG=30
+AI_IMAGE_QUOTA_TIMEZONE=Asia/Shanghai
+AI_IMAGE_ALLOWED_SIZES=1024x1024,1k,2k,2048x2048,2048x1152,2560x1440,1440x2560,4k,3840x2160,2160x3840
+AI_IMAGE_MAX_FILE_SIZE_MB=20
+AI_IMAGE_MAX_TOTAL_UPLOAD_MB=64
+AI_IMAGE_UPSTREAM_TIMEOUT_MS=30000
+AI_IMAGE_SYNC_INTERVAL_MS=3000
+AI_IMAGE_SYNC_ENABLED=true
+```
+
+尺寸列表开放了 65535 文档明确支持的 1K、2K、4K 档位别名与常用横竖/方图预设。2K、4K 的单次上游成本高于 1K，但 Jack House 当前仍按生成次数扣用户额度。Jack House 不配置生图对象存储，也不永久保存任何输入或输出图片。
+
 ## 部署前命令
 
 在 `jack-house-web/backend`：
@@ -77,6 +98,7 @@ POSTFILES_GITHUB_STORAGE_BASE_PATH=submissions
 npm install
 npm run migrate:storage-metadata
 npm run migrate:rich-text-assets
+npm run migrate:ai-image-jobs
 npm run check:deploy -- --print-summary
 npm run check:secrets
 ```
@@ -105,3 +127,7 @@ pnpm run build
 - 富文本图片上传返回 jsDelivr URL，并能在正文中显示。
 - 投稿上传返回原始 `file_name`，数据库对象名为短 hash 前缀 + 原扩展名，文件内容不被压缩或转格式。
 - 个人页投稿列表只展示文件名、上传时间、大小和状态，不展示下载入口和审批意见。
+- 普通用户显示每日 10 次、组织者显示 30 次、管理员显示无限额；所有角色同一时间只能有一个任务。
+- 同时从多个账号提交时，全站最多有 4 个 `submitting/pending/running` 任务；第 5 个请求返回繁忙提示，不会调用上游。
+- 生图完成后可打开临时原图；数据库 `ai_image_job` 不包含图片内容或结果 URL，上传临时目录在请求结束后为空。
+- 任务完成或失败后账号可立即提交下一次；上游技术故障退款，内容或安全拒绝仍占用额度。

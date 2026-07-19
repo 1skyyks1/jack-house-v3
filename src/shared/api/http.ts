@@ -1,4 +1,5 @@
 import axios, { AxiosHeaders } from "axios"
+import { queryClient } from "@/app/queryClient"
 import { useAuthStore } from "@/features/auth/model/authStore"
 import { i18n } from "@/shared/i18n/client"
 import { getBackendMessage } from "./contracts/unwrap"
@@ -115,8 +116,11 @@ http.interceptors.response.use(
         const isPassiveProbe = isPassiveAuthProbe(path)
         useAuthStore.getState().logout({
           openLogin: !isPassiveProbe,
-          redirectTo: isPassiveProbe ? undefined : window.location.pathname + window.location.search,
+          redirectTo: isPassiveProbe ? undefined : window.location.pathname + window.location.search + window.location.hash,
         })
+        if (!isPassiveProbe) {
+          queryClient.removeQueries({ queryKey: ["auth"] })
+        }
       }
 
       throw new ApiError(

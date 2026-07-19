@@ -4,6 +4,8 @@ import { LazyRoute } from "./LazyRoute"
 import {
   AboutPage,
   AccuracyCalculatorPage,
+  AiImagePage,
+  AdminAiImagesPage,
   AdminAnnouncementsPage,
   AdminBadgesPage,
   AdminDashboardPage,
@@ -82,6 +84,14 @@ export const router = createBrowserRouter([
       {
         path: "tool/acc",
         element: lazyElement(<AccuracyCalculatorPage />),
+      },
+      {
+        path: "tool/aimg",
+        element: (
+          <RequireAuth>
+            {lazyElement(<AiImagePage />)}
+          </RequireAuth>
+        ),
       },
       {
         path: "tool/oma",
@@ -212,6 +222,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireAdminPermission permission="users">
                 {lazyElement(<AdminUsersPage />)}
+              </RequireAdminPermission>
+            ),
+          },
+          {
+            path: "aimg",
+            element: (
+              <RequireAdminPermission permission="aiImages">
+                {lazyElement(<AdminAiImagesPage />)}
               </RequireAdminPermission>
             ),
           },

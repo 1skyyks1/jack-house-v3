@@ -53,11 +53,11 @@ V3 用统一富文本系统替代旧 WangEditor + `v-html` + 页面内 tocbot。
 - 发帖页预览必须走 `RichTextRenderer`。
 - 编辑器 toolbar 可用 shadcn Button/Tooltip/Dialog 等组合，不引入重型全套 UI 库。
 - 图片上传统一使用 `POST /upload/rich-text/image`；工具栏、剪贴板图片和拖拽图片都走同一个接口。
-- 如果后端配置 `RICHTEXT_STORAGE_PROVIDER=github`，富文本图片会经后端代理写入 GitHub 仓库并默认返回 jsDelivr CDN URL；`RICHTEXT_STORAGE_BUCKET` 用作仓库内对象分组，未配置时默认 `rich-text`；浏览器端不持有 GitHub token。
-- 当前编辑器里删除图片只会移除 HTML 中的 `<img>` 引用，不会立即删除 GitHub/MinIO 上已经上传的对象。不要在前端删除动作里直接删远端文件，避免误删撤销内容、复用图片或其他语言版本仍在引用的图片。
+- 富文本图片经后端写入 GitHub 仓库并默认返回 jsDelivr CDN URL；浏览器端不持有 GitHub token。
+- 当前编辑器里删除图片只会移除 HTML 中的 `<img>` 引用，不会立即删除 GitHub 对象。
 - 后端已增加富文本图片资产记录：上传成功后写入 `rich_text_asset`；帖子正文、活动说明和赛事章节保存时会解析 `<img src>`，分别用 `post_translation`、`event`、`t_section` + 对应 id 写入 `rich_text_asset_reference`。更新内容时，不再引用的图片只会移除对应引用；如果没有任何引用，资产状态标记为 `orphaned`。
-- 后端已提供 `npm run cleanup:rich-text-assets`。默认 dry-run，只列出超过保留期的 `uploaded/orphaned` 资产；生产定时任务需要设置 `RICHTEXT_ASSET_CLEANUP_DRY_RUN=false` 或传 `--delete` 才会物理删除 GitHub/MinIO 对象和数据库记录。
-- 后端已提供 `npm run backfill:rich-text-assets` 用于历史内容回填。默认 dry-run，扫描已有帖子正文、活动说明和赛事章节；只有识别为本站 GitHub/jsDelivr 或后端富文本代理 URL 的图片才会纳入资产表，外部图片跳过。确认输出后传 `--apply` 才写入资产和引用。
+- 后端已提供 `npm run cleanup:rich-text-assets`。默认 dry-run，生产定时任务显式启用后才会物理删除 GitHub 对象和数据库记录。
+- 后端已提供 `npm run backfill:rich-text-assets` 用于历史内容回填，只识别本站 GitHub/jsDelivr URL。
 - 表格当前以 HTML 存储，后端 sanitizer 已允许 `table/thead/tbody/tr/th/td` 及基础 `align/colspan/rowspan` 属性。
 
 ## 验收清单

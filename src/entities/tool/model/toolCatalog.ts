@@ -1,5 +1,13 @@
 export const TOOL_CATALOG = [
   {
+    access: "authenticated",
+    descriptionKey: "tools.aiImageDescription",
+    icon: "sparkle",
+    id: "ai-image",
+    titleKey: "tools.aiImageTitle",
+    to: "/tool/aimg",
+  },
+  {
     access: "public",
     descriptionKey: "tools.accDescription",
     icon: "calculator",

@@ -93,11 +93,6 @@
 - 这是旧活动系统，不是 tournament 赛事系统。
 - Stage 管理当前沿用旧前端批量创建和 1MB 背景图限制。
 
-## Home Image
-
-- 旧模型存在 `HomeImg`，但 V3 不迁移后台配置首页图。
-- 不新增 `home-image` entity。
-
 ## Tournament
 
 - 旧后端模型集中在 `jack-house-web/backend/models/tournament/*`，V3 前端类型集中在 `src/entities/tournament`。

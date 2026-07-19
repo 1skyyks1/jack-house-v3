@@ -65,7 +65,7 @@
 
 ## 范围排除
 
-- 不迁移旧 `/admin/homeImgs`；V3 首页不保留后台配置首页图。
+- 旧 `/admin/homeImgs` 与后端 HOMEIMG 协议已移除；V3 首页视觉图直接在前端配置。
 - 公告 type 3 独立在 `/admin/announcement` 管理，不通过 `/forum/editor/:id?` 暴露。
 
 ## 赛事系统

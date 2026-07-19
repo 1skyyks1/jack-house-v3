@@ -304,33 +304,33 @@ function drawDifficultyGraph(context: CanvasRenderingContext2D, result: ManiaAna
   const height = 300
   context.fillStyle = "#F8FAFC"
   setFont(context, 30, 700, true)
-  context.fillText(labels.difficultyGraph, x, y - 68)
-  drawRoundedRect(context, x, y, width, height, 28, "rgba(255,255,255,0.04)", "rgba(255,255,255,0.065)")
+  context.fillText(labels.difficultyGraph, x, y - 20)
 
   const points = result.graph.filter((point) => Number.isFinite(point.time) && Number.isFinite(point.difficulty))
   if (points.length < 2) return
-  const padding = 52
+  const horizontalPadding = 0
+  const verticalPadding = 12
   const minTime = points[0].time
   const maxTime = Math.max(minTime + 1, points[points.length - 1].time)
   const maxDifficulty = Math.max(1, ...points.map((point) => point.difficulty)) * 1.08
-  const getX = (time: number) => x + padding + (time - minTime) / (maxTime - minTime) * (width - padding * 2)
-  const getY = (difficulty: number) => y + height - padding - difficulty / maxDifficulty * (height - padding * 2)
-  const axisY = y + height - padding
+  const getX = (time: number) => x + horizontalPadding + (time - minTime) / (maxTime - minTime) * (width - horizontalPadding * 2)
+  const getY = (difficulty: number) => y + height - verticalPadding - difficulty / maxDifficulty * (height - verticalPadding * 2)
+  const axisY = y + height - verticalPadding
 
   context.strokeStyle = "rgba(148,163,184,0.12)"
   context.lineWidth = 2
   for (let index = 1; index <= 4; index += 1) {
-    const gridY = y + padding + (height - padding * 2) * index / 5
+    const gridY = y + verticalPadding + (height - verticalPadding * 2) * index / 5
     context.beginPath()
-    context.moveTo(x + padding, gridY)
-    context.lineTo(x + width - padding, gridY)
+    context.moveTo(x + horizontalPadding, gridY)
+    context.lineTo(x + width - horizontalPadding, gridY)
     context.stroke()
   }
 
   context.strokeStyle = "rgba(148,163,184,0.2)"
   context.beginPath()
-  context.moveTo(x + padding, axisY)
-  context.lineTo(x + width - padding, axisY)
+  context.moveTo(x + horizontalPadding, axisY)
+  context.lineTo(x + width - horizontalPadding, axisY)
   context.stroke()
 
   const tickStep = getTimeTickStep(maxTime - minTime)
@@ -353,10 +353,10 @@ function drawDifficultyGraph(context: CanvasRenderingContext2D, result: ManiaAna
     if (index === 0) context.moveTo(getX(point.time), getY(point.difficulty))
     else context.lineTo(getX(point.time), getY(point.difficulty))
   })
-  context.lineTo(getX(points[points.length - 1].time), y + height - padding)
-  context.lineTo(getX(points[0].time), y + height - padding)
+  context.lineTo(getX(points[points.length - 1].time), axisY)
+  context.lineTo(getX(points[0].time), axisY)
   context.closePath()
-  const fill = context.createLinearGradient(0, y + padding, 0, y + height - padding)
+  const fill = context.createLinearGradient(0, y + verticalPadding, 0, axisY)
   fill.addColorStop(0, "rgba(34,211,238,0.38)")
   fill.addColorStop(1, "rgba(34,211,238,0.015)")
   context.fillStyle = fill

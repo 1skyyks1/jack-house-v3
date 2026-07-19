@@ -2,6 +2,8 @@ import { lazy } from "react"
 
 export const AboutPage = lazy(() => import("@/pages/misc/about/AboutPage").then((module) => ({ default: module.AboutPage })))
 export const AccuracyCalculatorPage = lazy(() => import("@/pages/tools/accuracy-calculator/AccuracyCalculatorPage").then((module) => ({ default: module.AccuracyCalculatorPage })))
+export const AiImagePage = lazy(() => import("@/pages/tools/ai-image/AiImagePage").then((module) => ({ default: module.AiImagePage })))
+export const AdminAiImagesPage = lazy(() => import("@/pages/admin/aimg/AdminAiImagesPage").then((module) => ({ default: module.AdminAiImagesPage })))
 export const AdminAnnouncementsPage = lazy(() => import("@/pages/admin/announcements/AdminAnnouncementsPage").then((module) => ({ default: module.AdminAnnouncementsPage })))
 export const AdminBadgesPage = lazy(() => import("@/pages/admin/badges/AdminBadgesPage").then((module) => ({ default: module.AdminBadgesPage })))
 export const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage })))

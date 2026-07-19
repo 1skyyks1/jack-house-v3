@@ -104,7 +104,7 @@ V3 注意：
 - `GET /postFile/user/:user_id` 是个人页展示型列表接口，只返回 `file_id/post_id/user_id/file_name/uploaded_time/status/size`，不返回下载 URL、对象 key、checksum、note 或审批意见；公开列表 `pageSize` 上限为 20。
 - 用户侧投稿文件上传和 note 编辑已迁移。
 - 后台投稿审核、下载临时 URL、删除和 `.xlsx` 导出在 `/admin/postFiles`。
-- 普通用户投稿必须走 `POST /postFile/upload/:post_id`；`POST /postFile` 仅作为 `ORG/ADMIN` 后台兼容登记入口，用于登记已有 MinIO/GitHub/external 文件记录，并同样遵守征稿数量上限、单文件大小上限和总大小上限。
+- 普通用户投稿必须走 `POST /postFile/upload/:post_id`；`POST /postFile` 仅作为 `ORG/ADMIN` 后台兼容登记入口，用于登记已有 GitHub/external 文件记录，并同样遵守征稿数量上限、单文件大小上限和总大小上限。
 - 投稿上传默认单文件 20MB、单用户单征稿总大小 100MB；可通过 `POSTFILE_MAX_SIZE_MB`、`POSTFILE_MAX_TOTAL_SIZE_MB` 调整。
 - 投稿扩展名默认白名单由后端控制，可通过 `POSTFILE_ALLOWED_EXTENSIONS`、`POSTFILE_ALLOWED_MIME_TYPES` 收紧。
 - 投稿文件保持原始内容和 MIME，不做压缩、不转格式；后端按原文件内容计算完整 SHA-256 checksum 入库，并用短 hash 前缀加原扩展名作为对象文件名以降低重名风险和路径长度。
@@ -113,7 +113,6 @@ V3 注意：
 ## Upload
 
 - `POST /upload/rich-text/image`
-- `GET /upload/rich-text/image/:objectName`
 
 V3 注意：
 
@@ -121,13 +120,33 @@ V3 注意：
 - V3 编辑器支持工具栏选择文件、粘贴图片文件和拖拽图片文件，三者都复用该接口；普通文字/HTML 粘贴不走上传。
 - 默认允许 `jpeg/jpg/png/gif/webp`，默认最大 5MB，可通过后端 `RICHTEXT_IMAGE_MAX_SIZE_MB` 调整。
 - 后端会在存储前优化并默认转 WebP：限制最大边长、降低质量；GIF/SVG/多帧 WebP 不重编码。可通过 `IMAGE_OPTIMIZE_*` 环境变量调整或关闭，其中 `IMAGE_OPTIMIZE_CONVERT_WEBP=false` 可关闭转 WebP。
-- 默认 storage scope 为 `RICHTEXT`。对象分组优先使用 `RICHTEXT_STORAGE_BUCKET`；MinIO 兼容回退 `MINIO_RICHTEXT_BUCKET`、`MINIO_HOMEIMG_BUCKET`；GitHub provider 未配置 bucket 时默认使用 `rich-text`。
-- MinIO provider 返回稳定后端图片 URL，访问时后端重定向到临时签名 URL；GitHub provider 默认返回 jsDelivr CDN URL，显式设置 `RICHTEXT_GITHUB_STORAGE_CDN=raw` 或 `GITHUB_STORAGE_CDN=raw` 时返回 GitHub raw URL。富文本图片使用 GitHub 时配置 `RICHTEXT_STORAGE_PROVIDER=github`、`RICHTEXT_STORAGE_BUCKET` 和对应 `RICHTEXT_GITHUB_STORAGE_*` 环境变量。
+- storage scope 为 `RICHTEXT`，只允许 GitHub provider；对象分组由 `RICHTEXT_STORAGE_BUCKET` 配置，默认返回 jsDelivr CDN URL。
 - GitHub provider 的 owner/repo 默认指向 `1skyyks1/jack-house-img`，但服务端仍必须配置 `GITHUB_STORAGE_TOKEN`；生产环境建议显式写出 `GITHUB_STORAGE_OWNER` 和 `GITHUB_STORAGE_REPO`。
-- 上传成功后端会记录 `rich_text_asset`。帖子正文、活动说明和赛事章节保存时会解析 HTML 中的 `<img src>` 并同步 `rich_text_asset_reference`；编辑器删除图片不会立即删除 GitHub/MinIO 对象，只会在内容保存后移除引用并将无引用资产标记为 `orphaned`。
+- 上传成功后端会记录 `rich_text_asset`。编辑器删除图片不会立即删除 GitHub 对象，只会在内容保存后移除引用并将无引用资产标记为 `orphaned`。
 - 后端 `npm run cleanup:rich-text-assets` 可清理超过保留期的 `uploaded/orphaned` 富文本图片资产；默认 dry-run，生产删除需要传 `--delete` 或设置 `RICHTEXT_ASSET_CLEANUP_DRY_RUN=false`。
 - 后端 `npm run backfill:rich-text-assets` 可对历史帖子正文、活动说明和赛事章节做一次性回填；默认 dry-run，只识别本站托管图片 URL，生产写入需要传 `--apply`。
 - 新环境需要先执行后端 `npm run migrate:rich-text-assets` 创建富文本图片资产表。
+
+## AI Image Tool
+
+- `GET /tool/aimg/config`
+- `POST /tool/aimg/jobs`
+- `GET /tool/aimg/jobs`
+- `GET /tool/aimg/jobs/:jobId`
+- `GET /tool/aimg/admin/jobs`（仅 `ADMIN`）
+
+V3 注意：
+
+- 所有接口都要求登录；前端工具页路径是 `/tool/aimg`，管理员记录页是 `/admin/aimg`。
+- 管理员记录页提供分页、任务状态和用户 ID 筛选；主表展示用户、提示词、模式、尺寸、输入图数量、状态与费用，详情弹窗展示完整提示词、IP、User-Agent、文件元数据/SHA-256、错误和上下游任务 ID。
+- 后端代码集中在独立的 `backend/modules/aiImage` 模块；业务模型、临时上传、上游客户端、配额和同步器不注册到全局模型或共享上传组件中。全局层只挂载模块路由并调用一次 `start()`。
+- `POST /tool/aimg/jobs` 使用 `multipart/form-data`。通用字段为 `idempotencyKey`、`requestType`、`prompt`、`size`；编辑模式使用最多 10 个 `images` 文件和可选单个 `mask` 文件。
+- 后端只使用服务器环境变量里的 65535 API Key，并统一用 `X-Async-Mode: true` 提交；上游 API Key、全局任务列表都不会返回前端。
+- 每个账号最多有一个 `submitting/pending/running` 任务，管理员也不例外；全站上游活跃任务默认最多 4 个，达到上限返回 `429 global_concurrency_limit`。
+- 普通用户每日 10 次、组织者每日 30 次、管理员无每日上限；额度按 `Asia/Shanghai` 自然日统计。任务被上游接受后占用一次；内容/安全拒绝不退款，明确的上游技术故障可退款。
+- Jack House 不保存生成图、参考图或遮罩图。上传文件仅用于本次转发，完成或失败后删除；数据库只记录用户映射、提示词、请求参数、文件名/大小/SHA-256、IP、User-Agent、上游状态、费用和错误。
+- `GET /tool/aimg/jobs` 先按本地 `user_id` 隔离任务，再用保存的 `upstream_job_id` 查询 65535；返回中的 `resultUrls` 不入库，约 24 小时后失效。
+- 新环境必须先在 `jack-house-web/backend` 执行 `npm run migrate:ai-image-jobs`。
 
 ## Pack / Tag / Pack Comment
 
@@ -174,24 +193,18 @@ V3 注意：
 - 活动 `desc` 写入时后端会做 HTML sanitizer。
 - Stage 背景图使用专用上传器，默认 1MB，可通过 `EVENT_STAGE_BG_MAX_SIZE_MB` 调整；允许 `jpeg/jpg/png/gif/webp`，存储前同样走后端图片优化。
 
-## Badge / Dashboard / Home Image
+## Badge / Dashboard
 
 - `GET /badge`
 - `POST /badge`
 - `POST /badge/:id`
 - `DELETE /badge/:id`
 - `GET /dashboard/home`
-- `GET /homeImg/home`
-- `GET /homeImg`
-- `POST /homeImg`
-- `PUT /homeImg/:img_id`
-- `DELETE /homeImg/:img_id`
 
 V3 注意：
 
 - `/admin/badges` 和 `/admin/dashboard` 已迁移。
-- `homeImg` 仅作为旧协议记录，V3 不迁移后台首页图能力；V3 首页视觉图在 `HomePage.tsx` 中写死 GitHub raw URL，不经过后端上传/压缩。
-- 如果未来恢复 home image 管理，应复用 storage provider；旧记录没有 `storage_provider` 时后端读取/删除按 MinIO 兼容，已有 `public_url` / `download_url` 时直接返回该 URL。
+- 首页图管理协议已移除；V3 首页视觉图直接在 `HomePage.tsx` 中配置。
 - 徽章图片和活动 stage 背景图已接 storage provider；旧记录没有 `storage_provider` 时按 MinIO 兼容，新上传可通过 `BADGES_STORAGE_PROVIDER=github`、`EVENT_STAGE_BG_STORAGE_PROVIDER=github` 写入 `1skyyks1/jack-house-img`。
 
 ## Tournament

@@ -2,6 +2,7 @@ import { i18n } from "@/shared/i18n/client"
 
 export type AdminPermissionKey =
   | "admin"
+  | "aiImages"
   | "announcement"
   | "badges"
   | "dashboard"
@@ -14,6 +15,7 @@ export type AdminPermissionKey =
 
 export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKey, string> = {
   admin: "admin.nav.admin",
+  aiImages: "admin.nav.aiImages",
   announcement: "admin.nav.announcement",
   badges: "admin.nav.badges",
   dashboard: "admin.nav.dashboard",

@@ -1,12 +1,12 @@
 # GitHub Storage Strategy
 
-本文件记录把图片和投稿文件迁移到 GitHub 的可行性判断。当前指定仓库为 `1skyyks1/jack-house-img`。结论先行：GitHub 很适合放少量、公开、管理员控制的静态图片；投稿文件如果确认全部公开且规模可控，也可以先通过同一 storage 抽象写入该仓库，但仍要保留回退到 MinIO/S3/R2 的能力。
+本文件记录把图片和投稿文件迁移到 GitHub 的存储策略。当前指定仓库为 `1skyyks1/jack-house-img`；新上传统一写入 GitHub，MinIO 仅用于历史投稿和活动背景的兼容读取/删除。
 
 ## 当前状态
 
 - V3 首页三张图已经使用 GitHub raw 链接。
-- 后端已新增 `jack-house-web/backend/services/storage` 存储抽象层，`HOMEIMG`、`RICHTEXT`、`BADGES`、`EVENT_STAGE_BG` 和 `POSTFILES` 默认仍走 MinIO，可通过 `*_STORAGE_PROVIDER=github` 切到 GitHub repo provider。
-- 旧后端 `homeImgController` 已改为调用 storage service；如果未来重新启用后台首页图管理，可以通过 `HOMEIMG_STORAGE_PROVIDER=github` 接入 GitHub 仓库存图。
+- 首页图管理接口、模型和旧管理页面已移除；首页视觉图直接在前端代码中配置。
+- `RICHTEXT`、`BADGES`、`EVENT_STAGE_BG` 和 `POSTFILES` 新上传全部使用 GitHub；漏配 provider 会使部署检查失败，运行时也不会回退到 MinIO。
 - 投稿文件上传在 `jack-house-web/backend/controllers/post/postFileController.js`，当前流程是：
   - `multer` 接收文件到临时目录。
   - 默认限制 20MB，可通过 `POSTFILE_MAX_SIZE_MB` 调整。
@@ -15,7 +15,7 @@
   - 不压缩、不转格式，保留原文件内容、原 MIME 和原扩展名。
   - 计算原文件 SHA-256 checksum，写入 `PostFile.checksum` 并在上传响应中返回；数据库需执行 `2026-06-29-post-file-checksum.sql`。
   - 对象文件名使用短 hash 前缀 + 原扩展名，完整 SHA-256 checksum 仍写入数据库，降低重名风险并避免文件名过长。
-  - storage service 默认上传到 `MINIO_POSTFILES_BUCKET`，也可配置 `POSTFILES_STORAGE_PROVIDER=github` 写入 GitHub 仓库。
+  - storage service 上传到 GitHub 仓库；MinIO 仅兼容历史投稿下载和删除。
   - `PostFile.file_url` 保存 object key。
   - 下载时通过 storage service 生成下载 URL。
 - 普通用户投稿入口固定为 `/postFile/upload/:post_id`；`POST /postFile` 仅保留为 `ORG/ADMIN` 后台登记已有文件记录的兼容入口。
@@ -88,15 +88,15 @@
 
 - 支持 presigned URL、权限、过期下载、替换、删除。
 - 不污染 Git 历史。
-- 能通过 S3-compatible SDK 平滑迁移到 Cloudflare R2、Backblaze B2、Tebi、AWS S3 等。
+- 能通过 S3-compatible SDK 平滑迁移到 Cloudflare R2、Backblaze B2、AWS S3 等。
 
 ## 推荐路线
 
-1. 存储层抽象已完成：业务 controller 不再直接依赖 MinIO 上传、删除和下载签名。
+1. 存储层抽象已完成：新上传只允许 GitHub；历史 MinIO 记录仍可下载和删除。
 2. 管理员控制的公开图片、富文本图片、徽章和活动 stage 背景图已具备 GitHub repo provider 基础能力，建议先用于公开展示图片。
 3. 投稿文件按用户要求不压缩、不转格式；如果使用 GitHub repo provider，需要确认投稿文件均可公开、规模可控，并按目录分组管理。对象文件名只用短 hash 前缀，完整 checksum 存数据库。
-4. `post_file` 和 `home_img` 已补 `storage_provider`、`object_key`、`public_url`、`download_url`、`mime_type`；`post_file` 已补 `checksum`。
-5. 运行时兼容旧记录：如果历史 `post_file` / `home_img` 还没有 `storage_provider`，读取和删除会按 MinIO 处理；如果记录已有 `public_url` 或 `download_url`，读取时直接返回该 URL。
+4. `post_file` 已补 `storage_provider`、`object_key`、`public_url`、`download_url`、`mime_type` 和 `checksum`。
+5. 运行时兼容旧投稿记录：没有 `storage_provider` 时下载和删除按 MinIO 处理；已有 `public_url` 或 `download_url` 时直接返回该 URL。
 6. 前端上传协议保持 `multipart/form-data`，不要让浏览器直接拿 GitHub token。
 
 ## 后端建议结构
@@ -104,15 +104,15 @@
 位置：`/Users/bytedance/jackhouse/jack-house-web/backend`
 
 - `services/storage/index.js`：根据环境变量选择 provider，并通过 `*_STORAGE_BUCKET` 读取 provider 无关的对象分组。
-- `services/storage/minioStorage.js`：封装当前 MinIO 上传、删除、presign。
+- `services/storage/minioStorage.js`：只封装历史 MinIO 对象的删除和 presign，不提供上传。
 - `services/storage/githubStorage.js`：用于 GitHub Contents API 上传、删除和公开 URL 生成；默认返回 `https://cdn.jsdelivr.net/gh/1skyyks1/jack-house-img/<objectPath>` 格式的 jsDelivr CDN URL，可通过 `*_GITHUB_STORAGE_CDN=raw` 改回 raw URL。
 - `controllers/post/postFileController.js`：只调用 storage service，不关心具体 provider。
 
-当前已实现的 provider 只有 MinIO 和 GitHub Contents API。GitHub Release assets 仍只是投稿文件规模变大后的候选方向；如果要走 Release assets，需要另行实现 provider、release 分组、asset 删除和下载 URL 管理。
+新上传使用 GitHub Contents API；MinIO provider 只保留历史兼容。GitHub Release assets 仍只是投稿文件规模变大后的候选方向。
 
 ## 环境变量
 
-默认不需要新增配置，`HOMEIMG`、`RICHTEXT` 和 `POSTFILES` 都会继续走 MinIO。
+所有活动上传 scope 都必须显式配置 `*_STORAGE_PROVIDER=github`。
 
 如果使用用户指定仓库作为通用 GitHub 存储，通用配置建议为：
 
@@ -121,16 +121,6 @@
 - `GITHUB_STORAGE_REPO=jack-house-img`，代码默认值也是该 repo，生产建议显式配置
 - `GITHUB_STORAGE_BRANCH=main`
 - `GITHUB_STORAGE_CDN=jsdelivr`
-
-如果要让管理员上传的公开首页图写入 GitHub 仓库：
-
-- `HOMEIMG_STORAGE_PROVIDER=github`
-- `HOMEIMG_STORAGE_BUCKET=home-img`
-- `GITHUB_STORAGE_TOKEN`
-- `GITHUB_STORAGE_OWNER=1skyyks1`
-- `GITHUB_STORAGE_REPO=jack-house-img`
-- `GITHUB_STORAGE_BRANCH=main`
-- `GITHUB_STORAGE_BASE_PATH=assets`
 
 如果要让富文本图片写入 GitHub 仓库：
 
@@ -166,13 +156,6 @@
 
 也可以为某个 scope 单独覆盖：
 
-- `HOMEIMG_STORAGE_BUCKET`
-- `HOMEIMG_GITHUB_STORAGE_TOKEN`
-- `HOMEIMG_GITHUB_STORAGE_OWNER`
-- `HOMEIMG_GITHUB_STORAGE_REPO`
-- `HOMEIMG_GITHUB_STORAGE_BRANCH`
-- `HOMEIMG_GITHUB_STORAGE_BASE_PATH`
-- `HOMEIMG_GITHUB_STORAGE_PUBLIC_BASE_URL`
 - `RICHTEXT_STORAGE_BUCKET`
 - `RICHTEXT_GITHUB_STORAGE_TOKEN`
 - `RICHTEXT_GITHUB_STORAGE_OWNER`
@@ -210,7 +193,7 @@
 
 相关数据库迁移：
 
-- `2026-06-29-post-file-checksum.sql`：为 `post_file` 和 `home_img` 补存储元数据字段，并为 `post_file` 补 SHA-256 checksum。
+- `2026-06-29-post-file-checksum.sql`：为 `post_file` 补存储元数据字段和 SHA-256 checksum。
 - `2026-06-29-badge-event-stage-storage.sql`：为 `badge` 和 `event_stage` 补存储元数据字段，并回填旧 MinIO object key。
 - 迁移 SQL 会把旧记录回填为 `storage_provider='minio'`、`object_key=<旧文件名>`；代码也保留了未回填旧记录的 MinIO fallback，但正式环境仍应执行迁移，避免后续查询和导出缺少元数据。
 
@@ -218,7 +201,7 @@
 
 后端已补充 `/Users/bytedance/jackhouse/jack-house-web/backend/.env.example`，包含 GitHub 存储、投稿限制、富文本图片压缩和 cookie auth 的示例配置。
 
-后端也已补充 `npm run migrate:storage-metadata`，用于幂等迁移 `post_file`、`home_img`、`badge`、`event_stage` 的存储元数据字段。当前 `.env` 指向的数据库已经执行并复验通过。
+后端也已补充 `npm run migrate:storage-metadata`，用于幂等迁移 `post_file`、`badge`、`event_stage` 的存储元数据字段。当前 `.env` 指向的数据库已经执行并复验通过。
 
 ## 前端影响
 
@@ -227,11 +210,11 @@
 - 上传 UI 暂时不需要知道 provider。
 - 展示层只读后端返回的 URL。
 - 失败提示必须展示后端 `message`，统一走 `getErrorMessage` 和 Sonner/AppAlert。
-- 富文本图片上传已接入 `/upload/rich-text/image`，默认使用 `RICHTEXT` storage scope；如果配置 `RICHTEXT_STORAGE_PROVIDER=github`，可走 GitHub repo provider 返回公开 jsDelivr URL。未配置 `RICHTEXT_STORAGE_BUCKET` 时，GitHub provider 默认写入 `rich-text` 分组。
+- 富文本图片上传已接入 `/upload/rich-text/image`，使用 `RICHTEXT` scope 写入 GitHub 并返回公开 jsDelivr URL。
 - V3 编辑器已经支持工具栏选择文件、粘贴剪贴板图片文件和拖拽图片文件，三者都经后端代理上传，不在浏览器端暴露 GitHub token。
-- 富文本图片上传后会落库到 `rich_text_asset`，帖子正文、活动说明和赛事章节保存时同步 `rich_text_asset_reference`；从编辑器删除图片不会立即删除 GitHub 文件，而是让无引用资产进入 `orphaned` 状态。后端 `npm run cleanup:rich-text-assets` 可扫描超过保留期的 `uploaded/orphaned` 资产，默认 dry-run；生产定时任务显式传 `--delete` 后才会删除 GitHub/MinIO 对象和数据库记录。
-- 历史富文本图片可用 `npm run backfill:rich-text-assets` 回填资产和引用；脚本默认 dry-run，只识别 `1skyyks1/jack-house-img` 的 jsDelivr/GitHub raw URL 和后端富文本代理 URL，外部图片不会纳入托管资产；确认后传 `--apply`。
-- 后端公开展示图片会在存储前用 `sharp` 优化并默认转 WebP；GIF、SVG 和多帧 WebP 不重编码。相关入口包括富文本图片、活动 stage 背景图、徽章和旧 homeImg。投稿文件不压缩、不改文件类型。
+- 富文本图片上传后会落库到 `rich_text_asset`；无引用资产进入 `orphaned` 状态，并可通过 cleanup 脚本清理 GitHub 对象。
+- 历史富文本图片可用 `npm run backfill:rich-text-assets` 回填资产和引用；脚本只识别托管仓库的 jsDelivr/GitHub raw URL。
+- 后端公开展示图片会在存储前用 `sharp` 优化并默认转 WebP；相关入口包括富文本图片、活动 stage 背景图和徽章。投稿文件不压缩、不改文件类型。
 - V3 首页三张视觉图是 `HomePage.tsx` 中的 GitHub raw 静态 URL，不经过后端；这类图片需要在替换 GitHub 源文件前离线压缩，或未来改成走后端上传入口。
 
 ## 图片优化环境变量
