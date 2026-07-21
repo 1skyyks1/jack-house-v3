@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  calculateTournamentMappoolStats,
   createTournamentMatch,
   createTournamentMatchAction,
   createTournamentRound,
@@ -10,6 +11,7 @@ import {
   generateTournamentBracket,
   getTournamentBracket,
   getTournamentMappoolStats,
+  getTournamentMappoolStatsManage,
   getTournamentMatch,
   getTournamentPerformance,
   getTournamentRefereeData,
@@ -46,6 +48,21 @@ export function useTournamentMappoolStatsQuery(tournamentId: string | undefined)
   return useQuery({ enabled: Boolean(tournamentId), queryFn: () => getTournamentMappoolStats(tournamentId as string), queryKey: tournamentQueryKeys.mappoolStats(tournamentId ?? "") })
 }
 
+export function useTournamentMappoolStatsManageQuery(tournamentId: string | undefined) {
+  return useQuery({ enabled: Boolean(tournamentId), queryFn: () => getTournamentMappoolStatsManage(tournamentId as string), queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId ?? "") })
+}
+
+export function useCalculateTournamentMappoolStatsMutation(tournamentId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (stage: string) => calculateTournamentMappoolStats(tournamentId, stage),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
+    ]),
+  })
+}
+
 export function useTournamentMatchQuery(tournamentId: string | undefined, matchId: string | undefined) {
   return useQuery({ enabled: Boolean(tournamentId && matchId), queryFn: () => getTournamentMatch(tournamentId as string, matchId as string), queryKey: tournamentQueryKeys.match(tournamentId ?? "", matchId ?? "") })
 }
@@ -57,6 +74,8 @@ export function useGenerateTournamentBracketMutation(tournamentId: string) {
     onSuccess: async () => Promise.all([
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -69,7 +88,10 @@ export function useCreateTournamentRoundMutation(tournamentId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (request: CreateTournamentRoundRequest) => createTournamentRound(tournamentId, request),
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
+    ]),
   })
 }
 
@@ -80,6 +102,7 @@ export function useUpdateTournamentRoundMutation(tournamentId: string) {
     onSuccess: async () => Promise.all([
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -91,6 +114,7 @@ export function useDeleteTournamentRoundMutation(tournamentId: string) {
     onSuccess: async () => Promise.all([
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -111,6 +135,7 @@ export function useCreateTournamentRoundMapMutation(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.roundMappool(tournamentId, variables.roundId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -123,13 +148,20 @@ export function useDeleteTournamentRoundMapMutation(tournamentId: string) {
       variables.roundId ? queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.roundMappool(tournamentId, variables.roundId) }) : Promise.resolve(),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rounds(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
 
 export function useCreateTournamentMatchMutation(tournamentId: string) {
   const queryClient = useQueryClient()
-  return useMutation({ mutationFn: (request: CreateTournamentMatchRequest) => createTournamentMatch(tournamentId, request), onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }) })
+  return useMutation({
+    mutationFn: (request: CreateTournamentMatchRequest) => createTournamentMatch(tournamentId, request),
+    onSuccess: async () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
+    ]),
+  })
 }
 
 export function useUpdateTournamentMatchMutation(tournamentId: string) {
@@ -140,7 +172,7 @@ export function useUpdateTournamentMatchMutation(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(variables.matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(variables.matchId)) }),
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -154,7 +186,7 @@ export function useFetchTournamentMatchScoresMutation(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, String(matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, String(matchId)) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }
@@ -178,10 +210,7 @@ export function useCreateTournamentMatchActionMutation(tournamentId: string, mat
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (request: TournamentMatchActionRequest) => createTournamentMatchAction(tournamentId, matchId, request),
-    onSuccess: async () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
-    ]),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
   })
 }
 
@@ -189,10 +218,7 @@ export function useUpdateTournamentMatchActionMutation(tournamentId: string, mat
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ actionId, request }: { actionId: number; request: TournamentMatchActionRequest }) => updateTournamentMatchAction(tournamentId, matchId, actionId, request),
-    onSuccess: async () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
-    ]),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.referee(tournamentId, matchId) }),
   })
 }
 
@@ -216,7 +242,7 @@ export function useUpdateTournamentGameScoreMutation(tournamentId: string, match
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.match(tournamentId, matchId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.bracket(tournamentId) }),
       queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.performance(tournamentId) }),
-      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStats(tournamentId) }),
+      queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.mappoolStatsManage(tournamentId) }),
     ]),
   })
 }

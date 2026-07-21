@@ -13,7 +13,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
+import { formatDate } from "@/shared/lib/date"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
 import { groupRoundsByMainStage, type StageRoundGroup } from "../_shared/tournamentRoundStages"
 import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
@@ -57,6 +59,7 @@ function MainStageMappoolTabs({ isLoading, stages, tournamentId }: { isLoading: 
   const [activeStage, setActiveStage] = useState<string>("")
   const selectedStage = stages.find((stage) => stage.key === activeStage) ?? stages[0]
   const selectedStats = statsQuery.data?.stages.find((stage) => stage.key === selectedStage?.key)
+  const labeledMaps = labelMappoolMapsForStage(selectedStage?.maps ?? [])
 
   useEffect(() => {
     function syncStageFromHash() {
@@ -99,20 +102,30 @@ function MainStageMappoolTabs({ isLoading, stages, tournamentId }: { isLoading: 
       </Tabs>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        {labelMappoolMapsForStage(selectedStage.maps).map(({ label, map }) => (
-          <MainStageMapCard key={map.id} label={label} map={map} />
+        {labeledMaps.map(({ label, map }, index) => (
+          <MainStageMapCard
+            centerInRow={labeledMaps.length % 2 === 1 && index === labeledMaps.length - 1}
+            key={map.id}
+            label={label}
+            map={map}
+          />
         ))}
       </div>
 
-      {selectedStats?.is_complete ? (
-        <MappoolStatsTable maps={selectedStage.maps} stage={selectedStats} />
+      {statsQuery.isError ? (
+        <AppAlert className="mt-6" title={t("tournament.mappool.statsLoadFailed")}>{getErrorMessage(statsQuery.error)}</AppAlert>
+      ) : null}
+
+      {selectedStats ? (
+        <MappoolStatsTable stage={selectedStats} />
       ) : null}
     </section>
   )
 }
 
-function MappoolStatsTable({ maps, stage }: { maps: TournamentMappoolMap[]; stage: TournamentMappoolStatsStage }) {
+function MappoolStatsTable({ stage }: { stage: TournamentMappoolStatsStage }) {
   const { t } = useTranslation()
+  const maps = stage.maps.map((item) => item.map)
   const labelById = buildMappoolLabelMap(maps)
   const statsByMapId = new Map(stage.maps.map((item) => [item.map.id, item]))
   const rows: Array<{ label: string; map: TournamentMappoolMap; stats: TournamentMappoolStatsMap }> = sortMappoolMaps(maps)
@@ -130,6 +143,8 @@ function MappoolStatsTable({ maps, stage }: { maps: TournamentMappoolMap[]; stag
           <h2 className="text-base font-semibold">{t("tournament.mappool.statsTitle")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             {t("tournament.mappool.statsMeta", { count: stage.valid_match_count })}
+            {" · "}
+            {t("tournament.mappool.statsCalculatedAt", { time: formatDate(stage.calculated_at) })}
           </p>
         </div>
       </div>
@@ -164,12 +179,15 @@ function MappoolStatsTable({ maps, stage }: { maps: TournamentMappoolMap[]; stag
   )
 }
 
-function MainStageMapCard({ label, map }: { label: string; map: TournamentMappoolMap }) {
+function MainStageMapCard({ centerInRow, label, map }: { centerInRow: boolean; label: string; map: TournamentMappoolMap }) {
   const coverUrl = getTournamentMapCoverUrl(map)
 
   return (
     <a
-      className="group relative block h-28 overflow-hidden rounded-md border bg-muted text-white transition hover:border-primary/50"
+      className={cn(
+        "group relative block h-28 overflow-hidden rounded-md border bg-muted text-white transition hover:border-primary/50",
+        centerInRow && "lg:col-span-2 lg:w-[calc(50%-0.375rem)] lg:justify-self-center",
+      )}
       href={`https://osu.ppy.sh/beatmaps/${map.map_id}`}
       rel="noreferrer"
       target="_blank"

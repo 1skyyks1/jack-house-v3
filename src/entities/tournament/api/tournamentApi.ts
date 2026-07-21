@@ -21,6 +21,8 @@ import type {
   TournamentMatch,
   TournamentMappoolMap,
   TournamentMappoolStats,
+  TournamentMappoolStatsManage,
+  TournamentMappoolStatsStage,
   TournamentPerformance,
   TournamentQualImportList,
   TournamentQualMap,
@@ -127,6 +129,15 @@ export async function getTournamentPerformance(tournamentId: string): Promise<To
 
 export async function getTournamentMappoolStats(tournamentId: string): Promise<TournamentMappoolStats> {
   return await http.get(`/t/${tournamentId}/mappool-stats`) as unknown as TournamentMappoolStats
+}
+
+export async function getTournamentMappoolStatsManage(tournamentId: string): Promise<TournamentMappoolStatsManage> {
+  return await http.get(`/t/${tournamentId}/mappool-stats/manage`) as unknown as TournamentMappoolStatsManage
+}
+
+export async function calculateTournamentMappoolStats(tournamentId: string, stage: string): Promise<TournamentMappoolStatsStage> {
+  const response = await http.post(`/t/${tournamentId}/mappool-stats/${stage}/calculate`) as unknown as { stage: TournamentMappoolStatsStage }
+  return response.stage
 }
 
 export async function generateTournamentBracket(tournamentId: string): Promise<unknown> {

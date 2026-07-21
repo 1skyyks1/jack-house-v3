@@ -330,8 +330,11 @@ export type TournamentMappoolStatsMap = {
 }
 
 export type TournamentMappoolStatsStage = {
+  calculated_at: string
+  calculated_by: number | null
   completed_match_count: number
   is_complete: boolean
+  is_calculated: true
   key: string
   label: string
   maps: TournamentMappoolStatsMap[]
@@ -341,6 +344,24 @@ export type TournamentMappoolStatsStage = {
 
 export type TournamentMappoolStats = {
   stages: TournamentMappoolStatsStage[]
+}
+
+export type TournamentMappoolStatsManageStage = {
+  can_calculate: boolean
+  calculated_at: string | null
+  calculated_by: number | null
+  completed_match_count: number
+  is_calculated: boolean
+  is_complete: boolean
+  key: string
+  label: string
+  map_count: number
+  match_count: number
+  valid_match_count: number | null
+}
+
+export type TournamentMappoolStatsManage = {
+  stages: TournamentMappoolStatsManageStage[]
 }
 
 export type TournamentSection = {

@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 import {
   useTournamentDetailQuery,
   useTournamentPerformanceQuery,
+  useTournamentRoundsQuery,
   type TournamentMappoolMap,
   type TournamentPerformanceEntry,
   type TournamentPerformanceMap,
@@ -15,7 +16,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
-import { buildMappoolLabelMap, compareMappoolMaps, getMappoolLabel } from "../_shared/tournamentMappool"
+import { groupRoundsByMainStage } from "../_shared/tournamentRoundStages"
+import { buildMappoolLabelMap, compareMappoolMaps, getMappoolLabel, normalizeMapType } from "../_shared/tournamentMappool"
 import { getTournamentMapCoverUrl, getTournamentPublicPath } from "../_shared/tournamentVisuals"
 
 export function TournamentLeaderboardPage() {
@@ -26,12 +28,14 @@ export function TournamentLeaderboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tournamentQuery = useTournamentDetailQuery(tid)
   const leaderboardQuery = useTournamentPerformanceQuery(tid)
+  const roundsQuery = useTournamentRoundsQuery(tid)
   const stages = leaderboardQuery.data?.stages ?? []
+  const mappoolByStage = new Map<string, TournamentMappoolMap[]>(groupRoundsByMainStage(roundsQuery.data ?? []).map((stage) => [stage.key, stage.maps]))
   const stageParam = searchParams.get("stage")?.trim().toLowerCase() ?? ""
   const mapParam = searchParams.get("map")?.trim().toLowerCase() ?? ""
   const selectedStage = stages.find((stage) => stage.key.toLowerCase() === stageParam) ?? stages[0]
   const selectedStageMaps = sortLeaderboardMaps(selectedStage?.maps ?? [])
-  const selectedMapLabelById = buildMappoolLabelMap(selectedStageMaps.flatMap((mapData) => mapData.map ? [mapData.map] : []))
+  const selectedMapLabelById = buildLeaderboardMapLabelMap(selectedStageMaps, mappoolByStage.get(selectedStage?.key ?? ""))
   const selectedMap = selectedStageMaps.find((mapData) => getLeaderboardMapSlug(mapData, selectedMapLabelById) === mapParam) ?? selectedStageMaps[0]
   const publicTournamentPath = tournamentQuery.data ? getTournamentPublicPath(tournamentQuery.data) : `/t/${tid ?? ""}`
 
@@ -55,15 +59,15 @@ export function TournamentLeaderboardPage() {
     setSearchParams(nextParams, { replace: true })
   }, [mapParam, searchParams, selectedMap, selectedMapLabelById, selectedStage, setSearchParams, stageParam])
 
-  if (tournamentQuery.isError || leaderboardQuery.isError) {
-    return <PageState title={t("tournament.leaderboard.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? leaderboardQuery.error)} />
+  if (tournamentQuery.isError || leaderboardQuery.isError || roundsQuery.isError) {
+    return <PageState title={t("tournament.leaderboard.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? leaderboardQuery.error ?? roundsQuery.error)} />
   }
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <TournamentBreadcrumb current={t("tournament.common.leaderboard")} tournament={tournamentQuery.data} tournamentId={tid} />
 
-      {leaderboardQuery.isLoading ? (
+      {leaderboardQuery.isLoading || roundsQuery.isLoading ? (
         <CardGridSkeleton count={4} />
       ) : stages.length === 0 || !selectedStage || !selectedMap ? (
         <AppAlert title={t("tournament.leaderboard.emptyTitle")}>{t("tournament.leaderboard.emptyDescription")}</AppAlert>
@@ -85,7 +89,7 @@ export function TournamentLeaderboardPage() {
           onStageChange={(value) => {
             const nextStage = stages.find((stage) => stage.key === value)
             const nextStageMaps = sortLeaderboardMaps(nextStage?.maps ?? [])
-            const nextLabelById = buildMappoolLabelMap(nextStageMaps.flatMap((mapData) => mapData.map ? [mapData.map] : []))
+            const nextLabelById = buildLeaderboardMapLabelMap(nextStageMaps, mappoolByStage.get(value))
             const nextMap = nextStageMaps[0]
             const nextParams = new URLSearchParams(searchParams)
             nextParams.set("stage", value.toLowerCase())
@@ -259,6 +263,25 @@ function sortLeaderboardMaps(maps: TournamentPerformanceStage["maps"]) {
     if (b.map) return 1
     return a.key.localeCompare(b.key)
   })
+}
+
+function buildLeaderboardMapLabelMap(performanceMaps: TournamentPerformanceMap[], mappoolMaps: TournamentMappoolMap[] = []) {
+  const scoredMaps = performanceMaps.flatMap((mapData) => mapData.map ? [mapData.map] : [])
+  const fallbackLabelById = buildMappoolLabelMap(scoredMaps)
+  const fullMappoolLabelById = buildMappoolLabelMap(mappoolMaps)
+  const fullMappoolLabelByKey = new Map(mappoolMaps.map((map) => [
+    getMappoolMapIdentity(map),
+    getMappoolLabel(map, fullMappoolLabelById),
+  ]))
+
+  return new Map(scoredMaps.map((map) => [
+    map.id,
+    fullMappoolLabelByKey.get(getMappoolMapIdentity(map)) ?? getMappoolLabel(map, fallbackLabelById),
+  ]))
+}
+
+function getMappoolMapIdentity(map: TournamentMappoolMap) {
+  return `${normalizeMapType(map.type)}-${map.map_id}`
 }
 
 function getLeaderboardMapSlug(mapData: TournamentPerformanceMap, labelById: Map<number, string>) {

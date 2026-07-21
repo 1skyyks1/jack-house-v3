@@ -2,14 +2,17 @@ import type { FormEvent } from "react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Plus, Trash } from "@phosphor-icons/react"
+import { ArrowClockwise, Calculator, Plus, Trash } from "@phosphor-icons/react"
 import { Link, useParams } from "react-router-dom"
 import {
   useCreateTournamentRoundMapMutation,
+  useCalculateTournamentMappoolStatsMutation,
   useDeleteTournamentRoundMapMutation,
   useTournamentDetailQuery,
+  useTournamentMappoolStatsManageQuery,
   useTournamentRoundsQuery,
   type TournamentMappoolMap,
+  type TournamentMappoolStatsManageStage,
 } from "@/entities/tournament"
 import { AdminPage } from "@/features/admin-shell"
 import { Badge } from "@/components/ui/badge"
@@ -36,23 +39,26 @@ export function AdminTournamentMappoolPage() {
 
   const tournamentQuery = useTournamentDetailQuery(tid)
   const roundsQuery = useTournamentRoundsQuery(tid)
+  const statsManageQuery = useTournamentMappoolStatsManageQuery(tid)
   const createMapMutation = useCreateTournamentRoundMapMutation(tournamentId)
   const deleteMapMutation = useDeleteTournamentRoundMapMutation(tournamentId)
+  const calculateStatsMutation = useCalculateTournamentMappoolStatsMutation(tournamentId)
 
   const rounds = useMemo(() => [...(roundsQuery.data ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)), [roundsQuery.data])
   const stages = useMemo(() => groupRoundsByMainStage(rounds), [rounds])
   const selectedStage = stages.find((stage) => stage.key === selectedStageKey) ?? stages[0]
   const selectedRound = selectedStage?.rounds[0]
   const selectedMaps = sortMappoolMaps(selectedStage?.maps ?? [])
+  const selectedStatsStatus = statsManageQuery.data?.stages.find((stage) => stage.key === selectedStage?.key)
   const labelById = buildMappoolLabelMap(selectedMaps)
-  const mutationError = createMapMutation.error ?? deleteMapMutation.error
+  const mutationError = createMapMutation.error ?? deleteMapMutation.error ?? calculateStatsMutation.error
   const publicTournamentPath = tournamentQuery.data ? getTournamentPublicPath(tournamentQuery.data) : `/t/${tournamentId}`
 
-  if (tournamentQuery.isError || roundsQuery.isError) {
-    return <PageState title={t("tournament.admin.bracket.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? roundsQuery.error)} />
+  if (tournamentQuery.isError || roundsQuery.isError || statsManageQuery.isError) {
+    return <PageState title={t("tournament.admin.bracket.loadFailed")} description={getErrorMessage(tournamentQuery.error ?? roundsQuery.error ?? statsManageQuery.error)} />
   }
 
-  if (tournamentQuery.isLoading || roundsQuery.isLoading) {
+  if (tournamentQuery.isLoading || roundsQuery.isLoading || statsManageQuery.isLoading) {
     return (
       <AdminPage breadcrumb={<AdminTournamentBreadcrumb current={t("tournament.qualifier.mappool")} tournament={tournamentQuery.data} tournamentId={tid} />}>
         <PageSkeleton />
@@ -111,6 +117,14 @@ export function AdminTournamentMappoolPage() {
               </div>
             </Tabs>
 
+            <MappoolStatsCalculation
+              isPending={calculateStatsMutation.isPending && calculateStatsMutation.variables === selectedStage.key}
+              onCalculate={() => calculateStatsMutation.mutate(selectedStage.key, {
+                onSuccess: () => toast.success(t(selectedStatsStatus?.is_calculated ? "tournament.admin.mappool.statsRecalculated" : "tournament.admin.mappool.statsCalculated")),
+              })}
+              status={selectedStatsStatus}
+            />
+
             <form className="grid items-end gap-3 lg:grid-cols-[9rem_minmax(18rem,1fr)_auto]" onSubmit={handleCreateMap}>
               <Field label={t("tournament.admin.bracket.mapType")}>
                 <Select value={mapForm.type} onValueChange={(value) => setMapForm((state) => ({ ...state, type: value }))}>
@@ -146,6 +160,49 @@ export function AdminTournamentMappoolPage() {
         )}
       </div>
     </AdminPage>
+  )
+}
+
+function MappoolStatsCalculation({
+  isPending,
+  onCalculate,
+  status,
+}: {
+  isPending: boolean
+  onCalculate: () => void
+  status: TournamentMappoolStatsManageStage | undefined
+}) {
+  const { t } = useTranslation()
+
+  if (!status) return null
+
+  const description = status.map_count === 0
+    ? t("tournament.admin.mappool.statsNoMapsDescription")
+    : status.is_complete
+    ? status.is_calculated
+      ? t("tournament.admin.mappool.statsPublishedDescription", {
+          count: status.valid_match_count ?? 0,
+          time: status.calculated_at ? formatDate(status.calculated_at) : "-",
+        })
+      : t("tournament.admin.mappool.statsReadyDescription", { count: status.match_count })
+    : t("tournament.admin.mappool.statsProgressDescription", {
+        completed: status.completed_match_count,
+        total: status.match_count,
+      })
+
+  return (
+    <AppAlert
+      title={status.is_calculated ? t("tournament.admin.mappool.statsPublishedTitle") : t("tournament.admin.mappool.statsTitle")}
+      tone={status.can_calculate ? "success" : "default"}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span>{description}</span>
+        <Button disabled={!status.can_calculate || isPending} size="sm" type="button" variant={status.is_calculated ? "outline" : "default"} onClick={onCalculate}>
+          {status.is_calculated ? <ArrowClockwise className="size-4" weight="bold" /> : <Calculator className="size-4" weight="bold" />}
+          {status.is_calculated ? t("tournament.admin.mappool.recalculateStats") : t("tournament.admin.mappool.calculateStats")}
+        </Button>
+      </div>
+    </AppAlert>
   )
 }
 

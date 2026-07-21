@@ -223,6 +223,7 @@ Public：
 - `GET /t/:tid/qualifier/ranking`
 - `GET /t/:tid/rounds`
 - `GET /t/:tid/bracket`
+- `GET /t/:tid/mappool-stats`
 - `GET /t/:tid/round/:roundId/mappool`
 - `GET /t/:tid/match/:matchId`
 
@@ -268,6 +269,8 @@ Qualifier：
 
 Bracket / match / referee：
 
+- `GET /t/:tid/mappool-stats/manage`
+- `POST /t/:tid/mappool-stats/:stage/calculate`
 - `POST /t/:tid/round`
 - `PUT /t/:tid/round/:roundId`
 - `DELETE /t/:tid/round/:roundId`
@@ -290,4 +293,5 @@ Bracket / match / referee：
 - 不要新增 `/tournament` API 调用；目录名、模型名、entity 名仍保留 `tournament`。
 - 赛事接口权限必须以后端为准；前端隐藏按钮只作为体验优化。
 - 赛事联调时继续确认错误响应、空态、无权限态和真实数据边界。
+- 图池 BP 统计使用后台手动计算的阶段快照；只有全部有效比赛完成的阶段允许计算，未激活的 GFR 不阻塞 GF，公开接口不实时扫描比赛数据。
 - `event` 活动系统和 `tournament` 赛事系统是两个领域，不要混用数据模型。

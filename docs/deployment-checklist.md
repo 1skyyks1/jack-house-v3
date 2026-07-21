@@ -99,6 +99,7 @@ npm install
 npm run migrate:storage-metadata
 npm run migrate:rich-text-assets
 npm run migrate:ai-image-jobs
+npm run migrate:mappool-stats
 npm run check:deploy -- --print-summary
 npm run check:secrets
 ```
@@ -131,3 +132,4 @@ pnpm run build
 - 同时从多个账号提交时，全站最多有 4 个 `submitting/pending/running` 任务；第 5 个请求返回繁忙提示，不会调用上游。
 - 生图完成后可打开临时原图；数据库 `ai_image_job` 不包含图片内容或结果 URL，上传临时目录在请求结束后为空。
 - 任务完成或失败后账号可立即提交下一次；上游技术故障退款，内容或安全拒绝仍占用额度。
+- 正赛阶段全部有效比赛完成后，Host 可在图池后台手动计算 BP 统计；公开图池页只读取已发布快照，后续数据修改不会自动改变统计。

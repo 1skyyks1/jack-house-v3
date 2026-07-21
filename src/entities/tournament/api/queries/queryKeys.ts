@@ -9,6 +9,7 @@ export const tournamentQueryKeys = {
   manageSections: (tournamentId: string) => ["tournament", "sections", "manage", tournamentId] as const,
   match: (tournamentId: string, matchId: string) => ["tournament", "match", tournamentId, matchId] as const,
   mappoolStats: (tournamentId: string) => ["tournament", "mappool-stats", tournamentId] as const,
+  mappoolStatsManage: (tournamentId: string) => ["tournament", "mappool-stats", "manage", tournamentId] as const,
   performance: (tournamentId: string) => ["tournament", "performance", tournamentId] as const,
   qualImports: (tournamentId: string, page: number, pageSize: number) => [...tournamentQueryKeys.qualImportsRoot(tournamentId), page, pageSize] as const,
   qualImportsRoot: (tournamentId: string) => ["tournament", "qualifier", "imports", tournamentId] as const,
