@@ -133,11 +133,16 @@ function MappoolStatsTable({ stage }: { stage: TournamentMappoolStatsStage }) {
       const stats = statsByMapId.get(map.id) ?? stage.maps.find((item) => item.map.map_id === map.map_id && item.map.type.toUpperCase() === map.type.toUpperCase())
       return stats ? [{ label: getMappoolLabel(map, labelById), map, stats }] : []
     })
+  const extrema = {
+    ban: getExtrema(rows.filter(({ map }) => !isTiebreakerMap(map)).map(({ stats }) => stats.ban_count)),
+    pick: getExtrema(rows.map(({ stats }) => stats.pick_count)),
+    protect: getExtrema(rows.filter(({ map }) => !isTiebreakerMap(map)).map(({ stats }) => stats.protect_count)),
+  }
 
   if (rows.length === 0) return null
 
   return (
-    <section className="mt-6">
+    <section className="mt-8 border-t pt-6">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-base font-semibold">{t("tournament.mappool.statsTitle")}</h2>
@@ -147,34 +152,48 @@ function MappoolStatsTable({ stage }: { stage: TournamentMappoolStatsStage }) {
             {t("tournament.mappool.statsCalculatedAt", { time: formatDate(stage.calculated_at) })}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Badge className="border-emerald-500/25 bg-emerald-500/12 text-emerald-700 dark:text-emerald-300" variant="outline">
+            {t("tournament.mappool.statsHighest")}
+          </Badge>
+          <Badge className="border-amber-500/25 bg-amber-500/12 text-amber-700 dark:text-amber-300" variant="outline">
+            {t("tournament.mappool.statsLowest")}
+          </Badge>
+        </div>
       </div>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("tournament.mappool.statsMap")}</TableHead>
-              <TableHead className="text-right">{t("tournament.mappool.statsProtect")}</TableHead>
-              <TableHead className="text-right">{t("tournament.mappool.statsBan")}</TableHead>
-              <TableHead className="text-right">{t("tournament.mappool.statsPick")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map(({ label, map, stats }) => (
-              <TableRow key={map.id}>
+      <Table>
+        <TableHeader className="[&_tr]:border-0">
+          <TableRow className="border-0 hover:bg-transparent">
+            <TableHead className="h-9 text-xs text-muted-foreground">{t("tournament.mappool.statsMap")}</TableHead>
+            <TableHead className="h-9 text-right text-xs text-muted-foreground">{t("tournament.mappool.statsProtect")}</TableHead>
+            <TableHead className="h-9 text-right text-xs text-muted-foreground">{t("tournament.mappool.statsBan")}</TableHead>
+            <TableHead className="h-9 text-right text-xs text-muted-foreground">{t("tournament.mappool.statsPick")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(({ label, map, stats }) => {
+            const isTiebreaker = isTiebreakerMap(map)
+
+            return (
+              <TableRow className="border-0 hover:bg-muted/35 [&>td:first-child]:rounded-l-md [&>td:last-child]:rounded-r-md" key={map.id}>
                 <TableCell>
-                  <div className="flex min-w-60 items-center gap-3">
+                  <div className="flex items-center gap-3 sm:min-w-60">
                     <Badge variant="outline">{label}</Badge>
-                    <span className="truncate">{map.artist} - {map.title}</span>
+                    <span className="hidden min-w-0 truncate sm:block">{map.artist} - {map.title}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{formatActionStat(stats.protect_count, stats.protect_rate)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatActionStat(stats.ban_count, stats.ban_rate)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatActionStat(stats.pick_count, stats.pick_rate)}</TableCell>
+                <TableCell className={cn("text-right tabular-nums", !isTiebreaker && getExtremaClass(stats.protect_count, extrema.protect))}>
+                  {isTiebreaker ? "—" : formatActionStat(stats.protect_count, stats.protect_rate)}
+                </TableCell>
+                <TableCell className={cn("text-right tabular-nums", !isTiebreaker && getExtremaClass(stats.ban_count, extrema.ban))}>
+                  {isTiebreaker ? "—" : formatActionStat(stats.ban_count, stats.ban_rate)}
+                </TableCell>
+                <TableCell className={cn("text-right tabular-nums", getExtremaClass(stats.pick_count, extrema.pick))}>{formatActionStat(stats.pick_count, stats.pick_rate)}</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            )
+          })}
+        </TableBody>
+      </Table>
     </section>
   )
 }
@@ -219,4 +238,22 @@ function labelMappoolMapsForStage(maps: TournamentMappoolMap[]) {
 
 function formatActionStat(count: number, rate: number | null) {
   return `${count} (${rate === null ? "-" : `${Math.round(rate * 100)}%`})`
+}
+
+function isTiebreakerMap(map: TournamentMappoolMap) {
+  return map.type.trim().toUpperCase() === "TB"
+}
+
+function getExtrema(values: number[]) {
+  if (values.length < 2) return null
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  return min === max ? null : { max, min }
+}
+
+function getExtremaClass(value: number, extrema: { max: number; min: number } | null) {
+  if (!extrema) return undefined
+  if (value === extrema.max) return "bg-emerald-500/12 font-semibold text-emerald-700 dark:text-emerald-300"
+  if (value === extrema.min) return "bg-amber-500/12 font-semibold text-amber-700 dark:text-amber-300"
+  return undefined
 }

@@ -374,10 +374,10 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
   const artist = pack.artist_unicode || pack.artist
   const selectedRating = selectedMap ? formatDecimal(selectedMap.rating, 2) : "-"
   const externalLinks = getPackExternalLinks(pack.osu_bid)
-  const displayedLinks = [
-    ...externalLinks,
-    ...(pack.other_url ? [{ label: "Other", url: pack.other_url }] : []),
-  ]
+  const osuLink = externalLinks.find((link) => link.label === "osu!")
+  const downloadLinks = externalLinks.filter((link) => link.label === "osu.direct" || link.label === "Sayobot")
+  const otherLink = pack.other_url ? { label: "Other", url: pack.other_url } : null
+  const hasDownloadLinks = externalLinks.length > 0 || Boolean(otherLink)
 
   return (
     <article className="relative overflow-hidden rounded-lg bg-card text-white shadow-sm">
@@ -459,38 +459,70 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
           ) : (
             <div className="rounded bg-black/45 p-4 text-sm text-white/78">{t("pack.detail.noBeatmapMetadata")}</div>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            {selectedMap?.beatmap_id ? (
-              <Button
-                asChild
-                className="col-span-2 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
-                variant="outline"
-              >
-                <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
-                  <ChartLineUp className="size-4" weight="bold" />
-                  {t("pack.detail.analyseWithOma")}
-                </Link>
-              </Button>
-            ) : selectedMap ? (
-              <Button className="col-span-2" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
-                <ChartLineUp className="size-4" weight="bold" />
-                {t("pack.detail.analyseWithOma")}
-              </Button>
+          <div className="space-y-2">
+            {osuLink || selectedMap ? (
+              <div className="flex items-center gap-2">
+                {osuLink ? (
+                  <Button
+                    asChild
+                    className="shrink-0 rounded-full border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
+                    size="icon"
+                    variant="outline"
+                  >
+                    <a aria-label={osuLink.label} href={osuLink.url} rel="noopener noreferrer" target="_blank" title={osuLink.label}>
+                      <img alt="" className="size-6 object-contain" src={osuLogoIcon} />
+                    </a>
+                  </Button>
+                ) : null}
+                {selectedMap?.beatmap_id ? (
+                  <Button
+                    asChild
+                    className="min-w-0 flex-1 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
+                    variant="outline"
+                  >
+                    <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
+                      <ChartLineUp className="size-4" weight="bold" />
+                      {t("pack.detail.analyseWithOma")}
+                    </Link>
+                  </Button>
+                ) : selectedMap ? (
+                  <Button className="min-w-0 flex-1" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
+                    <ChartLineUp className="size-4" weight="bold" />
+                    {t("pack.detail.analyseWithOma")}
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
-            {displayedLinks.map((link) => (
+            {downloadLinks.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {downloadLinks.map((link) => (
+                  <Button
+                    asChild
+                    className="border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
+                    key={link.label}
+                    variant="outline"
+                  >
+                    <a href={link.url} rel="noopener noreferrer" target="_blank">
+                      <PackDownloadIcon label={link.label} />
+                      {link.label}
+                    </a>
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+            {otherLink ? (
               <Button
                 asChild
-                className="border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
-                key={link.label}
+                className="w-full border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
                 variant="outline"
               >
-                <a href={link.url} rel="noopener noreferrer" target="_blank">
-                  <PackDownloadIcon label={link.label} />
-                  {link.label}
+                <a href={otherLink.url} rel="noopener noreferrer" target="_blank">
+                  <PackDownloadIcon label={otherLink.label} />
+                  {otherLink.label}
                 </a>
               </Button>
-            ))}
-            {displayedLinks.length === 0 ? <p className="col-span-2 text-sm text-white/70">{t("pack.detail.noDownloadLinks")}</p> : null}
+            ) : null}
+            {!hasDownloadLinks ? <p className="text-sm text-white/70">{t("pack.detail.noDownloadLinks")}</p> : null}
           </div>
         </div>
       </div>

@@ -40,7 +40,7 @@ import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shar
 import { getMatchStage } from "../_shared/tournamentRoundStages"
 import { ActionRow, CommandLine, TeamCard } from "./components"
 import type { ActionType } from "./types"
-import { getNextAction, getRollWinnerTeamId, isMapDisabled, teamName, teamNameById } from "./utils"
+import { getNextAction, getRollWinnerTeamId, isAutomaticTiebreakerAction, isMapDisabled, teamName, teamNameById } from "./utils"
 
 export function TournamentRefereePage() {
   const { t } = useTranslation()
@@ -89,6 +89,9 @@ export function TournamentRefereePage() {
   const adminBracketStage = getMatchStage(match)
   const wbdWinner = Number(wbdWinnerTeamId) === Number(match.team1_id) ? match.team1 : Number(wbdWinnerTeamId) === Number(match.team2_id) ? match.team2 : null
   const wbdFirstTo = getWbdFirstTo(match)
+  const isTiebreaker = wbdFirstTo > 1 && Number(match.team1_score) === wbdFirstTo - 1 && Number(match.team2_score) === wbdFirstTo - 1
+  const hasAutomaticTiebreaker = actions.some(isAutomaticTiebreakerAction)
+  const actionEntryDisabled = match.status === 2 || isTiebreaker || hasAutomaticTiebreaker
 
   function handleCreateAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -181,9 +184,9 @@ export function TournamentRefereePage() {
               <form className="grid shrink-0 min-w-0 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_5rem_auto]" onSubmit={handleCreateAction}>
                 <p className="flex min-w-0 items-center gap-1.5 truncate border-l-2 border-primary bg-primary/[0.04] px-2 py-1.5 text-xs font-medium">
                   <Sparkle className="size-3.5 shrink-0 text-primary" weight="bold" />
-                  <span className="truncate">{formatNextAction(nextAction, match, t(`tournament.referee.next.${nextAction.labelKey}`), t("tournament.referee.selectRollWinnerFirst"))}</span>
+                  <span className="truncate">{isTiebreaker || hasAutomaticTiebreaker ? t("tournament.referee.tiebreakerAutoSelected") : formatNextAction(nextAction, match, t(`tournament.referee.next.${nextAction.labelKey}`), t("tournament.referee.selectRollWinnerFirst"))}</span>
                 </p>
-                <Select value={actionMapId} onValueChange={setActionMapId}>
+                <Select disabled={actionEntryDisabled} value={actionMapId} onValueChange={setActionMapId}>
                   <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
                     <SelectValue placeholder={t("tournament.referee.selectMap")} />
                   </SelectTrigger>
@@ -195,7 +198,7 @@ export function TournamentRefereePage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button className="h-7 whitespace-nowrap px-2 text-xs" disabled={createActionMutation.isPending || !selectedActionTeamId || !actionMapId} size="sm" type="submit">
+                <Button className="h-7 whitespace-nowrap px-2 text-xs" disabled={actionEntryDisabled || createActionMutation.isPending || !selectedActionTeamId || !actionMapId} size="sm" type="submit">
                   <Check className="size-4" weight="bold" />
                   {t("tournament.referee.saveAction")}
                 </Button>

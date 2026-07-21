@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { TeamFlag } from "../_shared/TeamFlag"
 import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shared/tournamentMappool"
 import type { ActionType } from "./types"
-import { isMapDisabled, normalizeActionType, teamName, teamNameById } from "./utils"
+import { isAutomaticTiebreakerAction, isMapDisabled, normalizeActionType, teamName, teamNameById } from "./utils"
 
 const actionIcons: Record<ActionType, ReactNode> = {
   ban: <Prohibit className="size-4" weight="bold" />,
@@ -81,6 +81,7 @@ export function ActionRow({
 }) {
   const { t } = useTranslation()
   const initialType = normalizeActionType(action.action_type)
+  const isAutomaticTiebreaker = isAutomaticTiebreakerAction(action)
   const [draft, setDraft] = useState({
     action_type: initialType,
     map_id: action.map_id ? String(action.map_id) : "",
@@ -91,7 +92,7 @@ export function ActionRow({
 
   function saveOnChange(nextDraft: typeof draft) {
     setDraft(nextDraft)
-    if (!nextDraft.team_id || !nextDraft.map_id) return
+    if (isAutomaticTiebreaker || !nextDraft.team_id || !nextDraft.map_id) return
     onAutosave({
       action_type: nextDraft.action_type,
       map_id: Number(nextDraft.map_id),
@@ -104,9 +105,9 @@ export function ActionRow({
     <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(4.75rem,1fr)_minmax(3.75rem,0.8fr)_minmax(5.25rem,1.2fr)] items-center gap-1.5 border-b px-2 py-1 text-xs last:border-b-0">
       <p className="flex min-w-0 items-center gap-1.5 truncate font-medium">
         <span className={cn("flex size-5 shrink-0 items-center justify-center rounded", actionIconClassNames[draft.action_type])}>{actionIcons[draft.action_type]}</span>
-        <span className="truncate">{teamNameById(match, Number(draft.team_id))}</span>
+        <span className="truncate">{isAutomaticTiebreaker ? t("tournament.referee.automaticTiebreaker") : teamNameById(match, Number(draft.team_id))}</span>
       </p>
-      <Select value={draft.action_type} onValueChange={(value) => saveOnChange({ ...draft, action_type: value as ActionType })}>
+      <Select disabled={isAutomaticTiebreaker} value={draft.action_type} onValueChange={(value) => saveOnChange({ ...draft, action_type: value as ActionType })}>
         <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
           <SelectValue />
         </SelectTrigger>
@@ -116,7 +117,7 @@ export function ActionRow({
           <SelectItem value="pick">{t("tournament.referee.pick")}</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={draft.map_id} onValueChange={(value) => saveOnChange({ ...draft, map_id: value })}>
+      <Select disabled={isAutomaticTiebreaker} value={draft.map_id} onValueChange={(value) => saveOnChange({ ...draft, map_id: value })}>
         <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
           <SelectValue placeholder={t("tournament.referee.selectMap")} />
         </SelectTrigger>

@@ -185,8 +185,7 @@ export function getPackExternalLinks(osuBid: number | null) {
   return [
     { label: "osu!", url: `https://osu.ppy.sh/beatmapsets/${osuBid}` },
     { label: "osu.direct", url: `https://osu.direct/api/d/${osuBid}` },
-    { label: "Sayobot", url: `https://txy1.sayobot.cn/beatmaps/download/full/${osuBid}` },
-    { label: "NeriNyan", url: `https://dl.nerinyan.moe/d/${osuBid}` },
+    { label: "Sayobot", url: `https://txy1.sayobot.cn/beatmaps/download/full/${osuBid}?server=auto` },
   ]
 }
 

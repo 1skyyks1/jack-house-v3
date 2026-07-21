@@ -111,7 +111,7 @@ export function ForumPage() {
           searchError={searchQuery.error}
         />
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="order-3 flex w-full flex-wrap items-center gap-2 sm:order-2 sm:w-auto">
           {postTypeFilters.map((filter) => (
             <Button
               key={filter}
@@ -126,7 +126,7 @@ export function ForumPage() {
           ))}
         </div>
 
-        <Button asChild className="shrink-0">
+        <Button asChild className="order-2 shrink-0 sm:order-3">
           <Link to="/forum/editor">
             <NotePencil className="size-4" weight="bold" />
             {t("forum.newPost")}
@@ -187,7 +187,7 @@ function ForumSearchBox({
   return (
     <Popover open={isOpen && hasKeyword} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <div className="relative min-w-64 flex-1">
+        <div className="relative order-1 min-w-0 flex-1 sm:min-w-64">
           <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" weight="bold" />
           <Input
             className="pl-9"

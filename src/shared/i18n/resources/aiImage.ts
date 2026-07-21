@@ -4,9 +4,6 @@ export const zhAiImage = {
       aiImages: "生图记录",
     },
     aiImages: {
-      eyebrow: "AI 图片",
-      title: "生图使用记录",
-      description: "查看全站生图任务、用户提示词、任务状态与滥用审查元数据。本站不保存输入图或生成图。",
       loadFailedTitle: "生图记录加载失败",
       empty: "没有符合条件的生图记录",
       unknownUser: "未知用户",
@@ -14,15 +11,10 @@ export const zhAiImage = {
       references: "参考图 {{count}} 张",
       hasMask: "含遮罩图",
       noMask: "无遮罩图",
-      roles: {
-        user: "普通用户",
-        organizer: "组织者",
-        admin: "管理员",
-      },
       table: {
         created: "提交时间",
         user: "用户",
-        prompt: "提示词 / 任务 ID",
+        prompt: "提示词",
         request: "模式 / 尺寸",
         inputs: "输入图片",
         status: "状态",
@@ -126,9 +118,6 @@ export const enAiImage = {
       aiImages: "Image jobs",
     },
     aiImages: {
-      eyebrow: "AI images",
-      title: "Image generation records",
-      description: "Review site-wide image jobs, prompts, job status, and abuse-review metadata. Jack House stores no input or generated image files.",
       loadFailedTitle: "Failed to load image records",
       empty: "No image jobs match these filters",
       unknownUser: "Unknown user",
@@ -136,15 +125,10 @@ export const enAiImage = {
       references: "{{count}} reference image(s)",
       hasMask: "Has mask",
       noMask: "No mask",
-      roles: {
-        user: "User",
-        organizer: "Organizer",
-        admin: "Administrator",
-      },
       table: {
         created: "Submitted",
         user: "User",
-        prompt: "Prompt / job ID",
+        prompt: "Prompt",
         request: "Mode / size",
         inputs: "Input images",
         status: "Status",

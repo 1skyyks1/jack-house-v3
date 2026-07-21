@@ -79,14 +79,9 @@ export function AdminAiImagesPage() {
     {
       header: t("admin.aiImages.table.user"),
       cell: ({ row }) => row.original.user ? (
-        <div className="w-36">
-          <Link className="block truncate font-medium text-primary hover:underline" to={`/user/${row.original.user.user_id}`}>
-            {row.original.user.user_name}
-          </Link>
-          <div className="mt-1 text-xs text-muted-foreground">
-            #{row.original.user.user_id} · {t(`admin.aiImages.roles.${resolveRoleKey(row.original.user.role)}`)}
-          </div>
-        </div>
+        <Link className="block w-36 truncate font-medium text-primary hover:underline" to={`/user/${row.original.user.user_id}`}>
+          {row.original.user.user_name}
+        </Link>
       ) : (
         <span className="text-muted-foreground">{t("admin.aiImages.unknownUser")}</span>
       ),
@@ -95,8 +90,7 @@ export function AdminAiImagesPage() {
       header: t("admin.aiImages.table.prompt"),
       cell: ({ row }) => (
         <div className="w-[24rem] max-w-[24rem]">
-          <p className="line-clamp-2 whitespace-pre-wrap font-medium leading-relaxed">{row.original.prompt}</p>
-          <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">{row.original.id}</p>
+          <p className="truncate font-medium">{row.original.prompt}</p>
         </div>
       ),
     },
@@ -146,13 +140,7 @@ export function AdminAiImagesPage() {
 
   return (
     <AdminPage>
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("admin.aiImages.eyebrow")}</p>
-        <h2 className="mt-1 font-heading text-3xl font-semibold">{t("admin.aiImages.title")}</h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{t("admin.aiImages.description")}</p>
-      </header>
-
-      <div className="grid gap-2 rounded-lg border bg-background p-3 md:grid-cols-[12rem_minmax(12rem,1fr)_auto_auto]">
+      <div className="grid gap-2 md:grid-cols-[12rem_minmax(12rem,1fr)_auto_auto]">
         <Select
           onValueChange={(value) => updateFilters({ status: value === "all" ? null : value as AiImageJobStatus })}
           value={status ?? "all"}
@@ -316,12 +304,6 @@ function parsePositiveInteger(value: string | null) {
 
 function parseStatus(value: string | null): AiImageJobStatus | null {
   return JOB_STATUSES.includes(value as AiImageJobStatus) ? value as AiImageJobStatus : null
-}
-
-function resolveRoleKey(role: number) {
-  if (role === 2) return "admin"
-  if (role === 1) return "organizer"
-  return "user"
 }
 
 function formatDateTime(value: string | null, locale: string) {
