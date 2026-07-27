@@ -2,10 +2,12 @@ import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Prohibit, ShieldCheck, Sword } from "@phosphor-icons/react"
-import type { TournamentGame, TournamentMappoolMap, TournamentMatch, TournamentMatchAction, TournamentTeam } from "@/entities/tournament"
+import type { TournamentGame, TournamentMappoolMap, TournamentMatch, TournamentMatchAction, TournamentTeam, UpdateTournamentGameScoreRequest } from "@/entities/tournament"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { TeamFlag } from "../_shared/TeamFlag"
@@ -71,6 +73,7 @@ export function ActionRow({
   maps,
   match,
   onAutosave,
+  onScoreSave,
 }: {
   action: TournamentMatchAction
   actions: TournamentMatchAction[]
@@ -78,6 +81,7 @@ export function ActionRow({
   maps: TournamentMappoolMap[]
   match: TournamentMatch
   onAutosave: (request: { action_type: ActionType; map_id: number; note?: string | null; team_id: number }) => void
+  onScoreSave: (gameId: number, request: UpdateTournamentGameScoreRequest) => Promise<void>
 }) {
   const { t } = useTranslation()
   const initialType = normalizeActionType(action.action_type)
@@ -129,27 +133,126 @@ export function ActionRow({
           ))}
         </SelectContent>
       </Select>
-      <ActionScore game={draft.action_type === "pick" ? game : undefined} match={match} />
+      <ActionScore game={draft.action_type === "pick" ? game : undefined} match={match} onSave={onScoreSave} />
     </div>
   )
 }
 
-function ActionScore({ game, match }: { game?: TournamentGame; match: TournamentMatch }) {
+function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: TournamentMatch; onSave: (gameId: number, request: UpdateTournamentGameScoreRequest) => Promise<void> }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [player1Id, setPlayer1Id] = useState("")
+  const [player2Id, setPlayer2Id] = useState("")
+  const [team1Score, setTeam1Score] = useState("")
+  const [team2Score, setTeam2Score] = useState("")
+  const [saving, setSaving] = useState(false)
+
   if (!game) {
     return <span className="text-right text-muted-foreground">-</span>
   }
 
-  const winner = game.winner_team === 1 ? teamName(match.team1) : game.winner_team === 2 ? teamName(match.team2) : "-"
-  const team1Won = game.winner_team === 1
-  const team2Won = game.winner_team === 2
+  const currentGame = game
+  const winner = currentGame.winner_team === 1 ? teamName(match.team1) : currentGame.winner_team === 2 ? teamName(match.team2) : "-"
+  const team1Won = currentGame.winner_team === 1
+  const team2Won = currentGame.winner_team === 2
+  const team1Players = match.team1?.players ?? []
+  const team2Players = match.team2?.players ?? []
+  const parsedTeam1Score = Number(team1Score)
+  const parsedTeam2Score = Number(team2Score)
+  const playerSelectionIsValid = (team1Players.length === 0 || Boolean(player1Id))
+    && (team2Players.length === 0 || Boolean(player2Id))
+  const scoreIsValid = playerSelectionIsValid
+    && team1Score.trim() !== ""
+    && team2Score.trim() !== ""
+    && Number.isFinite(parsedTeam1Score)
+    && Number.isFinite(parsedTeam2Score)
+    && parsedTeam1Score >= 0
+    && parsedTeam2Score >= 0
+    && parsedTeam1Score !== parsedTeam2Score
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (saving) return
+    setOpen(nextOpen)
+    if (nextOpen) {
+      setPlayer1Id(resolvePlayerId(currentGame.player1_id, team1Players))
+      setPlayer2Id(resolvePlayerId(currentGame.player2_id, team2Players))
+      setTeam1Score(String(currentGame.player1_score ?? 0))
+      setTeam2Score(String(currentGame.player2_score ?? 0))
+    }
+  }
+
+  async function handleSave() {
+    if (!scoreIsValid) return
+    setSaving(true)
+    try {
+      await onSave(currentGame.id, {
+        ...(player1Id ? { player1_id: Number(player1Id) } : {}),
+        player1_score: Math.round(parsedTeam1Score),
+        ...(player2Id ? { player2_id: Number(player2Id) } : {}),
+        player2_score: Math.round(parsedTeam2Score),
+      })
+      setOpen(false)
+      toast.success(t("tournament.referee.gameScoreSaved"))
+    } catch {
+      // The page-level mutation alert presents the API error while the editor stays open.
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <span className="min-w-0 pr-1 text-right tabular-nums" title={winner}>
-      <span className={cn("font-semibold", team1Won ? "text-primary" : "text-muted-foreground")}>{Number(game.player1_score || 0).toLocaleString()}</span>
-      <span className="px-1 text-muted-foreground">:</span>
-      <span className={cn("font-semibold", team2Won ? "text-primary" : "text-muted-foreground")}>{Number(game.player2_score || 0).toLocaleString()}</span>
-    </span>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button className="h-7 min-w-0 justify-end px-1 text-right tabular-nums" title={`${winner} · ${t("tournament.common.edit")}`} type="button" variant="ghost">
+          <span className={cn("font-semibold", team1Won ? "text-primary" : "text-muted-foreground")}>{Number(currentGame.player1_score || 0).toLocaleString()}</span>
+          <span className="px-1 text-muted-foreground">:</span>
+          <span className={cn("font-semibold", team2Won ? "text-primary" : "text-muted-foreground")}>{Number(currentGame.player2_score || 0).toLocaleString()}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-96 gap-3 rounded-lg p-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2">
+          <Label className="grid min-w-0 gap-1 text-xs">
+            <span className="truncate">{teamName(match.team1)}</span>
+            <Select disabled={saving || team1Players.length <= 1} value={player1Id} onValueChange={setPlayer1Id}>
+              <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
+                <SelectValue placeholder={t("tournament.common.player")} />
+              </SelectTrigger>
+              <SelectContent>
+                {team1Players.map((player) => <SelectItem key={player.id} value={String(player.id)}>{tournamentPlayerName(player)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input aria-label={teamName(match.team1)} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} step={1} type="number" value={team1Score} onChange={(event) => setTeam1Score(event.target.value)} />
+          </Label>
+          <span className="pb-1.5 text-muted-foreground">:</span>
+          <Label className="grid min-w-0 gap-1 text-xs">
+            <span className="truncate">{teamName(match.team2)}</span>
+            <Select disabled={saving || team2Players.length <= 1} value={player2Id} onValueChange={setPlayer2Id}>
+              <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
+                <SelectValue placeholder={t("tournament.common.player")} />
+              </SelectTrigger>
+              <SelectContent>
+                {team2Players.map((player) => <SelectItem key={player.id} value={String(player.id)}>{tournamentPlayerName(player)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input aria-label={teamName(match.team2)} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} step={1} type="number" value={team2Score} onChange={(event) => setTeam2Score(event.target.value)} />
+          </Label>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button disabled={saving} size="sm" type="button" variant="outline" onClick={() => setOpen(false)}>{t("tournament.common.cancel")}</Button>
+          <Button disabled={saving || !scoreIsValid} size="sm" type="button" onClick={() => void handleSave()}>{t("tournament.common.save")}</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
+}
+
+function resolvePlayerId(currentPlayerId: number, players: NonNullable<TournamentTeam["players"]>) {
+  if (currentPlayerId > 0 && players.some((player) => Number(player.id) === Number(currentPlayerId))) return String(currentPlayerId)
+  return players.length === 1 ? String(players[0].id) : ""
+}
+
+function tournamentPlayerName(player: NonNullable<TournamentTeam["players"]>[number]) {
+  return player.user_name_snapshot ?? player.user?.user_name ?? `#${player.user_id}`
 }
 
 export function CommandLine({ label, value }: { label: string; value?: string }) {

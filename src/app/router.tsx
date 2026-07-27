@@ -45,6 +45,7 @@ import {
   TournamentListPage,
   TournamentMappoolPage,
   TournamentMatchPage,
+  TournamentPlayerPerformancePage,
   TournamentQualifierPage,
   TournamentRefereePage,
   TournamentTeamsPage,
@@ -176,6 +177,14 @@ export const router = createBrowserRouter([
       {
         path: "t/:tid/leaderboard",
         element: lazyElement(<TournamentLeaderboardPage />),
+      },
+      {
+        path: "t/:tid/performance",
+        element: lazyElement(<TournamentPlayerPerformancePage />),
+      },
+      {
+        path: "t/:tid/performance/:playerId",
+        element: lazyElement(<TournamentPlayerPerformancePage />),
       },
       {
         path: "t/:tid/qualifier",

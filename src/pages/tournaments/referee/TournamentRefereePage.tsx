@@ -11,6 +11,7 @@ import {
   useRecordTournamentTimeoutMutation,
   useTournamentDetailQuery,
   useTournamentRefereeDataQuery,
+  useUpdateTournamentGameScoreMutation,
   useUpdateTournamentMatchMutation,
   useUpdateTournamentMatchActionMutation,
   type TournamentMappoolMap,
@@ -40,7 +41,7 @@ import { buildMappoolLabelMap, getMappoolLabel, sortMappoolMaps } from "../_shar
 import { getMatchStage } from "../_shared/tournamentRoundStages"
 import { ActionRow, CommandLine, TeamCard } from "./components"
 import type { ActionType } from "./types"
-import { getNextAction, getRollWinnerTeamId, isAutomaticTiebreakerAction, isMapDisabled, teamName, teamNameById } from "./utils"
+import { getNextAction, getRollWinnerTeamId, isMapDisabled, teamName, teamNameById } from "./utils"
 
 export function TournamentRefereePage() {
   const { t } = useTranslation()
@@ -53,6 +54,7 @@ export function TournamentRefereePage() {
   const createActionMutation = useCreateTournamentMatchActionMutation(tournamentId, safeMatchId)
   const fetchScoresMutation = useFetchTournamentMatchScoresMutation(tournamentId)
   const updateActionMutation = useUpdateTournamentMatchActionMutation(tournamentId, safeMatchId)
+  const updateGameScoreMutation = useUpdateTournamentGameScoreMutation(tournamentId, safeMatchId)
   const updateMatchMutation = useUpdateTournamentMatchMutation(tournamentId)
   const timeoutMutation = useRecordTournamentTimeoutMutation(tournamentId, safeMatchId)
 
@@ -62,7 +64,7 @@ export function TournamentRefereePage() {
   const [wbdWinnerTeamId, setWbdWinnerTeamId] = useState("")
   const [mpLinkDraft, setMpLinkDraft] = useState<{ key: string; value: string } | null>(null)
 
-  const mutationError = recordRollMutation.error ?? createActionMutation.error ?? fetchScoresMutation.error ?? updateActionMutation.error ?? updateMatchMutation.error ?? timeoutMutation.error
+  const mutationError = recordRollMutation.error ?? createActionMutation.error ?? fetchScoresMutation.error ?? updateActionMutation.error ?? updateGameScoreMutation.error ?? updateMatchMutation.error ?? timeoutMutation.error
   const mpLinkKey = `${match?.id ?? safeMatchId}:${match?.mp_id ?? ""}`
   const mpLink = mpLinkDraft?.key === mpLinkKey
     ? mpLinkDraft.value
@@ -89,9 +91,11 @@ export function TournamentRefereePage() {
   const adminBracketStage = getMatchStage(match)
   const wbdWinner = Number(wbdWinnerTeamId) === Number(match.team1_id) ? match.team1 : Number(wbdWinnerTeamId) === Number(match.team2_id) ? match.team2 : null
   const wbdFirstTo = getWbdFirstTo(match)
-  const isTiebreaker = wbdFirstTo > 1 && Number(match.team1_score) === wbdFirstTo - 1 && Number(match.team2_score) === wbdFirstTo - 1
-  const hasAutomaticTiebreaker = actions.some(isAutomaticTiebreakerAction)
-  const actionEntryDisabled = match.status === 2 || isTiebreaker || hasAutomaticTiebreaker
+  const mapById = new Map(maps.map((map) => [Number(map.id), map]))
+  const regulationPickCount = actions.filter((action) => action.action_type === "pick" && String(mapById.get(Number(action.map_id))?.type || "").trim().toUpperCase() !== "TB").length
+  const tiebreakerRequired = wbdFirstTo > 1 && regulationPickCount >= wbdFirstTo * 2 - 2
+  const hasTiebreakerPick = actions.some((action) => action.action_type === "pick" && String(mapById.get(Number(action.map_id))?.type || "").trim().toUpperCase() === "TB")
+  const actionEntryDisabled = match.status === 2 || hasTiebreakerPick
 
   function handleCreateAction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -184,7 +188,7 @@ export function TournamentRefereePage() {
               <form className="grid shrink-0 min-w-0 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_5rem_auto]" onSubmit={handleCreateAction}>
                 <p className="flex min-w-0 items-center gap-1.5 truncate border-l-2 border-primary bg-primary/[0.04] px-2 py-1.5 text-xs font-medium">
                   <Sparkle className="size-3.5 shrink-0 text-primary" weight="bold" />
-                  <span className="truncate">{isTiebreaker || hasAutomaticTiebreaker ? t("tournament.referee.tiebreakerAutoSelected") : formatNextAction(nextAction, match, t(`tournament.referee.next.${nextAction.labelKey}`), t("tournament.referee.selectRollWinnerFirst"))}</span>
+                  <span className="truncate">{hasTiebreakerPick ? t("tournament.referee.tiebreakerSelected") : tiebreakerRequired ? t("tournament.referee.tiebreakerRequired") : formatNextAction(nextAction, match, t(`tournament.referee.next.${nextAction.labelKey}`), t("tournament.referee.selectRollWinnerFirst"))}</span>
                 </p>
                 <Select disabled={actionEntryDisabled} value={actionMapId} onValueChange={setActionMapId}>
                   <SelectTrigger size="xs" className="w-full min-w-0 [&>span]:truncate">
@@ -192,7 +196,7 @@ export function TournamentRefereePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {maps.map((map) => (
-                      <SelectItem disabled={isMapDisabled(selectedActionType, map, actions)} key={map.id} value={String(map.id)}>
+                      <SelectItem disabled={isMapDisabled(selectedActionType, map, actions, undefined, tiebreakerRequired)} key={map.id} value={String(map.id)}>
                         {getMappoolLabel(map, mapLabelById)}
                       </SelectItem>
                     ))}
@@ -217,6 +221,7 @@ export function TournamentRefereePage() {
                         maps={maps}
                         match={match}
                         onAutosave={(request) => updateActionMutation.mutate({ actionId: action.id, request })}
+                        onScoreSave={(gameId, request) => updateGameScoreMutation.mutateAsync({ gameId, request })}
                       />
                     ))}
                   </div>

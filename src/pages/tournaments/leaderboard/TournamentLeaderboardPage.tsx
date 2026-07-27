@@ -220,18 +220,19 @@ function LeaderboardMapCard({ label, map }: { label: string; map: TournamentMapp
 }
 
 function LeaderboardListRow({ entry, publicTournamentPath }: { entry: TournamentPerformanceEntry; publicTournamentPath: string }) {
+  const matchDestination = `${publicTournamentPath}/match/${entry.match_id}`
+  const performanceDestination = entry.player?.id
+    ? `${publicTournamentPath}/performance/${entry.player.id}`
+    : matchDestination
   return (
-    <Link
-      className="grid grid-cols-[4.5rem_minmax(0,1fr)_7rem] items-center gap-3 px-4 py-3 text-sm transition hover:bg-muted/40 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_8rem]"
-      to={`${publicTournamentPath}/match/${entry.match_id}`}
-    >
-      <span className="inline-flex min-w-10 items-center justify-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+    <div className="group grid grid-cols-[4.5rem_minmax(0,1fr)_7rem] items-center gap-3 px-4 py-3 text-sm transition hover:bg-muted/40 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_8rem]">
+      <Link className="inline-flex min-w-10 items-center justify-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground transition group-hover:text-foreground" to={matchDestination}>
         {entry.rank <= 3 ? <Medal className={cn("size-3.5", getRankIconTone(entry.rank))} weight="fill" /> : null}
         #{entry.rank}
-      </span>
+      </Link>
       <span className="min-w-0">
-        <span className="hidden truncate font-medium md:block">{getEntryTeamName(entry)}</span>
-        <span className="flex min-w-0 items-center gap-2 md:hidden">
+        <Link className="hidden truncate font-medium transition hover:text-primary md:block" to={matchDestination}>{getEntryTeamName(entry)}</Link>
+        <Link className="flex min-w-0 items-center gap-2 transition hover:text-primary md:hidden" to={performanceDestination}>
           <Avatar size="sm">
             <AvatarImage src={getEntryAvatar(entry)} />
             <AvatarFallback>{getInitial(getEntryPlayerName(entry))}</AvatarFallback>
@@ -240,9 +241,9 @@ function LeaderboardListRow({ entry, publicTournamentPath }: { entry: Tournament
             <span className="block truncate font-medium">{getEntryPlayerName(entry)}</span>
             <span className="block truncate text-xs text-muted-foreground">{getEntryTeamName(entry)}</span>
           </span>
-        </span>
+        </Link>
       </span>
-      <span className="hidden min-w-0 items-center gap-2 md:flex">
+      <Link className="hidden min-w-0 items-center gap-2 transition hover:text-primary md:flex" to={performanceDestination}>
         <Avatar size="sm">
           <AvatarImage src={getEntryAvatar(entry)} />
           <AvatarFallback>{getInitial(getEntryPlayerName(entry))}</AvatarFallback>
@@ -250,9 +251,9 @@ function LeaderboardListRow({ entry, publicTournamentPath }: { entry: Tournament
         <span className="min-w-0">
           <span className="block truncate font-medium">{getEntryPlayerName(entry)}</span>
         </span>
-      </span>
-      <span className="text-right font-mono text-sm font-semibold tabular-nums">{formatScore(entry.score)}</span>
-    </Link>
+      </Link>
+      <Link className="text-right font-mono text-sm font-semibold tabular-nums transition hover:text-primary" to={matchDestination}>{formatScore(entry.score)}</Link>
+    </div>
   )
 }
 

@@ -105,7 +105,7 @@ function HeroBackdrop({ heroImage }: Pick<TournamentPageHeaderProps, "heroImage"
 function TournamentNavigation({ compact = false, items, label }: { compact?: boolean; items: TournamentNavigationItem[]; label: string }) {
   return (
     <nav aria-label={label} className={cn(!compact && "mt-3", compact && "bg-background/90")}>
-      <div className="grid grid-cols-5 gap-0.5">
+      <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => (
           <TournamentNavigationLink compact={compact} href={item.href} icon={item.icon} key={item.href} label={item.label} />
         ))}

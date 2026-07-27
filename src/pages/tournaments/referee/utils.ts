@@ -1,8 +1,9 @@
 import type { TournamentMappoolMap, TournamentMatch, TournamentMatchAction, TournamentTeam } from "@/entities/tournament"
 import type { ActionType } from "./types"
 
-export function isMapDisabled(actionType: ActionType, map: TournamentMappoolMap, actions: TournamentMatchAction[], ignoredActionId?: number) {
-  if (String(map.type || "").trim().toUpperCase() === "TB") return true
+export function isMapDisabled(actionType: ActionType, map: TournamentMappoolMap, actions: TournamentMatchAction[], ignoredActionId?: number, tiebreakerRequired = false) {
+  const isTiebreaker = String(map.type || "").trim().toUpperCase() === "TB"
+  if (isTiebreaker && actionType !== "pick") return true
   const otherActions = actions.filter((action) => !ignoredActionId || action.id !== ignoredActionId)
   const isProtected = otherActions.some((action) => action.action_type === "protect" && action.map_id === map.id)
   const isBanned = otherActions.some((action) => action.action_type === "ban" && action.map_id === map.id)
@@ -10,6 +11,7 @@ export function isMapDisabled(actionType: ActionType, map: TournamentMappoolMap,
 
   if (actionType === "protect") return isProtected || isBanned || isPicked
   if (actionType === "ban") return isProtected || isBanned || isPicked
+  if (tiebreakerRequired ? !isTiebreaker : isTiebreaker) return true
   return isBanned || isPicked
 }
 

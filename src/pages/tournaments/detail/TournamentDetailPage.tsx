@@ -1,4 +1,4 @@
-import { BracketsCurly, CalendarBlank, ChartBar, ChatText, ClipboardText, Info, MapTrifold, Trophy, UsersThree } from "@phosphor-icons/react"
+import { BracketsCurly, CalendarBlank, ChartBar, ChartLineUp, ChatText, ClipboardText, Info, MapTrifold, Trophy, UsersThree } from "@phosphor-icons/react"
 import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
@@ -69,6 +69,7 @@ export function TournamentDetailPage() {
     { href: `${publicTournamentPath}/bracket`, icon: BracketsCurly, label: t("tournament.common.schedule") },
     { href: `${publicTournamentPath}/mappool`, icon: MapTrifold, label: t("tournament.common.mappool") },
     { href: `${publicTournamentPath}/leaderboard`, icon: Trophy, label: t("tournament.common.leaderboard") },
+    { href: `${publicTournamentPath}/performance`, icon: ChartLineUp, label: t("tournament.common.performance") },
     { href: `${publicTournamentPath}/teams`, icon: UsersThree, label: t("tournament.common.teams") },
     { href: `${publicTournamentPath}/qualifier`, icon: ChartBar, label: t("tournament.common.qualifier") },
   ]

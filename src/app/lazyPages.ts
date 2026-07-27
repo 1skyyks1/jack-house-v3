@@ -43,6 +43,7 @@ export const TournamentListPage = lazy(() => import("@/pages/tournaments/list/To
 export const TournamentLeaderboardPage = lazy(() => import("@/pages/tournaments/leaderboard/TournamentLeaderboardPage").then((module) => ({ default: module.TournamentLeaderboardPage })))
 export const TournamentMatchPage = lazy(() => import("@/pages/tournaments/match/TournamentMatchPage").then((module) => ({ default: module.TournamentMatchPage })))
 export const TournamentMappoolPage = lazy(() => import("@/pages/tournaments/mappool/TournamentMappoolPage").then((module) => ({ default: module.TournamentMappoolPage })))
+export const TournamentPlayerPerformancePage = lazy(() => import("@/pages/tournaments/performance/TournamentPlayerPerformancePage").then((module) => ({ default: module.TournamentPlayerPerformancePage })))
 export const TournamentQualifierPage = lazy(() => import("@/pages/tournaments/qualifier/TournamentQualifierPage").then((module) => ({ default: module.TournamentQualifierPage })))
 export const TournamentRefereePage = lazy(() => import("@/pages/tournaments/referee/TournamentRefereePage").then((module) => ({ default: module.TournamentRefereePage })))
 export const TournamentTeamsPage = lazy(() => import("@/pages/tournaments/teams/TournamentTeamsPage").then((module) => ({ default: module.TournamentTeamsPage })))
