@@ -3,6 +3,7 @@ import {
   createUser,
   deleteUser,
   getUserById,
+  getUserTournamentExperiences,
   getUserList,
   searchUsers,
   updateUser,
@@ -16,6 +17,7 @@ export const userQueryKeys = {
   list: (params: GetUserListParams) => ["user", "list", params] as const,
   root: ["user"] as const,
   search: (params: GetUserListParams) => ["user", "search", params] as const,
+  tournamentExperiences: (userId: string) => ["user", "tournament-experiences", userId] as const,
 }
 
 export function useUserListQuery(params: GetUserListParams) {
@@ -38,6 +40,14 @@ export function useUserDetailQuery(userId: string | undefined) {
     enabled: Boolean(userId),
     queryFn: () => getUserById(userId as string),
     queryKey: userQueryKeys.detail(userId ?? ""),
+  })
+}
+
+export function useUserTournamentExperiencesQuery(userId: string | undefined) {
+  return useQuery({
+    enabled: Boolean(userId),
+    queryFn: () => getUserTournamentExperiences(userId as string),
+    queryKey: userQueryKeys.tournamentExperiences(userId ?? ""),
   })
 }
 

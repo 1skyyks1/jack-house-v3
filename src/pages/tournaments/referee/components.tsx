@@ -145,6 +145,8 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
   const [player2Id, setPlayer2Id] = useState("")
   const [team1Score, setTeam1Score] = useState("")
   const [team2Score, setTeam2Score] = useState("")
+  const [team1MissCount, setTeam1MissCount] = useState("")
+  const [team2MissCount, setTeam2MissCount] = useState("")
   const [saving, setSaving] = useState(false)
 
   if (!game) {
@@ -159,6 +161,8 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
   const team2Players = match.team2?.players ?? []
   const parsedTeam1Score = Number(team1Score)
   const parsedTeam2Score = Number(team2Score)
+  const missCountIsValid = (value: string) => value.trim() === ""
+    || (Number.isInteger(Number(value)) && Number(value) >= 0)
   const playerSelectionIsValid = (team1Players.length === 0 || Boolean(player1Id))
     && (team2Players.length === 0 || Boolean(player2Id))
   const scoreIsValid = playerSelectionIsValid
@@ -168,6 +172,8 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
     && Number.isFinite(parsedTeam2Score)
     && parsedTeam1Score >= 0
     && parsedTeam2Score >= 0
+    && missCountIsValid(team1MissCount)
+    && missCountIsValid(team2MissCount)
     && parsedTeam1Score !== parsedTeam2Score
 
   function handleOpenChange(nextOpen: boolean) {
@@ -178,6 +184,8 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
       setPlayer2Id(resolvePlayerId(currentGame.player2_id, team2Players))
       setTeam1Score(String(currentGame.player1_score ?? 0))
       setTeam2Score(String(currentGame.player2_score ?? 0))
+      setTeam1MissCount(currentGame.player1_miss_count == null ? "" : String(currentGame.player1_miss_count))
+      setTeam2MissCount(currentGame.player2_miss_count == null ? "" : String(currentGame.player2_miss_count))
     }
   }
 
@@ -187,8 +195,10 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
     try {
       await onSave(currentGame.id, {
         ...(player1Id ? { player1_id: Number(player1Id) } : {}),
+        player1_miss_count: team1MissCount.trim() === "" ? null : Math.round(Number(team1MissCount)),
         player1_score: Math.round(parsedTeam1Score),
         ...(player2Id ? { player2_id: Number(player2Id) } : {}),
+        player2_miss_count: team2MissCount.trim() === "" ? null : Math.round(Number(team2MissCount)),
         player2_score: Math.round(parsedTeam2Score),
       })
       setOpen(false)
@@ -222,6 +232,7 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
               </SelectContent>
             </Select>
             <Input aria-label={teamName(match.team1)} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} step={1} type="number" value={team1Score} onChange={(event) => setTeam1Score(event.target.value)} />
+            <Input aria-label={`${teamName(match.team1)} Miss`} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} placeholder={t("tournament.referee.missUnknownPlaceholder")} step={1} type="number" value={team1MissCount} onChange={(event) => setTeam1MissCount(event.target.value)} />
           </Label>
           <span className="pb-1.5 text-muted-foreground">:</span>
           <Label className="grid min-w-0 gap-1 text-xs">
@@ -235,6 +246,7 @@ function ActionScore({ game, match, onSave }: { game?: TournamentGame; match: To
               </SelectContent>
             </Select>
             <Input aria-label={teamName(match.team2)} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} step={1} type="number" value={team2Score} onChange={(event) => setTeam2Score(event.target.value)} />
+            <Input aria-label={`${teamName(match.team2)} Miss`} className="h-8 text-right tabular-nums" disabled={saving} inputMode="numeric" min={0} placeholder={t("tournament.referee.missUnknownPlaceholder")} step={1} type="number" value={team2MissCount} onChange={(event) => setTeam2MissCount(event.target.value)} />
           </Label>
         </div>
         <div className="flex justify-end gap-2">

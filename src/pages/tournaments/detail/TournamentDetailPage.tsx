@@ -68,8 +68,7 @@ export function TournamentDetailPage() {
   const navigationItems: TournamentNavigationItem[] = [
     { href: `${publicTournamentPath}/bracket`, icon: BracketsCurly, label: t("tournament.common.schedule") },
     { href: `${publicTournamentPath}/mappool`, icon: MapTrifold, label: t("tournament.common.mappool") },
-    { href: `${publicTournamentPath}/leaderboard`, icon: Trophy, label: t("tournament.common.leaderboard") },
-    { href: `${publicTournamentPath}/performance`, icon: ChartLineUp, label: t("tournament.common.performance") },
+    { href: `${publicTournamentPath}/leaderboard`, icon: ChartLineUp, label: t("tournament.common.stats") },
     { href: `${publicTournamentPath}/teams`, icon: UsersThree, label: t("tournament.common.teams") },
     { href: `${publicTournamentPath}/qualifier`, icon: ChartBar, label: t("tournament.common.qualifier") },
   ]

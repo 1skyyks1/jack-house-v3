@@ -1,4 +1,4 @@
-export { createUser, deleteUser, getUserById, getUserList, searchUsers, updateUser } from "./api/userApi"
+export { createUser, deleteUser, getUserById, getUserList, getUserTournamentExperiences, searchUsers, updateUser } from "./api/userApi"
 export {
   useCreateUserMutation,
   useDeleteUserMutation,
@@ -6,8 +6,9 @@ export {
   useUserDetailQuery,
   useUserListQuery,
   useUserSearchQuery,
+  useUserTournamentExperiencesQuery,
   userQueryKeys,
 } from "./api/userQueries"
 export { getUserRoleLabel, getUserStatusLabel } from "./model/types"
 export type { CreateUserRequest, GetUserListParams, UpdateUserRequest, UserSearchItem } from "./api/userApi"
-export type { UserBadge, UserProfile, UserRole, UserStatus } from "./model/types"
+export type { UserBadge, UserProfile, UserRole, UserStatus, UserTournamentExperience } from "./model/types"

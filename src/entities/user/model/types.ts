@@ -1,4 +1,10 @@
 import { i18n } from "@/shared/i18n/client"
+import type {
+  Tournament,
+  TournamentPerformanceStage,
+  TournamentPlayerRating,
+  TournamentRatingSnapshot,
+} from "@/entities/tournament/model/types"
 
 export type UserRole = 0 | 1 | 2
 export type UserStatus = 0 | 1 | 2
@@ -24,6 +30,13 @@ export type UserProfile = {
   created_time: string
   updated_time: string
   badges?: UserBadge[]
+}
+
+export type UserTournamentExperience = {
+  rating: TournamentPlayerRating
+  snapshot: TournamentRatingSnapshot
+  stages: TournamentPerformanceStage[]
+  tournament: Pick<Tournament, "acronym" | "banner" | "created_time" | "id" | "name" | "qual_end" | "qual_start" | "status">
 }
 
 export function getUserRoleLabel(role: UserRole) {

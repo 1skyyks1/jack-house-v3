@@ -11,7 +11,7 @@ import {
   X,
 } from "@phosphor-icons/react"
 import type { TFunction } from "i18next"
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
 import {
@@ -123,6 +123,8 @@ export function ManiaAnalyserPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [analysis, setAnalysis] = useState<CompletedAnalysis | null>(null)
   const [localFile, setLocalFile] = useState<File | null>(null)
+  const [isDraggingLocalFile, setIsDraggingLocalFile] = useState(false)
+  const localFileDragDepthRef = useRef(0)
   const localFileInputRef = useRef<HTMLInputElement>(null)
   const selectionFormRef = useRef<HTMLFormElement>(null)
   const autoAnalysisBeatmapIdRef = useRef<number | null>(null)
@@ -204,10 +206,7 @@ export function ManiaAnalyserPage() {
     }
   }
 
-  const handleLocalFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ""
-    if (!file) return
+  const selectLocalFile = (file: File) => {
     if (!file.name.toLowerCase().endsWith(".osu")) {
       toast.error(t("maniaAnalyser.invalidLocalFile"))
       return
@@ -215,6 +214,41 @@ export function ManiaAnalyserPage() {
     setLocalFile(file)
     setBeatmapInput("")
     setAnalysis(null)
+  }
+
+  const handleLocalFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (file) selectLocalFile(file)
+  }
+
+  const handleLocalFileDragEnter = (event: DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    localFileDragDepthRef.current += 1
+    setIsDraggingLocalFile(true)
+  }
+
+  const handleLocalFileDragOver = (event: DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "copy"
+  }
+
+  const handleLocalFileDragLeave = (event: DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    localFileDragDepthRef.current = Math.max(0, localFileDragDepthRef.current - 1)
+    if (localFileDragDepthRef.current === 0) setIsDraggingLocalFile(false)
+  }
+
+  const handleLocalFileDrop = (event: DragEvent<HTMLElement>) => {
+    if (!hasDraggedFiles(event)) return
+    event.preventDefault()
+    localFileDragDepthRef.current = 0
+    setIsDraggingLocalFile(false)
+    const file = event.dataTransfer.files[0]
+    if (file) selectLocalFile(file)
   }
 
   const clearLocalFile = () => {
@@ -282,24 +316,35 @@ export function ManiaAnalyserPage() {
         <input accept=".osu,text/plain" className="hidden" onChange={handleLocalFileChange} ref={localFileInputRef} type="file" />
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
           <Field label={t("maniaAnalyser.beatmapId")}>
-            <div className="flex gap-2">
-              <Input
-                autoComplete="off"
-                inputMode={localFile ? undefined : "numeric"}
-                onChange={(event) => setBeatmapInput(event.target.value)}
-                placeholder={t("maniaAnalyser.beatmapPlaceholder")}
-                readOnly={Boolean(localFile)}
-                value={localFile?.name ?? beatmapInput}
-              />
-              <Button className="shrink-0" onClick={() => localFileInputRef.current?.click()} type="button" variant="outline">
-                <FileArrowUp className="size-4" />
-                <span className="hidden md:inline">{localFile ? t("maniaAnalyser.changeLocalFile") : t("maniaAnalyser.chooseLocalFile")}</span>
-              </Button>
-              {localFile ? (
-                <Button aria-label={t("maniaAnalyser.clearLocalFile")} className="shrink-0" onClick={clearLocalFile} size="icon" type="button" variant="ghost">
-                  <X className="size-4" />
+            <div
+              className={cn(
+                "rounded-xl transition-[background-color,box-shadow]",
+                isDraggingLocalFile && "bg-primary/5 ring-2 ring-primary ring-offset-2 ring-offset-background",
+              )}
+              onDragEnter={handleLocalFileDragEnter}
+              onDragLeave={handleLocalFileDragLeave}
+              onDragOver={handleLocalFileDragOver}
+              onDrop={handleLocalFileDrop}
+            >
+              <div className="flex gap-2">
+                <Input
+                  autoComplete="off"
+                  inputMode={localFile ? undefined : "numeric"}
+                  onChange={(event) => setBeatmapInput(event.target.value)}
+                  placeholder={t(isDraggingLocalFile ? "maniaAnalyser.dropLocalFileActive" : "maniaAnalyser.beatmapPlaceholder")}
+                  readOnly={Boolean(localFile)}
+                  value={localFile?.name ?? beatmapInput}
+                />
+                <Button className="shrink-0" onClick={() => localFileInputRef.current?.click()} type="button" variant="outline">
+                  <FileArrowUp className="size-4" />
+                  <span className="hidden md:inline">{localFile ? t("maniaAnalyser.changeLocalFile") : t("maniaAnalyser.chooseLocalFile")}</span>
                 </Button>
-              ) : null}
+                {localFile ? (
+                  <Button aria-label={t("maniaAnalyser.clearLocalFile")} className="shrink-0" onClick={clearLocalFile} size="icon" type="button" variant="ghost">
+                    <X className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </Field>
           <div className="flex w-full items-end sm:w-36">
@@ -359,10 +404,14 @@ export function ManiaAnalyserPage() {
             <Input
               aria-label={t("maniaAnalyser.beatmapId")}
               autoComplete="off"
-              className="bg-background/70"
+              className={cn("bg-background/70", isDraggingLocalFile && "bg-primary/5 ring-2 ring-primary")}
               inputMode={localFile ? undefined : "numeric"}
               onChange={(event) => setBeatmapInput(event.target.value)}
-              placeholder={t("maniaAnalyser.beatmapPlaceholder")}
+              onDragEnter={handleLocalFileDragEnter}
+              onDragLeave={handleLocalFileDragLeave}
+              onDragOver={handleLocalFileDragOver}
+              onDrop={handleLocalFileDrop}
+              placeholder={t(isDraggingLocalFile ? "maniaAnalyser.dropLocalFileActive" : "maniaAnalyser.beatmapPlaceholder")}
               readOnly={Boolean(localFile)}
               value={localFile?.name ?? beatmapInput}
             />
@@ -748,6 +797,10 @@ function parseBeatmapId(value: string) {
   if (hashMatch) return Number(hashMatch[1])
   const pathMatch = normalized.match(/\/(?:beatmaps|b)\/(\d+)/i)
   return pathMatch ? Number(pathMatch[1]) : null
+}
+
+function hasDraggedFiles(event: DragEvent<HTMLElement>) {
+  return Array.from(event.dataTransfer.types).includes("Files")
 }
 
 function getAnalysisErrorDescription(error: unknown, t: TFunction) {

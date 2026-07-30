@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChartBar, ClockCounterClockwise, GearSix, Plus, Trophy, UsersThree } from "@phosphor-icons/react"
+import { Calculator, ChartBar, ClockCounterClockwise, GearSix, Plus, Trophy, UsersThree } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { getTournamentStatus, useTournamentListQuery, type Tournament } from "@/entities/tournament"
@@ -63,6 +63,12 @@ function useColumns(): Array<ColumnDef<Tournament>> {
           <Link to={`/admin/tournaments/${row.original.id}/qualifier`}>
             <ChartBar className="size-4" />
             {t("tournament.common.qualifier")}
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link to={`/admin/tournaments/${row.original.id}/ratings`}>
+            <Calculator className="size-4" />
+            {t("tournament.admin.common.ratings")}
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">

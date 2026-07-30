@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   useTournamentDetailQuery,
-  useTournamentPerformanceQuery,
+  useTournamentLeaderboardQuery,
   useTournamentRoundsQuery,
   type TournamentMappoolMap,
   type TournamentPerformanceEntry,
@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { AppAlert, CardGridSkeleton, getErrorMessage, PageState } from "@/shared/components"
 import { TournamentBreadcrumb } from "../_shared/TournamentBreadcrumb"
+import { TournamentStatsTabs } from "../_shared/TournamentStatsTabs"
 import { groupRoundsByMainStage } from "../_shared/tournamentRoundStages"
 import { buildMappoolLabelMap, compareMappoolMaps, getMappoolLabel, normalizeMapType } from "../_shared/tournamentMappool"
 import { getTournamentMapCoverUrl, getTournamentPublicPath } from "../_shared/tournamentVisuals"
@@ -27,10 +28,11 @@ export function TournamentLeaderboardPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tournamentQuery = useTournamentDetailQuery(tid)
-  const leaderboardQuery = useTournamentPerformanceQuery(tid)
+  const leaderboardQuery = useTournamentLeaderboardQuery(tid)
   const roundsQuery = useTournamentRoundsQuery(tid)
   const stages = leaderboardQuery.data?.stages ?? []
-  const mappoolByStage = new Map<string, TournamentMappoolMap[]>(groupRoundsByMainStage(roundsQuery.data ?? []).map((stage) => [stage.key, stage.maps]))
+  const roundGroups = groupRoundsByMainStage(roundsQuery.data ?? [])
+  const mappoolByStage = new Map<string, TournamentMappoolMap[]>(roundGroups.map((stage) => [stage.key, stage.maps]))
   const stageParam = searchParams.get("stage")?.trim().toLowerCase() ?? ""
   const mapParam = searchParams.get("map")?.trim().toLowerCase() ?? ""
   const selectedStage = stages.find((stage) => stage.key.toLowerCase() === stageParam) ?? stages[0]
@@ -65,7 +67,10 @@ export function TournamentLeaderboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <TournamentBreadcrumb current={t("tournament.common.leaderboard")} tournament={tournamentQuery.data} tournamentId={tid} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <TournamentBreadcrumb current={t("tournament.common.stats")} tournament={tournamentQuery.data} tournamentId={tid} />
+        <TournamentStatsTabs active="score-leaderboard" publicTournamentPath={publicTournamentPath} />
+      </div>
 
       {leaderboardQuery.isLoading || roundsQuery.isLoading ? (
         <CardGridSkeleton count={4} />
@@ -222,7 +227,7 @@ function LeaderboardMapCard({ label, map }: { label: string; map: TournamentMapp
 function LeaderboardListRow({ entry, publicTournamentPath }: { entry: TournamentPerformanceEntry; publicTournamentPath: string }) {
   const matchDestination = `${publicTournamentPath}/match/${entry.match_id}`
   const performanceDestination = entry.player?.id
-    ? `${publicTournamentPath}/performance/${entry.player.id}`
+    ? `${publicTournamentPath}/ratings?player=${entry.player.id}`
     : matchDestination
   return (
     <div className="group grid grid-cols-[4.5rem_minmax(0,1fr)_7rem] items-center gap-3 px-4 py-3 text-sm transition hover:bg-muted/40 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)_8rem]">

@@ -32,4 +32,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: process.env.VITE_DEV_API_PROXY ? {
+    proxy: {
+      "/api": {
+        changeOrigin: true,
+        rewrite: (requestPath) => requestPath.replace(/^\/api/, ""),
+        target: process.env.VITE_DEV_API_PROXY,
+      },
+    },
+  } : undefined,
 })

@@ -1,7 +1,7 @@
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
 import { http } from "@/shared/api/http"
-import type { UserProfile } from "../model/types"
+import type { UserProfile, UserTournamentExperience } from "../model/types"
 
 export type GetUserListParams = {
   page: number
@@ -47,6 +47,11 @@ export async function searchUsers(params: GetUserListParams): Promise<PaginatedE
 export async function getUserById(userId: string): Promise<UserProfile> {
   const response = await http.get(`/user/${userId}`)
   return unwrapData<UserProfile>(response)
+}
+
+export async function getUserTournamentExperiences(userId: string): Promise<UserTournamentExperience[]> {
+  const response = await http.get(`/user/${userId}/tournaments`)
+  return unwrapData<UserTournamentExperience[]>(response)
 }
 
 export async function createUser(request: CreateUserRequest): Promise<void> {

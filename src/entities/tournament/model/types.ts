@@ -271,8 +271,10 @@ export type TournamentMatchActionRequest = {
 
 export type UpdateTournamentGameScoreRequest = {
   player1_id?: number
+  player1_miss_count?: number | null
   player1_score: number
   player2_id?: number
+  player2_miss_count?: number | null
   player2_score: number
 }
 
@@ -283,24 +285,40 @@ export type TournamentGame = {
   map?: TournamentMappoolMap | null
   map_id: number
   match_id: number
+  mp_game_id?: number | null
   order: number
+  played_at?: string | null
   player1?: TournamentPlayer | null
   player1_id: number
+  player1_miss_count?: number | null
   player1_score: number
   player2?: TournamentPlayer | null
   player2_id: number
+  player2_miss_count?: number | null
   player2_score: number
   winner_team: 1 | 2 | number
 }
 
 export type TournamentPerformanceEntry = {
+  absolute_component: number
+  absolute_weight: number
   game_id: number
+  gpr?: number
+  jpp: number
+  match_component: number
   match_id: number
+  opponent_score: number
   player?: TournamentPlayer | null
   rank: number
+  rating_after: number
+  rating_before: number
+  rating_delta: number
+  reliability: "low" | "medium" | "high" | string
   score: number
+  sequence_no: number
   side: 1 | 2 | number
   team: Pick<TournamentTeam, "avatar" | "display_name" | "id" | "name">
+  won: boolean
 }
 
 export type TournamentPerformanceMap = {
@@ -316,7 +334,50 @@ export type TournamentPerformanceStage = {
 }
 
 export type TournamentPerformance = {
+  ratings: TournamentPlayerRating[]
+  snapshot: TournamentRatingSnapshot | null
   stages: TournamentPerformanceStage[]
+}
+
+export type TournamentLeaderboard = {
+  stages: TournamentPerformanceStage[]
+}
+
+export type TournamentRatingSnapshot = {
+  calculated_at: string
+  calculated_by: number | null
+  finalized_at: string | null
+  finalized_by: number | null
+  game_count: number
+  id: number
+  is_final: boolean
+  model_version: string
+  player_count: number
+  source_hash: string
+}
+
+export type TournamentPlayerRating = {
+  average_gpr?: number
+  average_jpp: number
+  best_gpr?: number
+  best_jpp: number
+  game_count: number
+  player: TournamentPlayer
+  rank: number
+  rating_delta: number
+  reliability: "low" | "medium" | "high" | string
+  team: Pick<TournamentTeam, "avatar" | "display_name" | "id" | "name"> | null
+  tpr?: number
+  tournament_rating: number
+  win_count: number
+}
+
+export type TournamentRatingsManage = {
+  can_calculate: boolean
+  current_game_count: number
+  is_calculated: boolean
+  is_stale: boolean
+  snapshot: TournamentRatingSnapshot | null
 }
 
 export type TournamentMappoolStatsMap = {

@@ -24,6 +24,9 @@ import type {
   TournamentMappoolStatsManage,
   TournamentMappoolStatsStage,
   TournamentPerformance,
+  TournamentLeaderboard,
+  TournamentRatingsManage,
+  TournamentRatingSnapshot,
   TournamentQualImportList,
   TournamentQualMap,
   TournamentQualScore,
@@ -125,6 +128,26 @@ export async function getTournamentBracket(tournamentId: string): Promise<Tourna
 
 export async function getTournamentPerformance(tournamentId: string): Promise<TournamentPerformance> {
   return await http.get(`/t/${tournamentId}/performance`) as unknown as TournamentPerformance
+}
+
+export async function getTournamentLeaderboard(tournamentId: string): Promise<TournamentLeaderboard> {
+  return await http.get(`/t/${tournamentId}/leaderboard`) as unknown as TournamentLeaderboard
+}
+
+export async function getTournamentRatingsManage(tournamentId: string): Promise<TournamentRatingsManage> {
+  return await http.get(`/t/${tournamentId}/ratings/manage`) as unknown as TournamentRatingsManage
+}
+
+export async function calculateTournamentRatings(tournamentId: string): Promise<{ message: string; snapshot: TournamentRatingSnapshot }> {
+  return await http.post(`/t/${tournamentId}/ratings/calculate`) as unknown as { message: string; snapshot: TournamentRatingSnapshot }
+}
+
+export async function finalizeTournamentRatings(tournamentId: string): Promise<{ message: string; snapshot: TournamentRatingSnapshot }> {
+  return await http.post(`/t/${tournamentId}/ratings/finalize`) as unknown as { message: string; snapshot: TournamentRatingSnapshot }
+}
+
+export async function unlockTournamentRatings(tournamentId: string): Promise<{ message: string; snapshot: TournamentRatingSnapshot }> {
+  return await http.post(`/t/${tournamentId}/ratings/unlock`) as unknown as { message: string; snapshot: TournamentRatingSnapshot }
 }
 
 export async function getTournamentMappoolStats(tournamentId: string): Promise<TournamentMappoolStats> {

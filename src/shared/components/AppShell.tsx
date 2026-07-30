@@ -63,6 +63,7 @@ export function AppShell() {
   const isHomeRoute = location.pathname === "/"
   const isTournamentBracketRoute = /^\/t\/[^/]+\/bracket\/?$/.test(location.pathname)
   const isTournamentRefereeRoute = /^\/t\/[^/]+\/referee\/[^/]+\/?$/.test(location.pathname)
+  const isUserProfileRoute = /^\/user\/\d+\/?$/.test(location.pathname)
   const headerScrolled = isHomeRoute ? homeSectionIndex > 0 : hasScrolled
   const useOverlayHeader = !isAdminRoute && !headerScrolled
 
@@ -286,7 +287,9 @@ export function AppShell() {
             ? "min-h-0 flex-1 overflow-hidden px-0 py-0"
             : isHomeRoute || isTournamentBracketRoute || isTournamentRefereeRoute
               ? "px-0 py-0"
-              : "mx-auto max-w-7xl px-3 py-6 sm:px-6",
+              : isUserProfileRoute
+                ? "px-0 py-6"
+                : "mx-auto max-w-7xl px-3 py-6 sm:px-6",
         )}
       >
         <Outlet />
