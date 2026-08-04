@@ -11,7 +11,7 @@ export const analytics = createAnalytics({
   debug: import.meta.env.DEV,
   endpoint: import.meta.env.VITE_ANALYTICS_ENDPOINT ?? `${API_BASE_URL}/analytics/collect`,
   features: {
-    activeTime: true,
+    activeTime: false,
     context: true,
     pageViews: true,
   },

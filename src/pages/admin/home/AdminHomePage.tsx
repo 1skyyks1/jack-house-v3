@@ -14,6 +14,7 @@ const adminNavItems: Array<{ key: AdminPermissionKey; to: string }> = [
   { key: "announcement", to: "/admin/announcement" },
   { key: "posts", to: "/admin/posts" },
   { key: "postFiles", to: "/admin/postFiles" },
+  { key: "packFeedback", to: "/admin/packFeedback" },
 ]
 
 export function AdminHomePage() {

@@ -1,11 +1,16 @@
 import { http } from "@/shared/api/http"
 import type {
+  AnalyticsAudienceResponse,
   AnalyticsDailyResponse,
   AnalyticsOverviewResponse,
   AnalyticsPagesResponse,
   AnalyticsStatsRange,
   DashboardUserGrowthResponse,
 } from "../model/types"
+
+export async function getAnalyticsAudience(params: AnalyticsStatsRange): Promise<AnalyticsAudienceResponse> {
+  return await http.get("/analytics/stats/audience", { params: { appId: params.appId } })
+}
 
 export async function getDashboardUserGrowth(days = 30): Promise<DashboardUserGrowthResponse> {
   return await http.get("/dashboard/users/daily", { params: { days } })

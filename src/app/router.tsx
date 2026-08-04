@@ -12,6 +12,7 @@ import {
   AdminEventStagesPage,
   AdminEventsPage,
   AdminHomePage,
+  AdminPackFeedbackPage,
   AdminPostFilesPage,
   AdminPostsPage,
   AdminTournamentAuditPage,
@@ -260,6 +261,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireAdminPermission permission="postFiles">
                 {lazyElement(<AdminPostFilesPage />)}
+              </RequireAdminPermission>
+            ),
+          },
+          {
+            path: "packFeedback",
+            element: (
+              <RequireAdminPermission permission="packFeedback">
+                {lazyElement(<AdminPackFeedbackPage />)}
               </RequireAdminPermission>
             ),
           },

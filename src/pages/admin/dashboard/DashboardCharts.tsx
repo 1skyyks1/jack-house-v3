@@ -1,13 +1,17 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
+import { geoEquirectangular, geoPath } from "d3-geo"
+import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { feature } from "topojson-client"
+import type { GeometryCollection, Topology } from "topojson-specification"
+import worldAtlas from "world-atlas/countries-110m.json"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 
 export type DashboardDailyPoint = {
-  activeMinutes: number
   date: string
   dateLabel: string
   pv: number
@@ -21,18 +25,8 @@ export type DashboardPagePoint = {
   pv: number
 }
 
-export type DashboardUserGrowthPoint = {
-  date: string
-  dateLabel: string
-  newUsers: number
-  totalUsers: number
-}
-
 export type DashboardChartSummary = {
-  activeLabel: string
   loginUsers?: number
-  newUsers?: number
-  totalUsers?: number
   traffic: {
     pv: number
     uv: number
@@ -40,12 +34,14 @@ export type DashboardChartSummary = {
 }
 
 type DashboardChartsProps = {
+  audienceDevices: Array<{ device: "desktop" | "mobile" | "tablet" | "unknown"; visitors: number }>
+  audienceScreens: Array<{ height: number; visitors: number; width: number }>
+  audienceTimezones: Array<{ timezone: string; visitors: number }>
   dailyData: DashboardDailyPoint[]
   hasDailyLoginUsers: boolean
   isLoading: boolean
   pageData: DashboardPagePoint[]
   summary: DashboardChartSummary
-  userGrowthData: DashboardUserGrowthPoint[]
 }
 
 const trafficChartConfig = {
@@ -73,21 +69,7 @@ const userChartConfig = {
   },
 } satisfies ChartConfig
 
-const activeChartConfig = {
-  activeMinutes: {
-    color: "var(--chart-4)",
-    label: "Minutes",
-  },
-} satisfies ChartConfig
-
-const userGrowthChartConfig = {
-  totalUsers: {
-    color: "var(--chart-1)",
-    label: "Users",
-  },
-} satisfies ChartConfig
-
-export function DashboardCharts({ dailyData, hasDailyLoginUsers, isLoading, pageData, summary, userGrowthData }: DashboardChartsProps) {
+export function DashboardCharts({ audienceDevices, audienceScreens, audienceTimezones, dailyData, hasDailyLoginUsers, isLoading, pageData, summary }: DashboardChartsProps) {
   const { t } = useTranslation()
 
   return (
@@ -145,27 +127,24 @@ export function DashboardCharts({ dailyData, hasDailyLoginUsers, isLoading, page
 
         <ChartCard
           badge={t("admin.dashboard.last30Days")}
-          description={t("admin.dashboard.userGrowthDescription")}
+          description={t("admin.dashboard.deviceAndScreenDescription")}
           isLoading={isLoading}
           loadingLabel={t("admin.dashboard.loadingAnalytics")}
-          stats={[
-            { label: t("admin.dashboard.currentUsers"), value: formatNumber(summary.totalUsers) },
-            { label: t("admin.dashboard.newUsers30"), value: formatNumber(summary.newUsers) },
-          ]}
-          title={t("admin.dashboard.userGrowth")}
+          title={t("admin.dashboard.deviceAndScreen")}
         >
-          {userGrowthData.length > 0 ? (
-            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={userGrowthChartConfig}>
-              <AreaChart data={userGrowthData} margin={{ left: 8, right: 8, top: 8 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis axisLine={false} dataKey="dateLabel" tickLine={false} tickMargin={8} />
-                <YAxis axisLine={false} tickLine={false} tickMargin={8} width={36} />
-                <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-                <Area dataKey="totalUsers" fill="var(--color-totalUsers)" fillOpacity={0.16} stroke="var(--color-totalUsers)" strokeWidth={2} type="monotone" />
-              </AreaChart>
-            </ChartContainer>
+          {audienceDevices.length > 0 || audienceScreens.length > 0 ? (
+            <div className="grid h-[220px] gap-5 overflow-y-auto md:grid-cols-2 xl:h-full xl:min-h-0">
+              <DistributionList
+                items={audienceDevices.map((item) => ({ label: t(`admin.dashboard.devices.${item.device}`), value: item.visitors }))}
+                title={t("admin.dashboard.deviceDistribution")}
+              />
+              <DistributionList
+                items={audienceScreens.map((item) => ({ label: `${item.width} × ${item.height}`, value: item.visitors }))}
+                title={t("admin.dashboard.screenSizeDistribution")}
+              />
+            </div>
           ) : (
-            <DashboardChartState label={t("admin.dashboard.noUserData")} />
+            <DashboardChartState label={t("admin.dashboard.noAudienceData")} />
           )}
         </ChartCard>
       </section>
@@ -173,24 +152,15 @@ export function DashboardCharts({ dailyData, hasDailyLoginUsers, isLoading, page
       <section className="grid gap-4 xl:min-h-0 xl:grid-cols-2">
         <ChartCard
           badge={t("admin.dashboard.last30Days")}
-          description={t("admin.dashboard.activeTrendDescription")}
+          description={t("admin.dashboard.regionDescription")}
           isLoading={isLoading}
           loadingLabel={t("admin.dashboard.loadingAnalytics")}
-          stats={[{ label: t("admin.dashboard.activeTimeTotal30"), value: summary.activeLabel }]}
-          title={t("admin.dashboard.activeTrend")}
+          title={t("admin.dashboard.visitorRegions")}
         >
-          {dailyData.length > 0 ? (
-            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={activeChartConfig}>
-              <AreaChart data={dailyData} margin={{ left: 8, right: 8, top: 8 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis axisLine={false} dataKey="dateLabel" tickLine={false} tickMargin={8} />
-                <YAxis axisLine={false} tickLine={false} tickMargin={8} width={36} />
-                <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-                <Area dataKey="activeMinutes" fill="var(--color-activeMinutes)" fillOpacity={0.16} stroke="var(--color-activeMinutes)" strokeWidth={2} type="monotone" />
-              </AreaChart>
-            </ChartContainer>
+          {audienceTimezones.length > 0 ? (
+            <VisitorTimezoneMap items={audienceTimezones} />
           ) : (
-            <DashboardChartState label={t("admin.dashboard.noTrafficData")} />
+            <DashboardChartState label={t("admin.dashboard.noAudienceData")} />
           )}
         </ChartCard>
 
@@ -268,6 +238,152 @@ export function DashboardChartState({ label }: { label: string }) {
       {label}
     </div>
   )
+}
+
+function DistributionList({ items, title }: { items: Array<{ label: string; value: number }>; title: string }) {
+  const maximum = Math.max(...items.map((item) => item.value), 1)
+
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      <div className="space-y-2.5">
+        {items.map((item) => (
+          <div key={item.label}>
+            <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+              <span className="truncate text-foreground" title={item.label}>{item.label}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">{formatNumber(item.value)}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max((item.value / maximum) * 100, 3)}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const timezoneMapWidth = 800
+const timezoneMapHeight = 300
+const timezoneMapProjection = geoEquirectangular().fitExtent(
+  [[4, 4], [timezoneMapWidth - 4, timezoneMapHeight - 4]],
+  { type: "Sphere" },
+)
+const timezoneMapPath = geoPath(timezoneMapProjection)
+const timezoneMapSpherePath = timezoneMapPath({ type: "Sphere" }) ?? ""
+const timezoneMapCountries = feature(
+  worldAtlas as unknown as Topology,
+  (worldAtlas as unknown as Topology).objects.countries as GeometryCollection,
+) as unknown as FeatureCollection<Geometry, GeoJsonProperties>
+
+function VisitorTimezoneMap({ items }: { items: Array<{ timezone: string; visitors: number }> }) {
+  const bands = getTimezoneBands(items)
+  const maximum = Math.max(...bands.map((band) => band.visitors), 1)
+
+  return (
+    <div className="h-[220px] xl:h-full xl:min-h-0">
+      <svg
+        aria-label="Visitor distribution by UTC timezone offset"
+        className="h-full w-full"
+        role="img"
+        viewBox={`0 0 ${timezoneMapWidth} ${timezoneMapHeight}`}
+      >
+        <defs>
+          <clipPath id="visitor-timezone-map-clip">
+            <path d={timezoneMapSpherePath} />
+          </clipPath>
+        </defs>
+        <path className="fill-muted stroke-border" d={timezoneMapSpherePath} strokeWidth={1} />
+        <g clipPath="url(#visitor-timezone-map-clip)">
+          {bands.map((band) => {
+            const longitude = normalizeLongitude(band.offset * 15)
+            const left = timezoneMapProjection([Math.max(longitude - 7.5, -180), 0])?.[0] ?? 0
+            const right = timezoneMapProjection([Math.min(longitude + 7.5, 180), 0])?.[0] ?? left
+            const opacity = 0.12 + 0.58 * Math.sqrt(band.visitors / maximum)
+            const center = (left + right) / 2
+            const label = `${formatUtcOffset(band.offset)} · ${formatNumber(band.visitors)}`
+
+            return (
+              <g key={band.offset}>
+                <rect className="fill-primary" height={timezoneMapHeight} opacity={opacity} width={Math.max(right - left, 2)} x={left} y={0}>
+                  <title>{`${label} visitors`}</title>
+                </rect>
+                <text
+                  className="fill-foreground text-[11px] font-medium"
+                  textAnchor="start"
+                  transform={`rotate(-90 ${center} ${timezoneMapHeight - 9})`}
+                  x={center}
+                  y={timezoneMapHeight - 9}
+                >
+                  {label}
+                </text>
+              </g>
+            )
+          })}
+        </g>
+        <g className="fill-transparent stroke-border" strokeWidth={0.7}>
+          {timezoneMapCountries.features.map((country, index) => (
+            <path d={timezoneMapPath(country) ?? undefined} key={String(country.id ?? index)} />
+          ))}
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+function getTimezoneBands(items: Array<{ timezone: string; visitors: number }>) {
+  const visitorsByOffset = new Map<number, number>()
+
+  for (const item of items) {
+    const offset = getTimezoneOffset(item.timezone)
+    if (offset == null) continue
+    visitorsByOffset.set(offset, (visitorsByOffset.get(offset) ?? 0) + item.visitors)
+  }
+
+  return [...visitorsByOffset.entries()]
+    .map(([offset, visitors]) => ({ offset, visitors }))
+    .sort((a, b) => a.offset - b.offset)
+}
+
+function getTimezoneOffset(timezone: string): number | null {
+  try {
+    const now = new Date()
+    const parts = new Intl.DateTimeFormat("en-US", {
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+      minute: "2-digit",
+      month: "2-digit",
+      second: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).formatToParts(now)
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+    const zonedTime = Date.UTC(
+      Number(values.year),
+      Number(values.month) - 1,
+      Number(values.day),
+      Number(values.hour),
+      Number(values.minute),
+      Number(values.second),
+    )
+    return Math.round(((zonedTime - now.getTime()) / 3_600_000) * 2) / 2
+  } catch {
+    return null
+  }
+}
+
+function formatUtcOffset(offset: number) {
+  if (offset === 0) return "UTC"
+  const sign = offset > 0 ? "+" : "−"
+  const absolute = Math.abs(offset)
+  const hours = Math.floor(absolute)
+  const minutes = absolute % 1 === 0 ? "" : `:${String(Math.round((absolute % 1) * 60)).padStart(2, "0")}`
+  return `UTC${sign}${hours}${minutes}`
+}
+
+function normalizeLongitude(longitude: number) {
+  return ((longitude + 180) % 360 + 360) % 360 - 180
 }
 
 function formatNumber(value: number | undefined) {

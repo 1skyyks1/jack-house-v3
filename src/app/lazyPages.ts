@@ -11,6 +11,7 @@ export const AdminEventStagesPage = lazy(() => import("@/pages/admin/event-stage
 export const AdminEventsPage = lazy(() => import("@/pages/admin/events/AdminEventsPage").then((module) => ({ default: module.AdminEventsPage })))
 export const AdminHomePage = lazy(() => import("@/pages/admin/home/AdminHomePage").then((module) => ({ default: module.AdminHomePage })))
 export const AdminPostFilesPage = lazy(() => import("@/pages/admin/post-files/AdminPostFilesPage").then((module) => ({ default: module.AdminPostFilesPage })))
+export const AdminPackFeedbackPage = lazy(() => import("@/pages/admin/pack-feedback/AdminPackFeedbackPage").then((module) => ({ default: module.AdminPackFeedbackPage })))
 export const AdminPostsPage = lazy(() => import("@/pages/admin/posts/AdminPostsPage").then((module) => ({ default: module.AdminPostsPage })))
 export const AdminTournamentAuditPage = lazy(() => import("@/pages/admin/tournaments/audit/AdminTournamentAuditPage").then((module) => ({ default: module.AdminTournamentAuditPage })))
 export const AdminTournamentBracketPage = lazy(() => import("@/pages/admin/tournaments/bracket/AdminTournamentBracketPage").then((module) => ({ default: module.AdminTournamentBracketPage })))

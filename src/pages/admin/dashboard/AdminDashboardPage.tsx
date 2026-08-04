@@ -2,19 +2,18 @@ import { ChartLineUp } from "@phosphor-icons/react"
 import { lazy, Suspense, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  useAnalyticsAudienceQuery,
   useAnalyticsDailyQuery,
   useAnalyticsOverviewQuery,
   useAnalyticsPagesQuery,
-  useDashboardUserGrowthQuery,
   type AnalyticsDailyPoint,
   type AnalyticsPageStats,
-  type DashboardUserGrowthPoint as ApiDashboardUserGrowthPoint,
 } from "@/entities/dashboard"
 import { AdminPage } from "@/features/admin-shell"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint, DashboardUserGrowthPoint } from "./DashboardCharts"
+import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint } from "./DashboardCharts"
 
-const analyticsDays = 30
+const analyticsDays = 14
 const analyticsAppId = "jack-house-v3"
 const DashboardCharts = lazy(() => import("./DashboardCharts").then((module) => ({ default: module.DashboardCharts })))
 
@@ -23,24 +22,26 @@ export function AdminDashboardPage() {
   const [analyticsRange] = useState(() => getLastDaysRange(analyticsDays))
   const analyticsParams = { appId: analyticsAppId, ...analyticsRange }
   const overviewQuery = useAnalyticsOverviewQuery(analyticsParams)
+  const audienceQuery = useAnalyticsAudienceQuery(analyticsParams)
   const dailyQuery = useAnalyticsDailyQuery(analyticsParams)
   const pagesQuery = useAnalyticsPagesQuery(analyticsParams)
-  const userGrowthQuery = useDashboardUserGrowthQuery(analyticsDays)
 
   const overview = overviewQuery.data?.overview
   const rawDailyData = dailyQuery.data?.daily ?? []
   const dailyData = normalizeDaily(rawDailyData, analyticsRange)
   const pageData = normalizePages(pagesQuery.data?.pages ?? [])
-  const userGrowthData = normalizeUserGrowth(userGrowthQuery.data?.daily ?? [])
   const hasDailyLoginUsers = rawDailyData.some(hasLoginUserField)
   const analyticsError = overviewQuery.isError || dailyQuery.isError || pagesQuery.isError
   const analyticsLoading = overviewQuery.isLoading || dailyQuery.isLoading || pagesQuery.isLoading
   const hasAnalyticsOverview = !analyticsError && Boolean(overview)
-  const chartLoading = analyticsLoading || userGrowthQuery.isLoading
+  const chartLoading = analyticsLoading || audienceQuery.isLoading
   const hasAnalyticsCharts = !analyticsError && (dailyData.length > 0 || pageData.length > 0)
-  const hasUserGrowthChart = !userGrowthQuery.isError && userGrowthData.length > 0
-  const hasDashboardCharts = hasAnalyticsCharts || hasUserGrowthChart
-  const chartSummary = getChartSummary(dailyData, userGrowthData, hasAnalyticsOverview ? toNumber(overview?.users) : undefined, hasAnalyticsOverview ? toNumber(overview?.active_ms) : undefined)
+  const hasAudienceData = !audienceQuery.isError && Boolean(audienceQuery.data?.timezones.length || audienceQuery.data?.devices.length || audienceQuery.data?.screens.length)
+  const hasDashboardCharts = hasAnalyticsCharts || hasAudienceData
+  const chartSummary = getChartSummary(
+    dailyData,
+    hasAnalyticsOverview ? toNumber(overview?.users) : undefined,
+  )
 
   return (
     <AdminPage className="h-full min-h-0">
@@ -63,12 +64,14 @@ export function AdminDashboardPage() {
         ) : (
           <Suspense fallback={<DashboardLoadingSkeleton />}>
             <DashboardCharts
+              audienceDevices={audienceQuery.isError ? [] : audienceQuery.data?.devices ?? []}
+              audienceScreens={audienceQuery.isError ? [] : audienceQuery.data?.screens ?? []}
+              audienceTimezones={audienceQuery.isError ? [] : audienceQuery.data?.timezones ?? []}
               dailyData={analyticsError ? [] : dailyData}
               hasDailyLoginUsers={hasDailyLoginUsers}
               isLoading={false}
               pageData={analyticsError ? [] : pageData}
               summary={chartSummary}
-              userGrowthData={userGrowthQuery.isError ? [] : userGrowthData}
             />
           </Suspense>
         )}
@@ -138,7 +141,6 @@ function normalizeDaily(rows: AnalyticsDailyPoint[], range: { from: string; to: 
     const row = rowsByDate.get(date)
 
     return {
-      activeMinutes: Math.round(toNumber(row?.active_ms) / 60_000),
       date,
       dateLabel: formatShortDate(date),
       pv: toNumber(row?.pv),
@@ -163,16 +165,10 @@ function normalizePages(rows: AnalyticsPageStats[]): DashboardPagePoint[] {
     }))
 }
 
-function normalizeUserGrowth(rows: ApiDashboardUserGrowthPoint[]): DashboardUserGrowthPoint[] {
-  return rows.map((row) => ({
-    date: row.date,
-    dateLabel: formatShortDate(row.date),
-    newUsers: toNumber(row.new_users),
-    totalUsers: toNumber(row.total_users),
-  }))
-}
-
-function getChartSummary(dailyData: DashboardDailyPoint[], userGrowthData: DashboardUserGrowthPoint[], loginUsers?: number, activeMs?: number): DashboardChartSummary {
+function getChartSummary(
+  dailyData: DashboardDailyPoint[],
+  loginUsers?: number,
+): DashboardChartSummary {
   const traffic = dailyData.reduce(
     (total, item) => ({
       pv: total.pv + item.pv,
@@ -180,14 +176,8 @@ function getChartSummary(dailyData: DashboardDailyPoint[], userGrowthData: Dashb
     }),
     { pv: 0, uv: 0 },
   )
-  const currentUserPoint = userGrowthData[userGrowthData.length - 1]
-  const newUsers = userGrowthData.reduce((total, item) => total + item.newUsers, 0)
-
   return {
-    activeLabel: formatDuration(activeMs ?? dailyData.reduce((total, item) => total + item.activeMinutes * 60_000, 0)),
     loginUsers,
-    newUsers,
-    totalUsers: currentUserPoint?.totalUsers,
     traffic,
   }
 }
@@ -197,14 +187,6 @@ function toNumber(value: number | string | undefined) {
   if (!value) return 0
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-function formatDuration(ms: number) {
-  if (!ms) return "-"
-  const minutes = Math.round(ms / 60_000)
-  if (minutes < 60) return `${minutes} min`
-  const hours = Math.round(minutes / 60)
-  return `${new Intl.NumberFormat("en-US").format(hours)} h`
 }
 
 function formatShortDate(value: string | Date) {

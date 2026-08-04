@@ -9,6 +9,7 @@ export type AdminPermissionKey =
   | "eventStages"
   | "events"
   | "postFiles"
+  | "packFeedback"
   | "posts"
   | "tournaments"
   | "users"
@@ -22,6 +23,7 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionKey, string> = {
   eventStages: "admin.nav.eventStages",
   events: "admin.nav.events",
   postFiles: "admin.nav.postFiles",
+  packFeedback: "admin.nav.packFeedback",
   posts: "admin.nav.posts",
   tournaments: "admin.nav.tournaments",
   users: "admin.nav.users",

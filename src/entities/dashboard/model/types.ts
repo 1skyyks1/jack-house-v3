@@ -16,6 +16,25 @@ export type AnalyticsStatsRange = {
   to?: string
 }
 
+export type AnalyticsAudienceResponse = {
+  appId: string
+  days: number
+  devices: Array<{
+    device: "desktop" | "mobile" | "tablet" | "unknown"
+    visitors: number
+  }>
+  ok: boolean
+  screens: Array<{
+    height: number
+    visitors: number
+    width: number
+  }>
+  timezones: Array<{
+    timezone: string
+    visitors: number
+  }>
+}
+
 export type AnalyticsOverview = {
   active_ms: number | string
   pv: number | string

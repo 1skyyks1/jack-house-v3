@@ -1,6 +1,7 @@
-export { getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardUserGrowth } from "./api/dashboardApi"
-export { dashboardQueryKeys, useAnalyticsDailyQuery, useAnalyticsOverviewQuery, useAnalyticsPagesQuery, useDashboardUserGrowthQuery } from "./api/dashboardQueries"
+export { getAnalyticsAudience, getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardUserGrowth } from "./api/dashboardApi"
+export { dashboardQueryKeys, useAnalyticsAudienceQuery, useAnalyticsDailyQuery, useAnalyticsOverviewQuery, useAnalyticsPagesQuery, useDashboardUserGrowthQuery } from "./api/dashboardQueries"
 export type {
+  AnalyticsAudienceResponse,
   AnalyticsDailyPoint,
   AnalyticsOverview,
   AnalyticsPageStats,
