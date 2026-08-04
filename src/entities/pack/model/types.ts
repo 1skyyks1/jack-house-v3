@@ -106,6 +106,39 @@ export type RefreshOsuPackRequest = {
   packId: number | string
 }
 
+export type PackFeedbackCategory = "incorrect_info" | "broken_link" | "inappropriate" | "duplicate" | "other"
+export type PackFeedbackStatus = 0 | 1 | 2
+
+export type CreatePackFeedbackRequest = {
+  category: PackFeedbackCategory
+  content: string
+  packId: number | string
+}
+
+export type PackFeedback = {
+  feedback_id: number
+  pack_id: number
+  user_id: number
+  category: PackFeedbackCategory
+  content: string
+  status: PackFeedbackStatus
+  created_time: string
+  updated_time: string
+  pack: Pick<PackDetail, "pack_id" | "title" | "title_unicode" | "artist" | "artist_unicode"> | null
+  user: PackUser | null
+}
+
+export type GetPackFeedbackParams = {
+  page: number
+  pageSize: number
+  status?: PackFeedbackStatus
+}
+
+export type UpdatePackFeedbackStatusRequest = {
+  feedbackId: number
+  status: PackFeedbackStatus
+}
+
 export type PackTagGroup = {
   label: string
   tags: PackTag[]

@@ -57,6 +57,7 @@ function getAdminTitle(pathname: string, t: (key: string) => string) {
   if (pathname === "/admin/announcement") return t("admin.nav.announcement")
   if (pathname === "/admin/posts") return t("admin.nav.posts")
   if (pathname === "/admin/postFiles") return t("admin.nav.postFiles")
+  if (pathname === "/admin/packFeedback") return t("admin.nav.packFeedback")
   if (pathname === "/admin/events") return t("admin.nav.events")
   if (/^\/admin\/events\/[^/]+\/stage\/?$/.test(pathname)) return t("admin.nav.eventStages")
   if (pathname === "/admin/tournaments" || pathname.startsWith("/admin/tournaments/")) return t("admin.nav.tournaments")

@@ -13,6 +13,7 @@ import {
   Star,
   Tag,
   Trash,
+  Warning,
 } from "@phosphor-icons/react"
 import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
@@ -32,12 +33,15 @@ import {
   getVisiblePackTagGroups,
   toFiniteNumber,
   useDeletePackMutation,
+  useCreatePackFeedbackMutation,
   usePackTagsQuery,
   useRefreshOsuPackMutation,
   useUpdatePackTagsMutation,
   type PackDetail,
+  type PackFeedbackCategory,
   type PackMap,
 } from "@/entities/pack"
+import { useAuthStore } from "@/features/auth"
 import { RichTextRenderer } from "@/features/rich-text/renderer"
 import {
   AlertDialog,
@@ -54,13 +58,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { AppAlert, InlineSkeleton, MutationErrorAlert } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
@@ -100,6 +109,7 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
         <h2 className="font-heading text-xl font-semibold">{t("pack.detail.infoTitle")}</h2>
         <div className="flex items-center gap-2">
           {canMaintain ? <PackMaintenanceDialog pack={pack} /> : null}
+          <PackFeedbackDialog pack={pack} />
           <Button aria-label={t("pack.detail.shareAriaLabel")} onClick={sharePack} size="icon-sm" type="button" variant="outline">
             <ShareNetwork className="size-4" weight="bold" />
           </Button>
@@ -118,6 +128,113 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
         />
       </dl>
     </section>
+  )
+}
+
+const feedbackCategories: PackFeedbackCategory[] = ["incorrect_info", "broken_link", "inappropriate", "duplicate", "other"]
+
+function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
+  const { t } = useTranslation()
+  const isLogged = useAuthStore((state) => state.isLogged)
+  const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
+  const mutation = useCreatePackFeedbackMutation()
+  const [isOpen, setIsOpen] = useState(false)
+  const [category, setCategory] = useState<PackFeedbackCategory>("incorrect_info")
+  const [content, setContent] = useState("")
+  const [validationError, setValidationError] = useState("")
+
+  const openFeedback = () => {
+    if (!isLogged) {
+      openLoginDialog(window.location.pathname + window.location.search)
+      return
+    }
+    setIsOpen(true)
+  }
+
+  const submitFeedback = () => {
+    const normalizedContent = content.trim()
+    if (normalizedContent.length < 5 || normalizedContent.length > 2000) {
+      setValidationError(t("pack.feedback.validation.contentLength"))
+      return
+    }
+
+    setValidationError("")
+    mutation.mutate(
+      { category, content: normalizedContent, packId: pack.pack_id },
+      {
+        onSuccess: () => {
+          toast.success(t("pack.feedback.success"))
+          setIsOpen(false)
+          setCategory("incorrect_info")
+          setContent("")
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open)
+      if (!open) setValidationError("")
+    }}>
+      <Button
+        aria-label={t("pack.feedback.ariaLabel")}
+        className="text-amber-600 hover:text-amber-700 dark:text-amber-400"
+        onClick={openFeedback}
+        size="icon-sm"
+        title={t("pack.feedback.ariaLabel")}
+        type="button"
+        variant="outline"
+      >
+        <Warning className="size-4" weight="bold" />
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("pack.feedback.title")}</DialogTitle>
+          <DialogDescription>{t("pack.feedback.description", { title: pack.title_unicode || pack.title })}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="pack-feedback-category">{t("pack.feedback.categoryLabel")}</Label>
+            <Select value={category} onValueChange={(value) => setCategory(value as PackFeedbackCategory)}>
+              <SelectTrigger className="w-full" id="pack-feedback-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {feedbackCategories.map((item) => (
+                  <SelectItem key={item} value={item}>{t(`pack.feedback.categories.${item}`)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="pack-feedback-content">{t("pack.feedback.contentLabel")}</Label>
+              <span className="text-xs text-muted-foreground">{content.length}/2000</span>
+            </div>
+            <Textarea
+              aria-invalid={Boolean(validationError)}
+              className="min-h-32"
+              id="pack-feedback-content"
+              maxLength={2000}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder={t("pack.feedback.contentPlaceholder")}
+              value={content}
+            />
+            {validationError ? <p className="text-sm text-destructive">{validationError}</p> : null}
+            {mutation.error ? <MutationErrorAlert error={mutation.error} /> : null}
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button disabled={mutation.isPending} type="button" variant="outline">{t("pack.feedback.cancel")}</Button>
+          </DialogClose>
+          <Button disabled={mutation.isPending} onClick={submitFeedback} type="button">
+            {mutation.isPending ? t("pack.feedback.submitting") : t("pack.feedback.submit")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

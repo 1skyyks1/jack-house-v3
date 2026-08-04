@@ -147,6 +147,28 @@ export const zhPack = {
       title: "讨论区",
       description: "和其他 Jack House 玩家一起讨论这个图包。",
     },
+    feedback: {
+      ariaLabel: "举报或反馈图包",
+      title: "举报 / 反馈",
+      description: "向管理员反馈「{{title}}」存在的问题。",
+      categoryLabel: "问题类型",
+      contentLabel: "问题说明",
+      contentPlaceholder: "请描述具体问题，例如错误位置、失效链接或重复图包信息…",
+      categories: {
+        incorrect_info: "信息有误",
+        broken_link: "下载链接失效",
+        inappropriate: "内容不当",
+        duplicate: "重复图包",
+        other: "其他问题",
+      },
+      validation: {
+        contentLength: "请填写 5 到 2000 字的问题说明",
+      },
+      cancel: "取消",
+      submit: "提交反馈",
+      submitting: "提交中…",
+      success: "反馈已提交，感谢你的帮助",
+    },
   },
 } as const
 
@@ -298,6 +320,28 @@ export const enPack = {
     comments: {
       title: "Pack comments",
       description: "Discuss this pack with other Jack House players.",
+    },
+    feedback: {
+      ariaLabel: "Report or send feedback about this pack",
+      title: "Report / feedback",
+      description: "Tell the moderators what is wrong with “{{title}}”.",
+      categoryLabel: "Issue type",
+      contentLabel: "Details",
+      contentPlaceholder: "Describe the issue, such as incorrect information, a broken link, or a duplicate pack…",
+      categories: {
+        incorrect_info: "Incorrect information",
+        broken_link: "Broken download link",
+        inappropriate: "Inappropriate content",
+        duplicate: "Duplicate pack",
+        other: "Other",
+      },
+      validation: {
+        contentLength: "Enter between 5 and 2000 characters",
+      },
+      cancel: "Cancel",
+      submit: "Submit feedback",
+      submitting: "Submitting…",
+      success: "Feedback submitted. Thanks for helping",
     },
   },
 } as const

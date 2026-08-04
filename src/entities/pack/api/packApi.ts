@@ -4,14 +4,18 @@ import { http } from "@/shared/api/http"
 import type {
   CreatePackRequest,
   CreatePackResponse,
+  CreatePackFeedbackRequest,
+  GetPackFeedbackParams,
   GetPackListParams,
   ImportOsuPackRequest,
   OsuPackPreview,
   PackDetail,
+  PackFeedback,
   PackListItem,
   PackTag,
   RefreshOsuPackRequest,
   UpdatePackTagsRequest,
+  UpdatePackFeedbackStatusRequest,
 } from "../model/types"
 
 export async function getPackList(params: GetPackListParams): Promise<PaginatedEnvelope<PackListItem>> {
@@ -70,4 +74,20 @@ export async function updatePackTags(request: UpdatePackTagsRequest): Promise<vo
   await http.put(`/tag/${request.packId}`, {
     tags: request.tags,
   })
+}
+
+export async function createPackFeedback(request: CreatePackFeedbackRequest): Promise<void> {
+  await http.post(`/pack/${request.packId}/feedback`, {
+    category: request.category,
+    content: request.content,
+  })
+}
+
+export async function getPackFeedbackList(params: GetPackFeedbackParams): Promise<PaginatedEnvelope<PackFeedback>> {
+  const response = await http.get("/pack/feedback", { params })
+  return unwrapPagination<PackFeedback>(response)
+}
+
+export async function updatePackFeedbackStatus(request: UpdatePackFeedbackStatusRequest): Promise<void> {
+  await http.patch(`/pack/feedback/${request.feedbackId}`, { status: request.status })
 }
