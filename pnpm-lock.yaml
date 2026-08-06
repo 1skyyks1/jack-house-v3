@@ -11,12 +11,21 @@ importers:
       '@elyasasmad/react-tournament-brackets':
         specifier: ^1.1.1
         version: 1.1.1(react-dom@19.2.7(react@19.2.7))(react-svg-pan-zoom@3.13.1)(react@19.2.7)(styled-components@6.4.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+      '@fontsource-variable/dancing-script':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@fontsource-variable/figtree':
         specifier: ^5.2.10
         version: 5.2.10
+      '@fontsource-variable/nunito':
+        specifier: ^5.2.5
+        version: 5.2.5
       '@fontsource-variable/oxanium':
         specifier: ^5.2.7
         version: 5.2.7
+      '@fontsource/space-grotesk':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.79.0(react@19.2.7))
@@ -424,11 +433,20 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
+  '@fontsource-variable/dancing-script@5.2.8':
+    resolution: {integrity: sha512-K6Mkb5bn00WJTDsiKZ83p1hWZ3Q5U9YSH1nIp2ATknHi8ladevGGjIUQBs+LAgEr2y2W1XRV3VVuLsLVxH+G8g==}
+
   '@fontsource-variable/figtree@5.2.10':
     resolution: {integrity: sha512-a5Gumbpy3mdd+Yg31g6Qb7CmjYbrfyutJa3bWfP5q8A4GclIOwX7mI+ZuSHsJnw/mHvW6r9oh1AHJcJTIxK4JA==}
 
+  '@fontsource-variable/nunito@5.2.5':
+    resolution: {integrity: sha512-XMrSfi1XrnM6HQA+MMdPVY/5tdnG4vamQScaesQRhaboP8g0dEjxbtUJY50KHFTh2MnQP5lHIyDFuMNM4Kb23A==}
+
   '@fontsource-variable/oxanium@5.2.7':
     resolution: {integrity: sha512-n1v3iCQCQgBo/tj38G7m8zJJdfy0eAgkaf0t4AZVguX3D5RO8OCDQ5Bx0nHh9TO/k6BVS8uT5M2XyomxjINdeg==}
+
+  '@fontsource/space-grotesk@5.3.0':
+    resolution: {integrity: sha512-ksnGizDPXIDuvqcTYTSrmZ+evx9sDlS8rp7+42BQ7wU+spt3twEoXfbJz672C+5CLg6VeUQwRy5RXshWb67LcQ==}
 
   '@hono/node-server@1.19.14':
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
@@ -4008,9 +4026,15 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@fontsource-variable/dancing-script@5.2.8': {}
+
   '@fontsource-variable/figtree@5.2.10': {}
 
+  '@fontsource-variable/nunito@5.2.5': {}
+
   '@fontsource-variable/oxanium@5.2.7': {}
+
+  '@fontsource/space-grotesk@5.3.0': {}
 
   '@hono/node-server@1.19.14(hono@4.12.25)':
     dependencies:

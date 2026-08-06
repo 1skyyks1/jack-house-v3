@@ -5,12 +5,13 @@ import {
   ChatText,
   DiscordLogo,
   DownloadSimple,
+  Eye,
   FileArrowUp,
   LinkSimple,
   Question,
   Trophy,
 } from "@phosphor-icons/react"
-import { useMemo, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -29,10 +30,12 @@ import {
   type UserProfile,
   type UserTournamentExperience,
 } from "@/entities/user"
-import { useTournamentRoundsQuery, type TournamentPerformance } from "@/entities/tournament"
+import { useTournamentPerformanceQuery, useTournamentRoundsQuery, type TournamentPerformance } from "@/entities/tournament"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { HolographicCard } from "@/components/ui/holographic-card"
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -42,6 +45,7 @@ import type { AppLocale } from "@/shared/i18n/client"
 import { formatDate } from "@/shared/lib/date"
 import { getErrorMessage } from "@/shared/components"
 import { PlayerPerformancePoster } from "@/pages/tournaments/performance/PlayerPerformancePoster"
+import { PlayerCollectibleCard } from "@/pages/tournaments/performance/PlayerCollectibleCard"
 import { downloadSvgAsPng } from "@/pages/tournaments/performance/exportSvg"
 import {
   buildPlayerPerformanceProfiles,
@@ -55,6 +59,7 @@ import { parsePage } from "./utils"
 
 const USER_POST_PAGE_SIZE = 4
 const USER_POST_FILE_PAGE_SIZE = 3
+const SHOW_PERFORMANCE_POSTER = false
 const TPR_CHART_CONFIG = {
   tpr: { color: "var(--primary)", label: "TPR" },
 } satisfies ChartConfig
@@ -160,7 +165,7 @@ function UserBadgeStrip({ badges, className, limit }: { badges: UserBadge[]; cla
   const hiddenBadgeCount = badges.length - visibleBadges.length
 
   return (
-    <div className={cn("min-w-0 items-center gap-2", className)}>
+    <div className={cn("flex min-w-0 flex-row flex-wrap items-center gap-2", className)}>
       {visibleBadges.map((badge) => <UserBadgeItem badge={badge} key={badge.id} />)}
       {hiddenBadgeCount > 0 ? (
         <Popover>
@@ -268,10 +273,13 @@ function TournamentExperienceSection({ experiencesQuery, user }: {
   const [selectedStageKey, setSelectedStageKey] = useState<string | null>(null)
   const [chartStageKey, setChartStageKey] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const posterRef = useRef<SVGSVGElement>(null)
+  const [isCardHintVisible, setIsCardHintVisible] = useState(true)
+  const collectibleCardRef = useRef<SVGSVGElement>(null)
+  const cardHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const experiences = experiencesQuery.data ?? []
   const selected = experiences.find((item) => item.tournament.id === selectedId) ?? experiences[0]
   const roundsQuery = useTournamentRoundsQuery(selected ? String(selected.tournament.id) : undefined)
+  const tournamentPerformanceQuery = useTournamentPerformanceQuery(selected ? String(selected.tournament.id) : undefined)
   const roundGroups = useMemo(() => groupRoundsByMainStage(roundsQuery.data ?? []).map((group) => ({
     key: group.key,
     label: group.label,
@@ -279,6 +287,26 @@ function TournamentExperienceSection({ experiencesQuery, user }: {
     roundIds: group.rounds.map((round) => round.id),
   })), [roundsQuery.data])
   const profile = useMemo(() => selected ? buildExperienceProfile(selected, roundGroups) : null, [roundGroups, selected])
+  const comparisonProfiles = useMemo(() => (
+    tournamentPerformanceQuery.data
+      ? buildPlayerPerformanceProfiles(tournamentPerformanceQuery.data, roundGroups)
+      : []
+  ), [roundGroups, tournamentPerformanceQuery.data])
+  useEffect(() => () => {
+    if (cardHintTimerRef.current) clearTimeout(cardHintTimerRef.current)
+  }, [])
+  const handleCardDialogOpenChange = (open: boolean) => {
+    if (cardHintTimerRef.current) clearTimeout(cardHintTimerRef.current)
+    cardHintTimerRef.current = null
+    if (open) setIsCardHintVisible(true)
+  }
+  const handleCardPointerMove = () => {
+    if (!isCardHintVisible || cardHintTimerRef.current) return
+    cardHintTimerRef.current = setTimeout(() => {
+      setIsCardHintVisible(false)
+      cardHintTimerRef.current = null
+    }, 2000)
+  }
   const activeStageKey = profile?.stages.some((stage) => stage.key === selectedStageKey)
     ? selectedStageKey
     : profile?.stages[0]?.key ?? null
@@ -327,12 +355,12 @@ function TournamentExperienceSection({ experiencesQuery, user }: {
     const ticks = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, index) => min + index * step)
     return { domain: [min, max] as [number, number], ticks }
   }, [tprChartData])
-  const exportPoster = async () => {
-    if (!posterRef.current || !profile || !selected) return
+  const exportCollectibleCard = async () => {
+    if (!collectibleCardRef.current || !profile || !selected) return
     setIsExporting(true)
     try {
       const safeName = user.user_name.replace(/[^a-z0-9\u4e00-\u9fff_-]+/gi, "-")
-      await downloadSvgAsPng(posterRef.current, `${selected.tournament.acronym}-${safeName}-performance.png`)
+      await downloadSvgAsPng(collectibleCardRef.current, `${selected.tournament.acronym}-${safeName}-collectible-card.png`)
       toast.success(t("tournament.playerPerformance.exported"))
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -367,17 +395,51 @@ function TournamentExperienceSection({ experiencesQuery, user }: {
                 ))}
               </SelectContent>
             </Select>
+            <Dialog onOpenChange={handleCardDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button
+                  aria-label={t("user.profile.previewPlayerCard")}
+                  className="size-8 px-0 sm:w-auto sm:px-3"
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Eye />
+                  <span className="hidden sm:inline">{t("user.profile.previewPlayerCard")}</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[min(360px,calc((100dvh-176px)*0.72),calc(100vw-32px))] max-w-none select-none gap-0 rounded-none bg-transparent p-0 text-white ring-0 sm:max-w-none [&_[data-slot=dialog-close]]:-top-18 [&_[data-slot=dialog-close]]:right-0 [&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:bg-black/35 [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:backdrop-blur-md">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>{t("user.profile.previewPlayerCard")}</DialogTitle>
+                </DialogHeader>
+                <div className="w-full" onPointerMove={handleCardPointerMove}>
+                  <HolographicCard aspectRatio={360 / 500}>
+                    <PlayerCollectibleCard comparisonProfiles={comparisonProfiles} profile={profile} tournament={selected.tournament} />
+                  </HolographicCard>
+                </div>
+                <DialogDescription
+                  aria-hidden={!isCardHintVisible}
+                  className={cn(
+                    "pointer-events-none absolute bottom-[-60px] left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-black/30 px-3 py-1.5 text-[11px] tracking-[0.08em] text-white/60 backdrop-blur-md transition duration-300",
+                    isCardHintVisible ? "opacity-100" : "translate-y-1 opacity-0",
+                  )}
+                >
+                  <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-white/60" />
+                  {t("user.profile.playerCardPreviewDescription")}
+                </DialogDescription>
+              </DialogContent>
+            </Dialog>
             <Button
               aria-label={isExporting ? t("tournament.playerPerformance.exporting") : t("user.profile.exportPlayerCard")}
               className="size-8 px-0 sm:w-auto sm:px-3"
               disabled={isExporting}
-              onClick={exportPoster}
+              onClick={exportCollectibleCard}
               size="sm"
               type="button"
               variant="outline"
             >
               <DownloadSimple />
-              <span className="hidden sm:inline">{isExporting ? t("tournament.playerPerformance.exporting") : t("user.profile.exportPlayerCard")}</span>
+              <span className="hidden sm:inline">{isExporting ? t("tournament.playerPerformance.exporting") : t("user.profile.exportPlayerCardShort")}</span>
             </Button>
           </div>
         ) : undefined}
@@ -442,11 +504,20 @@ function TournamentExperienceSection({ experiencesQuery, user }: {
                 </div>
               </div>
 
-              <div className="fixed -left-[10000px] top-0 size-[340px] overflow-hidden" aria-hidden="true">
-                <PlayerPerformancePoster
+              {SHOW_PERFORMANCE_POSTER ? (
+                <div className="fixed -left-[10000px] top-0 size-[340px] overflow-hidden" aria-hidden="true">
+                  <PlayerPerformancePoster
+                    profile={profile}
+                    snapshotDate={selected.snapshot.finalized_at ?? selected.snapshot.calculated_at}
+                    tournament={selected.tournament}
+                  />
+                </div>
+              ) : null}
+              <div className="fixed -left-[10000px] top-0 w-[360px] overflow-hidden" aria-hidden="true">
+                <PlayerCollectibleCard
+                  comparisonProfiles={comparisonProfiles}
                   profile={profile}
-                  ref={posterRef}
-                  snapshotDate={selected.snapshot.finalized_at ?? selected.snapshot.calculated_at}
+                  ref={collectibleCardRef}
                   tournament={selected.tournament}
                 />
               </div>

@@ -1,0 +1,199 @@
+.holographic-card {
+  width: 100%;
+  aspect-ratio: var(--card-aspect);
+  border-radius: var(--card-radius);
+  perspective: 600px;
+}
+
+.holographic-card__rotator {
+  --tilt-left-right: 0deg;
+  --tilt-up-down: 0deg;
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-from-center: 0;
+  --effect-intensity: 0;
+  --background-x: 50%;
+  --background-y: 50%;
+  --space: 6%;
+  --angle: 133deg;
+  --imgsize: 60% 30%;
+
+  width: 100%;
+  height: 100%;
+  display: grid;
+  border-radius: inherit;
+  transform: rotateY(var(--tilt-left-right)) rotateX(var(--tilt-up-down));
+  transform-origin: center;
+  will-change: transform;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.42), 0 4px 12px rgba(0, 0, 0, 0.34);
+}
+
+.holographic-card__front,
+.holographic-card__front > * {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.holographic-card__front {
+  display: grid;
+  overflow: hidden;
+}
+
+.holographic-card__content {
+  overflow: hidden;
+}
+
+.holographic-card__content > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.holographic-card__shine,
+.holographic-card__glare,
+.holographic-card__edge {
+  pointer-events: none;
+}
+
+.holographic-card__shine {
+  display: grid;
+  background-image: var(--foil),
+    repeating-linear-gradient(
+      -33deg,
+      hsl(2, 70%, 47%) calc(var(--space) * 1),
+      hsl(228, 60%, 64%) calc(var(--space) * 2),
+      hsl(176, 55%, 39%) calc(var(--space) * 3),
+      hsl(123, 68%, 35%) calc(var(--space) * 4),
+      hsl(283, 75%, 57%) calc(var(--space) * 5),
+      hsl(2, 70%, 47%) calc(var(--space) * 6)
+    ),
+    repeating-linear-gradient(
+      var(--angle),
+      hsla(227, 53%, 12%, 0.5) 0%,
+      hsl(180, 10%, 50%) 2.5%,
+      hsl(83, 50%, 35%) 5%,
+      hsl(180, 10%, 50%) 7.5%,
+      hsla(227, 53%, 12%, 0.5) 10%,
+      hsla(227, 53%, 12%, 0.5) 15%
+    ),
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x) var(--pointer-y),
+      hsla(189, 76%, 77%, 0.6) 0%,
+      hsla(147, 59%, 77%, 0.6) 25%,
+      hsla(271, 55%, 69%, 0.6) 50%,
+      hsla(355, 56%, 72%, 0.6) 75%
+    );
+  background-size: var(--imgsize), 1100% 1100%, 600% 600%, 200% 200%;
+  background-blend-mode: difference, luminosity, soft-light, normal;
+  mix-blend-mode: color-dodge;
+  background-position: center, var(--background-x) var(--background-y),
+    var(--background-x) var(--background-y),
+    var(--background-x) var(--background-y);
+  opacity: var(--effect-intensity);
+  filter: brightness(calc((var(--pointer-from-center) * 0.4) + 0.4)) contrast(2) saturate(1);
+}
+
+.holographic-card__shine::after {
+  --sunpillar-1: hsl(2, 100%, 73%);
+  --sunpillar-2: hsl(53, 100%, 69%);
+  --sunpillar-3: hsl(93, 100%, 69%);
+  --sunpillar-4: hsl(176, 100%, 76%);
+  --sunpillar-5: hsl(228, 100%, 74%);
+  --sunpillar-6: hsl(283, 100%, 73%);
+
+  content: "";
+  grid-area: 1 / 1;
+  border-radius: inherit;
+  background-image: repeating-linear-gradient(
+      0deg,
+      var(--sunpillar-6) calc(var(--space) * 1),
+      var(--sunpillar-1) calc(var(--space) * 2),
+      var(--sunpillar-2) calc(var(--space) * 3),
+      var(--sunpillar-3) calc(var(--space) * 4),
+      var(--sunpillar-4) calc(var(--space) * 5),
+      var(--sunpillar-5) calc(var(--space) * 6),
+      var(--sunpillar-6) calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(
+      var(--angle),
+      #0e152e 0%,
+      hsl(180, 10%, 60%) 3.8%,
+      hsl(180, 29%, 66%) 4.5%,
+      hsl(180, 10%, 60%) 5.2%,
+      #0e152e 10%,
+      #0e152e 12%
+    );
+  background-blend-mode: hue, normal;
+  background-size: 200% 700%, 300% 100%;
+  background-position: 0% var(--background-y), var(--background-x) var(--background-y);
+  mix-blend-mode: lighten;
+  opacity: calc(
+    (0.3 * var(--effect-intensity)) + var(--effect-intensity) * var(--pointer-from-center) * 0.5
+  );
+}
+
+.holographic-card__glare {
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsla(0, 0%, 100%, 0.75) 0%,
+    hsl(0, 0%, 0%) 120%
+  );
+  mix-blend-mode: hard-light;
+  opacity: calc(
+    (0.2 * var(--effect-intensity)) + var(--effect-intensity) * var(--pointer-from-center) * 0.8
+  );
+}
+
+.holographic-card__edge {
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 8px rgba(214, 226, 240, 0.1);
+}
+
+.holographic-card__edge::after {
+  position: absolute;
+  inset: 0;
+  padding: 5px;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      112deg,
+      rgba(255, 147, 185, 0.9) 0%,
+      rgba(255, 220, 151, 0.96) 4%,
+      rgba(177, 255, 220, 0.9) 8%,
+      rgba(139, 222, 255, 0.96) 12%,
+      rgba(178, 165, 255, 0.92) 16%,
+      rgba(255, 164, 222, 0.88) 20%,
+      rgba(255, 147, 185, 0.9) 24%
+    ),
+    repeating-linear-gradient(
+      28deg,
+      rgba(255, 255, 255, 0.58) 0,
+      rgba(255, 255, 255, 0.58) 1px,
+      rgba(255, 255, 255, 0.04) 1.5px,
+      rgba(255, 255, 255, 0.04) 5px
+    ),
+    radial-gradient(
+      circle at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.76) 0%,
+      rgba(255, 255, 255, 0.22) 18%,
+      rgba(255, 255, 255, 0) 48%
+    );
+  background-blend-mode: color, overlay, screen;
+  background-position:
+    var(--background-x) var(--background-y),
+    var(--background-x) var(--background-y),
+    center;
+  background-size: 240% 240%, 17px 17px, 100% 100%;
+  content: "";
+  filter: brightness(1.06) contrast(1.12) saturate(0.38);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  mix-blend-mode: normal;
+  opacity: calc(0.3 + (var(--effect-intensity) * 0.42));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+}
