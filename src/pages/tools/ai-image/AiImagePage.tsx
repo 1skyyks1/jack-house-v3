@@ -39,6 +39,10 @@ import { ApiError } from "@/shared/api/errors"
 import { ToolsBreadcrumb } from "../_shared/ToolsBreadcrumb"
 
 const ACTIVE_STATUSES = new Set<AiImageJobStatus>(["submitting", "pending", "running"])
+const ASPECT_RATIO_ORDER = ["auto", "1:1", "4:3", "3:4", "16:9", "9:16"]
+const RESOLUTION_ORDER = ["1k", "2k", "4k"]
+const MAX_CUSTOM_PIXELS = 8_294_400
+const MAX_REFERENCE_IMAGES = 16
 
 export function AiImagePage() {
   const { i18n, t } = useTranslation()
@@ -48,7 +52,10 @@ export function AiImagePage() {
   const [jobs, setJobs] = useState<AiImageJob[]>([])
   const [requestType, setRequestType] = useState<AiImageRequestType>("generation")
   const [prompt, setPrompt] = useState("")
-  const [size, setSize] = useState("")
+  const [aspectRatio, setAspectRatio] = useState("auto")
+  const [resolution, setResolution] = useState("4k")
+  const [customWidth, setCustomWidth] = useState("1024")
+  const [customHeight, setCustomHeight] = useState("1024")
   const [images, setImages] = useState<File[]>([])
   const [mask, setMask] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -74,7 +81,6 @@ export function AiImagePage() {
       ])
       setConfig(nextConfig)
       setJobs(history.data)
-      setSize((current) => current || nextConfig.allowedSizes[0] || "1024x1024")
     } catch (error) {
       if (!silent) toast.error(getErrorMessage(error, t("aiImage.loadFailed")))
     } finally {
@@ -105,7 +111,7 @@ export function AiImagePage() {
 
   const handleImages = (files: FileList | null) => {
     if (!files) return
-    const maxReferences = config?.maxReferences ?? 10
+    const maxReferences = MAX_REFERENCE_IMAGES
     const next = Array.from(files).slice(0, maxReferences)
     if (files.length > maxReferences) toast.error(t("aiImage.tooManyReferences", { count: maxReferences }))
     setImages(next)
@@ -121,6 +127,10 @@ export function AiImagePage() {
       toast.error(t("aiImage.referencesRequired"))
       return
     }
+    if (resolution === "custom" && !isValidCustomSize(customWidth, customHeight)) {
+      toast.error(t("aiImage.customSizeInvalid"))
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -128,7 +138,7 @@ export function AiImagePage() {
         idempotencyKey: requestKey,
         requestType,
         prompt: prompt.trim(),
-        size: size || config?.allowedSizes[0] || "1024x1024",
+        size: composeRequestedSize({ aspectRatio, customHeight, customWidth, resolution }),
         images,
         mask,
       })
@@ -148,6 +158,7 @@ export function AiImagePage() {
 
   const quotaExhausted = config?.quota.remaining === 0
   const submitDisabled = isSubmitting || Boolean(activeJob) || quotaExhausted || isLoading
+  const maxReferences = MAX_REFERENCE_IMAGES
 
   return (
     <section className="space-y-6">
@@ -187,6 +198,7 @@ export function AiImagePage() {
                     accept="image/jpeg,image/png,image/webp"
                     files={images}
                     label={t("aiImage.references")}
+                    maxFiles={maxReferences}
                     multiple
                     onChange={handleImages}
                     onRemove={(index) => setImages((current) => current.filter((_file, itemIndex) => itemIndex !== index))}
@@ -203,18 +215,65 @@ export function AiImagePage() {
                 </div>
               ) : null}
 
-              <div className="grid gap-4 sm:grid-cols-[14rem_1fr] sm:items-end">
-                <div className="space-y-2">
-                  <Label>{t("aiImage.size")}</Label>
-                  <Select disabled={submitDisabled} onValueChange={setSize} value={size}>
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <div className={resolution === "custom"
+                ? "grid gap-4 sm:grid-cols-[11rem_13rem_1fr] sm:items-end"
+                : "grid gap-4 sm:grid-cols-[11rem_9rem_1fr] sm:items-end"}
+              >
+                <div className="grid grid-rows-[1rem_2.25rem] gap-2">
+                  <Label className="h-4">{t("aiImage.resolution")}</Label>
+                  <Select disabled={submitDisabled} onValueChange={setResolution} value={resolution}>
+                    <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {(config?.allowedSizes ?? ["1024x1024"]).map((item) => (
-                        <SelectItem key={item} value={item}>{item}</SelectItem>
-                      ))}
+                      {RESOLUTION_ORDER.map((item) => <SelectItem key={item} value={item}>{item.toUpperCase()}</SelectItem>)}
+                      <SelectItem value="custom">{t("aiImage.custom")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {resolution === "custom" ? (
+                  <div className="grid grid-rows-[1rem_2.25rem] gap-2">
+                    <Label className="h-4" htmlFor="ai-image-custom-width">{t("aiImage.exactSize")}</Label>
+                    <div className="grid h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <Input
+                        aria-label={t("aiImage.customWidth")}
+                        className="h-9"
+                        disabled={submitDisabled}
+                        id="ai-image-custom-width"
+                        inputMode="numeric"
+                        maxLength={5}
+                        onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, "").slice(0, 5))}
+                        placeholder={t("aiImage.customWidth")}
+                        type="text"
+                        value={customWidth}
+                      />
+                      <span aria-hidden="true" className="text-sm text-muted-foreground">×</span>
+                      <Input
+                        aria-label={t("aiImage.customHeight")}
+                        className="h-9"
+                        disabled={submitDisabled}
+                        id="ai-image-custom-height"
+                        inputMode="numeric"
+                        maxLength={5}
+                        onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, "").slice(0, 5))}
+                        placeholder={t("aiImage.customHeight")}
+                        type="text"
+                        value={customHeight}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-rows-[1rem_2.25rem] gap-2">
+                    <Label className="h-4">{t("aiImage.aspectRatio")}</Label>
+                    <Select disabled={submitDisabled} onValueChange={setAspectRatio} value={aspectRatio}>
+                      <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ASPECT_RATIO_ORDER.map((item) => (
+                          <SelectItem key={item} value={item}>{item === "auto" ? "Auto" : item}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <Button className="w-full sm:justify-self-end sm:w-auto" disabled={submitDisabled} size="lg" type="submit">
                   {isSubmitting || activeJob ? <CircleNotch className="animate-spin" /> : <Sparkle weight="fill" />}
                   {activeJob ? t("aiImage.inProgress") : isSubmitting ? t("aiImage.submitting") : t("aiImage.generate")}
@@ -281,20 +340,24 @@ type FilePickerProps = {
   accept: string
   files: File[]
   label: string
+  maxFiles?: number
   multiple?: boolean
   onChange: (files: FileList | null) => void
   onRemove: (index: number) => void
   optional: boolean
 }
 
-function FilePicker({ accept, files, label, multiple, onChange, onRemove, optional }: FilePickerProps) {
+function FilePicker({ accept, files, label, maxFiles, multiple, onChange, onRemove, optional }: FilePickerProps) {
   const { t } = useTranslation()
   return (
     <div className="space-y-2">
-      <Label>{label}{optional ? <span className="ml-1 text-muted-foreground">{t("aiImage.optional")}</span> : null}</Label>
+      <div className="flex items-center justify-between gap-3">
+        <Label>{label}{optional ? <span className="ml-1 text-muted-foreground">{t("aiImage.optional")}</span> : null}</Label>
+        {multiple && maxFiles ? <span className="text-xs text-muted-foreground">{t("aiImage.referencesSelected", { count: maxFiles, selected: files.length })}</span> : null}
+      </div>
       <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/20 p-4 text-center text-sm text-muted-foreground hover:bg-muted/40">
         <FileArrowUp className="size-5 text-primary" />
-        <span>{multiple ? t("aiImage.chooseReferences") : t("aiImage.chooseMask")}</span>
+        <span>{multiple ? t("aiImage.chooseReferences", { count: maxFiles ?? 16 }) : t("aiImage.chooseMask")}</span>
         <Input
           accept={accept}
           className="sr-only"
@@ -361,7 +424,7 @@ function JobCard({ job, locale }: { job: AiImageJob; locale: string }) {
           <span className="text-xs text-muted-foreground">{formatDateTime(job.createdAt, locale)}</span>
         </div>
         <CardTitle className="line-clamp-2 leading-snug">{job.prompt}</CardTitle>
-        <CardDescription>{job.size} · {job.requestType === "edit" ? t("aiImage.referenceMode") : t("aiImage.textMode")}</CardDescription>
+        <CardDescription>{formatRequestedSize(job.size)} · {job.requestType === "edit" ? t("aiImage.referenceMode") : t("aiImage.textMode")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {active ? (
@@ -543,6 +606,35 @@ function StatusBadge({ status }: { status: AiImageJobStatus }) {
 
 function createRequestKey() {
   return crypto.randomUUID().replaceAll("-", "")
+}
+
+function composeRequestedSize({
+  aspectRatio,
+  customHeight,
+  customWidth,
+  resolution,
+}: {
+  aspectRatio: string
+  customHeight: string
+  customWidth: string
+  resolution: string
+}) {
+  if (resolution === "custom") return `${Number(customWidth)}x${Number(customHeight)}`
+  if (!aspectRatio) return resolution || "2k"
+  return `${aspectRatio}@${resolution || "2k"}`
+}
+
+function isValidCustomSize(widthValue: string, heightValue: string) {
+  if (!/^\d{2,5}$/.test(widthValue) || !/^\d{2,5}$/.test(heightValue)) return false
+  const width = Number(widthValue)
+  const height = Number(heightValue)
+  return width * height <= MAX_CUSTOM_PIXELS
+}
+
+function formatRequestedSize(value: string) {
+  const [size, resolution] = value.split("@")
+  const sizeLabel = size === "auto" ? "Auto" : size
+  return resolution ? `${sizeLabel} · ${resolution.toUpperCase()}` : (/^[124]k$/.test(value) ? value.toUpperCase() : value)
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
