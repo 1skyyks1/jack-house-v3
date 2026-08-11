@@ -6,6 +6,8 @@ import tailwindcss from "@tailwindcss/vite"
 // https://vite.dev/config/
 export default defineConfig({
   build: {
+    // Preserve the authored color functions used by the holographic blend stack.
+    cssMinify: false,
     modulePreload: {
       resolveDependencies(_filename, dependencies, context) {
         if (context.hostType !== "html") return dependencies

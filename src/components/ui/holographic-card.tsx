@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import foilImageUrl from "@/assets/holographic/foil.jpeg"
 import "./holographic-card.css"
 
 // React port of https://codepen.io/linxiang-webcraft/pen/JobXpLO,
@@ -25,7 +26,7 @@ type SpringSettings = {
   stiffness: number
 }
 
-const DEFAULT_FOIL_IMAGE = "https://i.imgur.com/vu5azD2.jpeg"
+const DEFAULT_FOIL_IMAGE = foilImageUrl
 const STOP_THRESHOLD = 0.001
 const SPRING_INTERACT_SETTINGS: SpringSettings = {
   stiffness: 0.066,
