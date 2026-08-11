@@ -193,7 +193,7 @@ export function AdminTournamentBracketPage() {
                         onSave={() => saveScheduleTime(match)}
                       />
                     </TableCell>
-                    <TableCell className="px-2 py-1"><Badge className="px-1.5 py-0 text-[10px]" variant={match.status === 2 ? "default" : "outline"}>{match.status === 2 ? t("tournament.common.done") : t("tournament.common.notStarted")}</Badge></TableCell>
+                    <TableCell className="px-2 py-1"><Badge className="px-1.5 py-0 text-[10px]" variant={match.status === 2 ? "default" : "outline"}>{match.status === 2 ? t("tournament.common.done") : match.status === 1 ? t("tournament.common.inProgress") : t("tournament.common.notStarted")}</Badge></TableCell>
                     <TableCell className="px-2 py-1">
                       <div className="flex justify-end gap-1.5">
                         <Button asChild size="xs" type="button" variant="outline">

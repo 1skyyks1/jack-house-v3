@@ -92,6 +92,7 @@ Controller 只做参数读取和 response；业务规则进入 service；写操�
 3. 比赛完成后，根据 `source_match_*` 推进胜者/败者。
 4. 下游已有结果时禁止静默覆盖。
 5. reset final 预生成，符合条件时激活。
+6. 生成 bracket 后赛事进入正赛；GF 无需 reset 即决出冠军，或已激活的 reset final 完成后，赛事进入已结束。
 
 ### Referee
 

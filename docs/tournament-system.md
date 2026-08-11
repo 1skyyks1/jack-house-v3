@@ -74,7 +74,9 @@
 - 后端 `source_match_1_id/result` 和 `source_match_2_id/result` 是唯一真实流转来源；前端不能自己推导对位。
 - reset final 预生成并默认隐藏，只有败者组侧赢下 GF 时激活。
 - 每场正赛只绑定一个 osu MP；MP ID 可修改，但不保存多个 MP。
-- match 状态只需要区分未开始和完成，旧值 `1` 仅作兼容。
+- match 状态分为未开始、进行中和完成。填写 MP、记录 Roll、Protect/Ban/Pick、暂停或局分后进入进行中，确认胜方后进入完成。
+- 生成正赛 bracket 后 tournament 进入正赛状态。Grand Finals 由胜者组侧直接获胜时赛事结束；败者组侧获胜则激活 reset final，reset final 完成后赛事结束。
+- 旧数据可先执行 `npm run backfill:tournament-status` 预览，再用 `npm run backfill:tournament-status -- --apply` 回填已明确决出冠军但尚未标记结束的赛事；无法明确判断的数据不会修改。
 - 支持 WBD 和 FF，由 referee/host 设置；不细分原因枚举，只保留备注。
 - WBD 优先级高于普通比分，默认记为胜方 FT 分数、负方 `-1`。
 - osu MP 拉分后默认按比分判胜；referee 可手动改胜方，但必须提醒并记录审计。

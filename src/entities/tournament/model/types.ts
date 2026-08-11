@@ -657,7 +657,12 @@ export type TournamentHistoricalImportResult = {
   teams: TournamentHistoricalImportResultTeam[]
 }
 
-export function getTournamentStatus(tournament: Pick<Tournament, "qual_end" | "qual_start" | "reg_end" | "reg_start">) {
+export function getTournamentStatus(tournament: Pick<Tournament, "qual_end" | "qual_start" | "reg_end" | "reg_start" | "status">) {
+  if (tournament.status === 4) return { key: "completed", label: "Completed", tone: "muted" as const }
+  if (tournament.status === 3) return { key: "mainStage", label: "Main stage", tone: "warning" as const }
+  if (tournament.status === 2) return { key: "qualifier", label: "Qualifier", tone: "info" as const }
+  if (tournament.status === 1) return { key: "registration", label: "Registration", tone: "success" as const }
+
   const now = Date.now()
   const regStart = tournament.reg_start ? new Date(tournament.reg_start).getTime() : Number.NaN
   const regEnd = tournament.reg_end ? new Date(tournament.reg_end).getTime() : Number.NaN

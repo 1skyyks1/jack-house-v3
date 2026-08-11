@@ -149,7 +149,7 @@ function InfoPanel({ match, roundLabel }: { match: TournamentMatch; roundLabel: 
         <InfoLine label={t("tournament.match.roundLabel")} value={roundLabel} />
         <InfoLine label={t("tournament.match.matchLabel")} value={`#${getMatchDisplayNumber(match)}`} />
         <InfoLine label={t("tournament.common.scheduled")} value={formatTournamentScheduleTimeUtc(match.scheduled_time)} />
-        <InfoLine label={t("tournament.match.statusLabel")} value={match.status === 2 ? t("tournament.common.completed") : t("tournament.common.notStarted")} />
+        <InfoLine label={t("tournament.match.statusLabel")} value={match.status === 2 ? t("tournament.common.completed") : match.status === 1 ? t("tournament.common.inProgress") : t("tournament.common.notStarted")} />
       </div>
     </section>
   )
