@@ -14,6 +14,7 @@ type PlayerCollectibleCardProps = {
 
 const FONT_DISPLAY = '"Nunito Variable", "Helvetica Neue", "PingFang SC", sans-serif'
 const FONT_SANS = '"Nunito Variable", "Helvetica Neue", "PingFang SC", Arial, sans-serif'
+const ACCURACY_RELIABLE_GAME_COUNT = 8
 
 export const PlayerCollectibleCard = forwardRef<SVGSVGElement, PlayerCollectibleCardProps>(function PlayerCollectibleCard({ comparisonProfiles, profile, tournament }, ref) {
   const id = useId().replaceAll(":", "")
@@ -25,10 +26,7 @@ export const PlayerCollectibleCard = forwardRef<SVGSVGElement, PlayerCollectible
     getDominanceValue(profile.entries),
     peers.map((item) => getDominanceValue(item.entries)),
   )
-  const accuracyStars = getPercentileStars(
-    getAccuracyValue(profile.entries),
-    peers.map((item) => getAccuracyValue(item.entries)),
-  )
+  const accuracyStars = getStageNormalizedAccuracyStars(profile, peers)
 
   return (
     <svg
@@ -186,20 +184,65 @@ function getDominanceValue(entries: PlayerPerformanceProfile["entries"]) {
   ), 0) / entries.length
 }
 
-function getAccuracyValue(entries: PlayerPerformanceProfile["entries"]) {
-  if (!entries.length) return 0
-  return entries.reduce((total, entry) => (
-    total + Math.max(0, entry.match_component)
-  ), 0) / entries.length
+function getStageNormalizedAccuracyStars(profile: PlayerPerformanceProfile, comparisonProfiles: PlayerPerformanceProfile[]) {
+  const profilesByPlayer = new Map(comparisonProfiles.map((item) => [item.player.id, item]))
+  profilesByPlayer.set(profile.player.id, profile)
+
+  const accuracyByStage = new Map<string, Map<number, { games: number; value: number }>>()
+  for (const item of profilesByPlayer.values()) {
+    const entriesByStage = new Map<string, PlayerPerformanceProfile["entries"]>()
+    for (const entry of item.entries) {
+      entriesByStage.set(entry.stageKey, [...(entriesByStage.get(entry.stageKey) ?? []), entry])
+    }
+    for (const [stageKey, entries] of entriesByStage) {
+      const stageValues = accuracyByStage.get(stageKey) ?? new Map()
+      stageValues.set(item.player.id, {
+        games: entries.length,
+        value: average(entries.map((entry) => Math.max(0, entry.match_component))),
+      })
+      accuracyByStage.set(stageKey, stageValues)
+    }
+  }
+
+  let games = 0
+  let weightedPercentile = 0
+  for (const stageValues of accuracyByStage.values()) {
+    const playerValue = stageValues.get(profile.player.id)
+    if (!playerValue) continue
+    const percentile = getPercentile(
+      playerValue.value,
+      Array.from(stageValues.values(), (item) => item.value),
+    )
+    games += playerValue.games
+    weightedPercentile += percentile * playerValue.games
+  }
+
+  if (!games) return 7.5
+  // Match the rating model's high-reliability threshold and pull smaller samples
+  // toward the neutral midpoint instead of letting a few early 999s dominate the card.
+  const neutralGames = Math.max(0, ACCURACY_RELIABLE_GAME_COUNT - games)
+  const normalizedAccuracy = (weightedPercentile + neutralGames * 0.5) / (games + neutralGames)
+  return getStarsFromPercentile(normalizedAccuracy)
 }
 
 function getPercentileStars(value: number, values: number[]) {
+  return getStarsFromPercentile(getPercentile(value, values))
+}
+
+function getPercentile(value: number, values: number[]) {
   const sortedValues = values.filter(Number.isFinite).sort((left, right) => left - right)
-  if (sortedValues.length <= 1) return 7.5
+  if (sortedValues.length <= 1) return 0.5
   const below = sortedValues.filter((item) => item < value).length
   const equal = sortedValues.filter((item) => item === value).length
-  const percentile = (below + Math.max(0, equal - 1) / 2) / (sortedValues.length - 1)
+  return (below + Math.max(0, equal - 1) / 2) / (sortedValues.length - 1)
+}
+
+function getStarsFromPercentile(percentile: number) {
   return Math.max(5, Math.min(10, Math.round((5 + percentile * 5) * 2) / 2))
+}
+
+function average(values: number[]) {
+  return values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0
 }
 
 function getPlayerNameFontSize(value: string) {
