@@ -153,8 +153,10 @@ export const zhPack = {
       description: "向管理员反馈「{{title}}」存在的问题。",
       categoryLabel: "问题类型",
       contentLabel: "问题说明",
-      contentPlaceholder: "请描述具体问题，例如错误位置、失效链接或重复图包信息…",
+      contentPlaceholder: "请描述具体问题，例如错误标签、重复来源或违规内容…",
       categories: {
+        incorrect_tag: "标签有误",
+        copyright_or_violation: "侵权或违规",
         incorrect_info: "信息有误",
         broken_link: "下载链接失效",
         inappropriate: "内容不当",
@@ -327,8 +329,10 @@ export const enPack = {
       description: "Tell the moderators what is wrong with “{{title}}”.",
       categoryLabel: "Issue type",
       contentLabel: "Details",
-      contentPlaceholder: "Describe the issue, such as incorrect information, a broken link, or a duplicate pack…",
+      contentPlaceholder: "Describe the issue, such as incorrect tags, a duplicate source, or prohibited content…",
       categories: {
+        incorrect_tag: "Incorrect tags",
+        copyright_or_violation: "Copyright or policy violation",
         incorrect_info: "Incorrect information",
         broken_link: "Broken download link",
         inappropriate: "Inappropriate content",

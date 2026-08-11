@@ -38,7 +38,7 @@ import {
   useRefreshOsuPackMutation,
   useUpdatePackTagsMutation,
   type PackDetail,
-  type PackFeedbackCategory,
+  type PackFeedbackSubmissionCategory,
   type PackMap,
 } from "@/entities/pack"
 import { useAuthStore } from "@/features/auth"
@@ -131,7 +131,7 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
   )
 }
 
-const feedbackCategories: PackFeedbackCategory[] = ["incorrect_info", "broken_link", "inappropriate", "duplicate", "other"]
+const feedbackCategories: PackFeedbackSubmissionCategory[] = ["incorrect_tag", "duplicate", "copyright_or_violation", "other"]
 
 function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
   const { t } = useTranslation()
@@ -139,7 +139,7 @@ function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
   const mutation = useCreatePackFeedbackMutation()
   const [isOpen, setIsOpen] = useState(false)
-  const [category, setCategory] = useState<PackFeedbackCategory>("incorrect_info")
+  const [category, setCategory] = useState<PackFeedbackSubmissionCategory>("incorrect_tag")
   const [content, setContent] = useState("")
   const [validationError, setValidationError] = useState("")
 
@@ -165,7 +165,7 @@ function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
         onSuccess: () => {
           toast.success(t("pack.feedback.success"))
           setIsOpen(false)
-          setCategory("incorrect_info")
+          setCategory("incorrect_tag")
           setContent("")
         },
       },
@@ -196,7 +196,7 @@ function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="pack-feedback-category">{t("pack.feedback.categoryLabel")}</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as PackFeedbackCategory)}>
+            <Select value={category} onValueChange={(value) => setCategory(value as PackFeedbackSubmissionCategory)}>
               <SelectTrigger className="w-full" id="pack-feedback-category">
                 <SelectValue />
               </SelectTrigger>

@@ -106,11 +106,12 @@ export type RefreshOsuPackRequest = {
   packId: number | string
 }
 
-export type PackFeedbackCategory = "incorrect_info" | "broken_link" | "inappropriate" | "duplicate" | "other"
+export type PackFeedbackSubmissionCategory = "incorrect_tag" | "duplicate" | "copyright_or_violation" | "other"
+export type PackFeedbackCategory = PackFeedbackSubmissionCategory | "incorrect_info" | "broken_link" | "inappropriate"
 export type PackFeedbackStatus = 0 | 1 | 2
 
 export type CreatePackFeedbackRequest = {
-  category: PackFeedbackCategory
+  category: PackFeedbackSubmissionCategory
   content: string
   packId: number | string
 }

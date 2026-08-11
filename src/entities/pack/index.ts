@@ -38,6 +38,7 @@ export type {
   PackDetail,
   PackFeedback,
   PackFeedbackCategory,
+  PackFeedbackSubmissionCategory,
   PackFeedbackStatus,
   PackListItem,
   PackMap,
