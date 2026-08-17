@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type TournamentStatsTabsProps = {
-  active: "ratings" | "score-leaderboard"
+  active: "mapper-leaderboard" | "ratings" | "score-leaderboard"
   publicTournamentPath: string
 }
 

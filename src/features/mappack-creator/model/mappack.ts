@@ -154,7 +154,15 @@ export async function buildMappack(options: PackBuildOptions): Promise<PackBuild
     const audio = findSiblingFile(sourceFiles, beatmap.parentPath, beatmap.metadata.audioFilename)
     const background = findSiblingFile(sourceFiles, beatmap.parentPath, beatmap.metadata.backgroundFilename)
     const audioName = await addAsset(entries, reservedNames, copiedAssets, audio, edit.version, "audio")
-    const backgroundName = await addAsset(entries, reservedNames, copiedAssets, background, edit.version, "bg")
+    const backgroundName = await addAsset(
+      entries,
+      reservedNames,
+      copiedAssets,
+      background,
+      edit.version,
+      "bg",
+      true,
+    )
 
     if (beatmap.metadata.audioFilename && !audio) {
       missingAssets.push(`${beatmap.relativePath}: ${beatmap.metadata.audioFilename}`)
@@ -183,7 +191,7 @@ export async function buildMappack(options: PackBuildOptions): Promise<PackBuild
   if (options.deleteAssets) {
     const mediaBase = sanitizeFilename(`${title} delete this`)
     const audioName = reserveName(reservedNames, `${mediaBase}.mp3`)
-    const backgroundName = reserveName(reservedNames, `${mediaBase}.jpg`)
+    const backgroundName = reserveName(reservedNames, `${sanitizeEventFilename(mediaBase)}.jpg`)
     const osuName = reserveName(
       reservedNames,
       `${sanitizeFilename(`${artist} - ${title} (${creator}) [delete this]`)}.osu`,
@@ -291,6 +299,7 @@ async function addAsset(
   file: File | null,
   version: string,
   fallbackExtension: string,
+  isEventAsset = false,
 ) {
   if (!file) return null
   const sourceKey = `${getRelativePath(file).toLowerCase()}:${file.lastModified}:${file.size}`
@@ -298,7 +307,10 @@ async function addAsset(
   if (existingName) return existingName
 
   const extension = getExtension(file.name) || fallbackExtension
-  const filename = reserveName(reservedNames, `${sanitizeFilename(version || "asset")}.${extension}`)
+  const sanitizedVersion = isEventAsset
+    ? sanitizeEventFilename(version || "asset")
+    : sanitizeFilename(version || "asset")
+  const filename = reserveName(reservedNames, `${sanitizedVersion}.${extension}`)
   entries[filename] = [new Uint8Array(await file.arrayBuffer()), { level: isCompressedMedia(extension) ? 0 : 6 }]
   copiedAssets.set(sourceKey, filename)
   return filename
@@ -340,6 +352,10 @@ function sanitizeFilename(value: string) {
   const printableValue = [...value].map((character) => character.charCodeAt(0) < 32 ? "_" : character).join("")
   const sanitized = printableValue.replace(/[<>:"/\\|?*]/g, "_").replace(/[. ]+$/g, "").trim()
   return sanitized || "mappack"
+}
+
+function sanitizeEventFilename(value: string) {
+  return sanitizeFilename(value).replace(/,/g, "_")
 }
 
 function reserveName(reserved: Set<string>, preferred: string) {

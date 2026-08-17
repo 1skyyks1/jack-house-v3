@@ -1,5 +1,4 @@
-import type { GetPackListParams, PackSort, PackTag, PackTypeFilter } from "@/entities/pack"
-import { i18n } from "@/shared/i18n/client"
+import { getVisiblePackTagGroups, type GetPackListParams, type PackSort, type PackTag, type PackTypeFilter } from "@/entities/pack"
 
 export const PACK_LIST_PAGE_SIZE = 12
 export const packTypeFilters: PackTypeFilter[] = [-1, 0, 1, 2, 3]
@@ -65,17 +64,7 @@ export function getActiveFilterCount(filters: GetPackListParams) {
 }
 
 export function getPackFilterTagGroups(tags: PackTag[], packType: PackTypeFilter): PackFilterTagGroup[] {
-  const groups: PackFilterTagGroup[] = [
-    { label: i18n.t("pack.tagGroups.pattern"), tags: tags.slice(0, 7) },
-    { label: i18n.t("pack.tagGroups.bpm"), tags: tags.slice(7, 19) },
-    { label: i18n.t("pack.tagGroups.difficulty"), tags: tags.slice(19) },
-  ].filter((group) => group.tags.length > 0)
-
-  if (packType === 1) return []
-  if (packType === 2) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.difficulty"))
-  if (packType === 3) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.pattern"))
-
-  return groups
+  return getVisiblePackTagGroups(tags, packType)
 }
 
 export function filterTagIdsByType(tagIds: number[], tags: PackTag[], packType: PackTypeFilter) {

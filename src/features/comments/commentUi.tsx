@@ -1,4 +1,5 @@
 import { Trash } from "@phosphor-icons/react"
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { getUserRoleLabel, type UserRole } from "@/entities/user"
@@ -143,14 +144,16 @@ export function CommentPagination({ onPageChange, page, totalPages }: CommentPag
 
 type CommentStateProps = {
   description: string
+  icon?: ReactNode
   title: string
 }
 
-export function CommentState({ description, title }: CommentStateProps) {
+export function CommentState({ description, icon, title }: CommentStateProps) {
   return (
-    <div className="p-6 text-center">
-      <h3 className="font-heading text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <div className={cn("text-center", icon ? "py-12" : "p-6")}>
+      {icon ? <div className="mx-auto mb-3 grid size-10 place-items-center text-primary/60 [&>svg]:size-8">{icon}</div> : null}
+      <h3 className={cn("font-heading", icon ? "text-sm font-medium text-muted-foreground" : "text-lg font-semibold")}>{title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
     </div>
   )
 }

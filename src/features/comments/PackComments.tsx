@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ChatText } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import type { TFunction } from "i18next"
@@ -13,7 +14,8 @@ import {
 import { useAuthStore, useCurrentUserQuery } from "@/features/auth"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { FormFieldError, getErrorMessage, MutationErrorAlert } from "@/shared/components"
+import { cn } from "@/lib/utils"
+import { FormFieldError, getErrorMessage, MutationErrorAlert, SectionTitle } from "@/shared/components"
 import {
   CommentListItem,
   CommentPagination,
@@ -21,7 +23,7 @@ import {
   CommentState,
 } from "./commentUi"
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 10
 
 const createCommentSchema = (t: TFunction) => z.object({
   content: z.string().trim().min(1, t("post.validation.commentEmpty")).max(2000, t("post.validation.commentTooLong")),
@@ -42,6 +44,7 @@ export function PackComments({ packId }: PackCommentsProps) {
   const currentUserQuery = useCurrentUserQuery()
   const isLogged = useAuthStore((state) => state.isLogged)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
+  const isEmpty = !commentsQuery.isLoading && !commentsQuery.isError && commentsQuery.data?.data.length === 0
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(createCommentSchema(t)),
     defaultValues: { content: "" },
@@ -73,10 +76,9 @@ export function PackComments({ packId }: PackCommentsProps) {
   }
 
   return (
-    <section className="rounded-lg border bg-card p-5">
-      <div>
-        <h2 className="font-heading text-2xl font-semibold">{t("pack.comments.title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("pack.comments.description")}</p>
+    <section className="p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <SectionTitle>{t("pack.comments.title")}</SectionTitle>
       </div>
 
       <form className="mt-5 space-y-3" onSubmit={form.handleSubmit(submitComment)}>
@@ -98,7 +100,7 @@ export function PackComments({ packId }: PackCommentsProps) {
         </div>
       </form>
 
-      <div className="mt-6 divide-y rounded-lg border">
+      <div className={cn("mt-6 divide-y", !isEmpty && "rounded-lg border")}>
         {commentsQuery.isLoading ? (
           <CommentSkeleton />
         ) : commentsQuery.isError ? (
@@ -119,7 +121,11 @@ export function PackComments({ packId }: PackCommentsProps) {
             />
           ))
         ) : (
-          <CommentState title={t("post.commentsEmptyTitle")} description={t("post.commentsEmptyDescription")} />
+          <CommentState
+            description={t("post.commentsEmptyDescription")}
+            icon={<ChatText weight="duotone" />}
+            title={t("post.commentsEmptyTitle")}
+          />
         )}
       </div>
 

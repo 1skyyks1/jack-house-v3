@@ -21,6 +21,11 @@ export type UpdatePostFileRequest = {
   note: string
 }
 
+export type UploadPostFileRequest = {
+  file: File
+  onUploadProgress?: (progress: number) => void
+}
+
 export type ReviewPostFileRequest = {
   feedback: string
   status: 1 | 2
@@ -56,14 +61,19 @@ export async function getPostFilesByUserId(params: GetUserPostFilesParams): Prom
   return unwrapPagination<PublicPostFileListItem>(response)
 }
 
-export async function uploadPostFile(postId: string, file: File): Promise<PostFile> {
+export async function uploadPostFile(postId: string, request: UploadPostFileRequest): Promise<PostFile> {
   const formData = new FormData()
-  formData.append("file", file)
+  formData.append("file", request.file)
 
   const response = await http.post(`/postFile/upload/${postId}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    onUploadProgress: (event) => {
+      if (!event.total) return
+      request.onUploadProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)))
+    },
+    timeout: 5 * 60_000,
   })
 
   return unwrapData<PostFile>(response)

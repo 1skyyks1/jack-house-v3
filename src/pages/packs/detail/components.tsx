@@ -68,10 +68,9 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { AppAlert, InlineSkeleton, MutationErrorAlert } from "@/shared/components"
+import { AppAlert, InlineSkeleton, MutationErrorAlert, SectionTitle } from "@/shared/components"
 import { formatDate } from "@/shared/lib/date"
 
 const packDownloadIcons: Record<string, string> = {
@@ -79,6 +78,8 @@ const packDownloadIcons: Record<string, string> = {
   "osu.direct": osuDirectIcon,
   Sayobot: sayobotIcon,
 }
+
+const packHeroButtonClass = "h-9 w-full min-w-0 border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
 
 type PackMaintenancePanelProps = {
   pack: PackDetail
@@ -104,9 +105,9 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
   }
 
   return (
-    <section className="flex h-full min-h-0 flex-col rounded-lg border bg-card p-4">
+    <section className="flex h-full min-h-0 flex-col p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-heading text-xl font-semibold">{t("pack.detail.infoTitle")}</h2>
+        <SectionTitle>{t("pack.detail.infoTitle")}</SectionTitle>
         <div className="flex items-center gap-2">
           {canMaintain ? <PackMaintenanceDialog pack={pack} /> : null}
           <PackFeedbackDialog pack={pack} />
@@ -497,7 +498,7 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
   const hasDownloadLinks = externalLinks.length > 0 || Boolean(otherLink)
 
   return (
-    <article className="relative overflow-hidden rounded-lg bg-card text-white shadow-sm">
+    <article className="relative overflow-hidden bg-card text-white">
       {coverUrl ? <img alt="" className="absolute inset-0 size-full object-cover" src={coverUrl} /> : <div className="absolute inset-0 bg-muted" />}
       <div className="absolute inset-0 bg-black/58" />
       <div className="relative z-10 grid min-h-[24rem] gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:p-7">
@@ -576,61 +577,49 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
           ) : (
             <div className="rounded bg-black/45 p-4 text-sm text-white/78">{t("pack.detail.noBeatmapMetadata")}</div>
           )}
-          <div className="space-y-2">
-            {osuLink || selectedMap ? (
-              <div className="flex items-center gap-2">
-                {osuLink ? (
-                  <Button
-                    asChild
-                    className="shrink-0 rounded-full border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
-                    size="icon"
-                    variant="outline"
-                  >
-                    <a aria-label={osuLink.label} href={osuLink.url} rel="noopener noreferrer" target="_blank" title={osuLink.label}>
-                      <img alt="" className="size-6 object-contain" src={osuLogoIcon} />
-                    </a>
-                  </Button>
-                ) : null}
-                {selectedMap?.beatmap_id ? (
-                  <Button
-                    asChild
-                    className="min-w-0 flex-1 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
-                    variant="outline"
-                  >
-                    <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
-                      <ChartLineUp className="size-4" weight="bold" />
-                      {t("pack.detail.analyseWithOma")}
-                    </Link>
-                  </Button>
-                ) : selectedMap ? (
-                  <Button className="min-w-0 flex-1" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
-                    <ChartLineUp className="size-4" weight="bold" />
-                    {t("pack.detail.analyseWithOma")}
-                  </Button>
-                ) : null}
-              </div>
+          <div className="grid grid-cols-2 gap-2">
+            {osuLink ? (
+              <Button asChild className={packHeroButtonClass} variant="outline">
+                <a href={osuLink.url} rel="noopener noreferrer" target="_blank">
+                  <PackDownloadIcon label={osuLink.label} />
+                  osu!
+                </a>
+              </Button>
             ) : null}
-            {downloadLinks.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {downloadLinks.map((link) => (
-                  <Button
-                    asChild
-                    className="border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
-                    key={link.label}
-                    variant="outline"
-                  >
-                    <a href={link.url} rel="noopener noreferrer" target="_blank">
-                      <PackDownloadIcon label={link.label} />
-                      {link.label}
-                    </a>
-                  </Button>
-                ))}
-              </div>
+            {selectedMap?.beatmap_id ? (
+              <Button
+                asChild
+                className="h-9 w-full min-w-0 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
+                variant="outline"
+              >
+                <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
+                  <ChartLineUp className="size-4" weight="bold" />
+                  {t("pack.detail.analyseWithOma")}
+                </Link>
+              </Button>
+            ) : selectedMap ? (
+              <Button className="h-9 w-full min-w-0" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
+                <ChartLineUp className="size-4" weight="bold" />
+                {t("pack.detail.analyseWithOma")}
+              </Button>
             ) : null}
+            {downloadLinks.map((link) => (
+              <Button
+                asChild
+                className={packHeroButtonClass}
+                key={link.label}
+                variant="outline"
+              >
+                <a href={link.url} rel="noopener noreferrer" target="_blank">
+                  <PackDownloadIcon label={link.label} />
+                  {link.label}
+                </a>
+              </Button>
+            ))}
             {otherLink ? (
               <Button
                 asChild
-                className="w-full border-white/18 bg-white/12 text-white shadow-sm hover:border-white/28 hover:bg-white/20 hover:text-white focus-visible:text-white"
+                className={packHeroButtonClass}
                 variant="outline"
               >
                 <a href={otherLink.url} rel="noopener noreferrer" target="_blank">
@@ -726,10 +715,9 @@ type PackDescriptionProps = {
 export function PackDescription({ className, description }: PackDescriptionProps) {
   const { t } = useTranslation()
   return (
-    <section className={cn("flex h-full min-h-0 flex-col rounded-lg border bg-card p-4", className)}>
-      <h2 className="font-heading text-xl font-semibold">{t("pack.detail.descriptionTitle")}</h2>
-      <Separator className="my-3" />
-      <div className="scrollbar-soft min-h-0 flex-1 overflow-y-auto pr-2">
+    <section className={cn("flex h-full min-h-0 flex-col p-5 sm:p-6", className)}>
+      <SectionTitle>{t("pack.detail.descriptionTitle")}</SectionTitle>
+      <div className="scrollbar-soft mt-3 min-h-0 flex-1 overflow-y-auto pr-2">
         <RichTextRenderer content={description ?? ""} emptyLabel={t("pack.detail.noDescription")} />
       </div>
     </section>
@@ -759,17 +747,23 @@ function StatusBadge({ children, tone }: StatusBadgeProps) {
 
 export function PackDetailSkeleton() {
   return (
-    <section className="space-y-6">
+    <section className="mx-auto w-full max-w-6xl px-3 sm:px-0">
       <div className="h-5 w-28 animate-pulse rounded bg-muted" />
-      <div className="h-[22rem] animate-pulse rounded-lg bg-muted" />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-6">
-          <div className="h-80 animate-pulse rounded-lg bg-muted" />
-          <div className="h-36 animate-pulse rounded-lg bg-muted" />
+      <div className="mt-4 overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="h-[24rem] animate-pulse bg-muted" />
+        <div className="grid divide-y border-t lg:h-[18rem] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+          <div className="space-y-4 p-5 sm:p-6">
+            <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-32 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="space-y-4 p-5 sm:p-6">
+            <div className="h-6 w-24 animate-pulse rounded bg-muted" />
+            <div className="h-32 animate-pulse rounded bg-muted" />
+          </div>
         </div>
-        <div className="space-y-6">
-          <div className="h-52 animate-pulse rounded-lg bg-muted" />
-          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+        <div className="space-y-4 border-t p-5 sm:p-6">
+          <div className="h-6 w-24 animate-pulse rounded bg-muted" />
+          <div className="h-24 animate-pulse rounded bg-muted" />
         </div>
       </div>
     </section>

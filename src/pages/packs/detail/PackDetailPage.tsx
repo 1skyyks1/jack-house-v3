@@ -50,7 +50,7 @@ export function PackDetailPage() {
   }
 
   return (
-    <section>
+    <section className="mx-auto w-full max-w-6xl px-3 sm:px-0">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -65,7 +65,7 @@ export function PackDetailPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="space-y-4">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         <PackShowcase
           maps={maps}
           onSelectMap={setSelectedMapId}
@@ -74,12 +74,14 @@ export function PackDetailPage() {
           selectedMapId={selectedMap?.map_id ?? null}
         />
 
-        <div className="grid min-h-0 gap-4 lg:h-[18rem] lg:grid-cols-2 lg:items-stretch">
+        <div className="grid min-h-0 divide-y border-t bg-muted/20 lg:h-[18rem] lg:grid-cols-2 lg:items-stretch lg:divide-x lg:divide-y-0">
           <PackDescription className="h-[18rem] lg:h-full" description={packQuery.data.description} />
           <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
         </div>
 
-        <PackComments packId={packId} />
+        <div className="border-t">
+          <PackComments packId={packId} />
+        </div>
       </div>
     </section>
   )

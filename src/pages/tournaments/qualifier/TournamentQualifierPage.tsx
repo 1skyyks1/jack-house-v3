@@ -91,13 +91,6 @@ export function TournamentQualifierPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <TournamentBreadcrumb current={t("tournament.common.qualifier")} tournament={tournament} tournamentId={tid} />
 
-      <div>
-        <div>
-          <p className="text-xs font-semibold uppercase text-muted-foreground">{tournament?.acronym ?? t("tournament.common.tournament")}</p>
-          <h1 className="mt-1 font-heading text-3xl font-semibold">{t("tournament.common.qualifier")}</h1>
-        </div>
-      </div>
-
       <MappoolStrip isLoading={mappoolQuery.isLoading} maps={maps} />
 
       <section className="border-t pt-5">

@@ -101,6 +101,7 @@ npm install
 npm run migrate:storage-metadata
 npm run migrate:rich-text-assets
 npm run migrate:ai-image-jobs
+npm run migrate:pack-tag-taxonomy
 npm run migrate:mappool-stats
 npm run check:deploy -- --print-summary
 npm run check:secrets

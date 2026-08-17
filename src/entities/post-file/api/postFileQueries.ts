@@ -12,6 +12,7 @@ import {
   type GetUserPostFilesParams,
   type ReviewPostFileRequest,
   type UpdatePostFileRequest,
+  type UploadPostFileRequest,
 } from "./postFileApi"
 
 export const postFileQueryKeys = {
@@ -50,7 +51,7 @@ export function useUploadPostFileMutation(postId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (file: File) => uploadPostFile(postId, file),
+    mutationFn: (request: UploadPostFileRequest) => uploadPostFile(postId, request),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: postFileQueryKeys.myPostFiles(postId) })
     },

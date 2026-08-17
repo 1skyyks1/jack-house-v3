@@ -4,10 +4,28 @@ export type PackType = 0 | 1 | 2 | 3
 export type PackTypeFilter = PackType | -1
 export type PackRankStatus = -2 | -1 | 0 | 1 | 2 | 3 | 4
 export type PackSort = 0 | 1 | 2
+export type PackTagCategory = "bpm" | "difficulty" | "pattern"
 
 export type PackTag = {
+  category: PackTagCategory
+  enabled: boolean
+  name_en: string
+  name_zh: string
+  sort_order: number
   tag_id: number
+  tag_key: string
   tag_name: string
+}
+
+export type AdminPackTag = PackTag & {
+  usage_count: number
+}
+
+export type CreatePackTagRequest = Omit<PackTag, "tag_id" | "tag_name">
+
+export type UpdatePackTagRequest = {
+  tagId: number
+  values: Partial<Pick<PackTag, "category" | "enabled" | "name_en" | "name_zh" | "sort_order">>
 }
 
 export type PackUser = {
@@ -141,6 +159,7 @@ export type UpdatePackFeedbackStatusRequest = {
 }
 
 export type PackTagGroup = {
+  category: PackTagCategory
   label: string
   tags: PackTag[]
 }
@@ -197,20 +216,10 @@ export function getPackRankStatus(status: PackRankStatus | null) {
   }
 }
 
-const packTagLabels: Record<number, { en: string; zh: string }> = {
-  1: { en: "Full Jack", zh: "满叠" },
-  2: { en: "Dense Jack", zh: "大叠" },
-  3: { en: "Middle Jack", zh: "中叠" },
-  4: { en: "Light Jack", zh: "小叠" },
-  5: { en: "Anchor Jack", zh: "纵叠" },
-  6: { en: "QuadStream", zh: "四押切" },
-  7: { en: "MiniJack", zh: "子弹叠" },
-}
-
-export function getPackTagLabel(tag: Pick<PackTag, "tag_id" | "tag_name">) {
-  const label = packTagLabels[tag.tag_id]
-  if (!label) return tag.tag_name
-  return i18n.language === "en" ? label.en : label.zh
+export function getPackTagLabel(tag: Pick<PackTag, "name_en" | "name_zh" | "tag_name">) {
+  return i18n.language === "en"
+    ? tag.name_en || tag.tag_name
+    : tag.name_zh || tag.tag_name
 }
 
 export function getPackExternalLinks(osuBid: number | null) {
@@ -286,16 +295,31 @@ export function toFiniteNumber(value: number | string | null | undefined, fallba
   return Number.isFinite(numberValue) ? numberValue : fallback
 }
 
-export function getVisiblePackTagGroups(tags: PackTag[], packType: PackType): PackTagGroup[] {
-  const groups = [
-    { label: i18n.t("pack.tagGroups.pattern"), tags: tags.slice(0, 7) },
-    { label: i18n.t("pack.tagGroups.bpm"), tags: tags.slice(7, 19) },
-    { label: i18n.t("pack.tagGroups.difficulty"), tags: tags.slice(19) },
-  ]
+const packTagCategoryOrder: PackTagCategory[] = ["pattern", "bpm", "difficulty"]
 
-  if (packType === 0) return groups.filter((group) => group.tags.length > 0)
-  if (packType === 2) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.difficulty") && group.tags.length > 0)
-  if (packType === 3) return groups.filter((group) => group.label === i18n.t("pack.tagGroups.pattern") && group.tags.length > 0)
+export function getPackTagCategoryLabel(category: PackTagCategory) {
+  return i18n.t(`pack.tagGroups.${category}`)
+}
+
+export function getVisiblePackTagGroups(tags: PackTag[], packType: PackTypeFilter): PackTagGroup[] {
+  const allowedCategories = getPackTypeTagCategories(packType)
+
+  return packTagCategoryOrder
+    .filter((category) => allowedCategories.includes(category))
+    .map((category) => ({
+      category,
+      label: getPackTagCategoryLabel(category),
+      tags: tags
+        .filter((tag) => tag.category === category)
+        .sort((left, right) => left.sort_order - right.sort_order || left.tag_id - right.tag_id),
+    }))
+    .filter((group) => group.tags.length > 0)
+}
+
+export function getPackTypeTagCategories(packType: PackTypeFilter): PackTagCategory[] {
+  if (packType === -1 || packType === 0) return packTagCategoryOrder
+  if (packType === 2) return ["difficulty"]
+  if (packType === 3) return ["pattern"]
   return []
 }
 

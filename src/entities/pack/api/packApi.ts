@@ -13,8 +13,11 @@ import type {
   PackFeedback,
   PackListItem,
   PackTag,
+  AdminPackTag,
+  CreatePackTagRequest,
   RefreshOsuPackRequest,
   UpdatePackTagsRequest,
+  UpdatePackTagRequest,
   UpdatePackFeedbackStatusRequest,
 } from "../model/types"
 
@@ -68,6 +71,23 @@ export async function deletePack(packId: number | string): Promise<void> {
 export async function getTagList(): Promise<PackTag[]> {
   const response = await http.get("/tag")
   return unwrapData<PackTag[]>(response)
+}
+
+export async function getAdminTagList(): Promise<AdminPackTag[]> {
+  const response = await http.get("/tag/admin")
+  return unwrapData<AdminPackTag[]>(response)
+}
+
+export async function createPackTag(request: CreatePackTagRequest): Promise<void> {
+  await http.post("/tag/admin", request)
+}
+
+export async function updatePackTag(request: UpdatePackTagRequest): Promise<void> {
+  await http.patch(`/tag/admin/${request.tagId}`, request.values)
+}
+
+export async function deletePackTag(tagId: number): Promise<void> {
+  await http.delete(`/tag/admin/${tagId}`)
 }
 
 export async function updatePackTags(request: UpdatePackTagsRequest): Promise<void> {

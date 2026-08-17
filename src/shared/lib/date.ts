@@ -12,4 +12,3 @@ export function formatDate(value?: string | null) {
 
   return dateFormatter.format(date)
 }
-

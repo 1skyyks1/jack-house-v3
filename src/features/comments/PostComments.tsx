@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ChatText } from "@phosphor-icons/react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import type { TFunction } from "i18next"
@@ -13,6 +14,7 @@ import {
 import { useAuthStore, useCurrentUserQuery } from "@/features/auth"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 import { FormFieldError, getErrorMessage, MutationErrorAlert } from "@/shared/components"
 import {
   CommentListItem,
@@ -42,6 +44,7 @@ export function PostComments({ postId }: PostCommentsProps) {
   const currentUserQuery = useCurrentUserQuery()
   const isLogged = useAuthStore((state) => state.isLogged)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
+  const isEmpty = !commentsQuery.isLoading && !commentsQuery.isError && commentsQuery.data?.data.length === 0
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(createCommentSchema(t)),
     defaultValues: { comment: "" },
@@ -73,11 +76,10 @@ export function PostComments({ postId }: PostCommentsProps) {
   }
 
   return (
-    <section className="rounded-lg border bg-card p-5">
+    <section className="rounded-lg border bg-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-heading text-2xl font-semibold">{t("post.commentsTitle")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t("post.commentsDescription")}</p>
+          <h2 className="font-heading text-lg font-semibold">{t("post.commentsTitle")}</h2>
         </div>
       </div>
 
@@ -100,7 +102,7 @@ export function PostComments({ postId }: PostCommentsProps) {
         </div>
       </form>
 
-      <div className="mt-6 divide-y rounded-lg border">
+      <div className={cn("mt-6 divide-y", !isEmpty && "rounded-lg border")}>
         {commentsQuery.isLoading ? (
           <CommentSkeleton />
         ) : commentsQuery.isError ? (
@@ -121,7 +123,11 @@ export function PostComments({ postId }: PostCommentsProps) {
             />
           ))
         ) : (
-          <CommentState title={t("post.commentsEmptyTitle")} description={t("post.commentsEmptyDescription")} />
+          <CommentState
+            description={t("post.commentsEmptyDescription")}
+            icon={<ChatText weight="duotone" />}
+            title={t("post.commentsEmptyTitle")}
+          />
         )}
       </div>
 

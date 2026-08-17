@@ -13,6 +13,7 @@ import {
   formatFileSize,
   getAdminPostFiles,
   getPostFileStatusLabel,
+  isPostFileLocked,
   useAdminPostFilesQuery,
   useDeletePostFileMutation,
   usePostFileDownloadUrlMutation,
@@ -63,6 +64,7 @@ import { formatDate } from "@/shared/lib/date"
 import { usePageParam } from "../_shared/usePageParam"
 
 const PAGE_SIZE = 13
+const ADMIN_POST_FILES_INITIAL_TIME = Date.now()
 
 const createReviewSchema = (t: TFunction) => z.object({
   feedback: z.string().trim().max(1000, t("admin.postFiles.validation.feedbackTooLong")),
@@ -88,6 +90,7 @@ export function AdminPostFilesPage() {
   const [keywordDraft, setKeywordDraft] = useState("")
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [now, setNow] = useState(ADMIN_POST_FILES_INITIAL_TIME)
   const keywordTimerRef = useRef<number | null>(null)
   const postFilesQuery = useAdminPostFilesQuery({ keyword, page, pageSize: PAGE_SIZE, post_id: postId, status })
   const requestPostsQuery = usePostListQuery({ page: 1, pageSize: 100, type: 1 })
@@ -97,6 +100,11 @@ export function AdminPostFilesPage() {
 
   useEffect(() => () => {
     if (keywordTimerRef.current) window.clearTimeout(keywordTimerRef.current)
+  }, [])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(intervalId)
   }, [])
 
   const exportPostFiles = async () => {
@@ -157,7 +165,7 @@ export function AdminPostFilesPage() {
       header: () => <span className="block text-center">{t("admin.postFiles.table.status")}</span>,
       cell: ({ row }) => (
         <div className="flex w-24 justify-center">
-          <StatusWithFeedback feedback={row.original.feedback} status={row.original.status} />
+          {isPostFileLocked(row.original, now) ? <StatusWithFeedback feedback={row.original.feedback} status={row.original.status} /> : null}
         </div>
       ),
     },
@@ -175,7 +183,13 @@ export function AdminPostFilesPage() {
             disabled={downloadMutation.isPending}
             onClick={() => {
               downloadMutation.mutate(row.original.file_id, {
-                onSuccess: (url) => window.open(url, "_blank", "noopener,noreferrer"),
+                onSuccess: async (url) => {
+                  try {
+                    await downloadRemoteFile(url, row.original.file_name)
+                  } catch {
+                    toast.error(t("admin.postFiles.downloadFailed"))
+                  }
+                },
               })
             }}
             size="xs"
@@ -186,7 +200,7 @@ export function AdminPostFilesPage() {
             {t("admin.postFiles.actions.download")}
           </Button>
           <Button
-            disabled={row.original.status !== 0}
+            disabled={row.original.status !== 0 || !isPostFileLocked(row.original, now)}
             onClick={() => setReviewTarget({ fileId: row.original.file_id, fileName: row.original.file_name })}
             size="xs"
             type="button"
@@ -253,7 +267,7 @@ export function AdminPostFilesPage() {
   return (
     <AdminPage>
       <div className="flex flex-col gap-4">
-        <div className="grid gap-2 rounded-lg border bg-background p-3 lg:grid-cols-[14rem_9rem_minmax(22rem,1fr)_auto_auto]">
+        <div className="grid gap-2 lg:grid-cols-[14rem_9rem_minmax(22rem,1fr)_auto_auto]">
           <Select
             onValueChange={(value) => {
               setPostId(value === "all" ? null : Number(value))
@@ -455,7 +469,6 @@ function PostFileStatusBadge({ status }: { status: PostFileStatus }) {
   return <AdminBadge tone={tone}>{getPostFileStatusLabel(status)}</AdminBadge>
 }
 
-
 function downloadPostFilesCsv(files: PostFile[]) {
   const { t } = { t: i18n.t.bind(i18n) }
   const columns = [
@@ -498,4 +511,14 @@ function downloadBlob(blob: Blob, fileName: string) {
   link.click()
   link.remove()
   window.setTimeout(() => URL.revokeObjectURL(url), 0)
+}
+
+async function downloadRemoteFile(url: string, fileName: string) {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error(`Download failed with status ${response.status}`)
+  }
+
+  downloadBlob(await response.blob(), fileName)
 }

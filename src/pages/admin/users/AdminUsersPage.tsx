@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Eye, PencilSimple, Plus, Trash, X } from "@phosphor-icons/react"
+import { Eye, MagnifyingGlass, PencilSimple, Plus, Trash } from "@phosphor-icons/react"
 import type { TFunction } from "i18next"
 import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
@@ -33,6 +33,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -191,19 +199,9 @@ export function AdminUsersPage() {
   }
 
   return (
-    <AdminPage
-      actions={
-        <Button
-          onClick={() => setEditorMode({ type: "create" })}
-          type="button"
-        >
-          <Plus className="size-4" weight="bold" />
-          {t("admin.users.create")}
-        </Button>
-      }
-    >
+    <AdminPage>
       <div className="space-y-4">
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-3 sm:flex-row">
+        <div className="flex min-w-0 items-center gap-2">
           <Input
             className="min-w-0 flex-1"
             onChange={(event) => setSearchDraft(event.target.value)}
@@ -213,12 +211,26 @@ export function AdminUsersPage() {
             placeholder={t("admin.users.searchPlaceholder")}
             value={searchDraft}
           />
-          <Button onClick={applySearch} type="button" variant="outline">
-            {t("admin.users.search")}
+          <Button aria-label={t("admin.users.search")} className="shrink-0" onClick={applySearch} type="button" variant="outline">
+            <MagnifyingGlass className="size-4" weight="bold" />
+            <span className="hidden sm:inline">{t("admin.users.search")}</span>
+          </Button>
+          <Button
+            aria-label={t("admin.users.create")}
+            className="shrink-0"
+            onClick={() => setEditorMode({ type: "create" })}
+            type="button"
+          >
+            <Plus className="size-4" weight="bold" />
+            <span className="hidden sm:inline">{t("admin.users.create")}</span>
           </Button>
         </div>
 
-        {editorMode ? <UserEditorPanel mode={editorMode} onClose={() => setEditorMode(null)} /> : null}
+        <Dialog open={editorMode !== null} onOpenChange={(open) => {
+          if (!open) setEditorMode(null)
+        }}>
+          {editorMode ? <UserEditorDialog mode={editorMode} onClose={() => setEditorMode(null)} /> : null}
+        </Dialog>
 
         <AdminTable columns={columns} data={usersQuery.data?.data ?? []} isLoading={usersQuery.isLoading} />
         {usersQuery.data ? (
@@ -235,12 +247,12 @@ export function AdminUsersPage() {
   )
 }
 
-type UserEditorPanelProps = {
+type UserEditorDialogProps = {
   mode: NonNullable<EditorMode>
   onClose: () => void
 }
 
-function UserEditorPanel({ mode, onClose }: UserEditorPanelProps) {
+function UserEditorDialog({ mode, onClose }: UserEditorDialogProps) {
   const { t } = useTranslation()
   const isEditing = mode.type === "edit"
   const userId = isEditing ? mode.userId : ""
@@ -292,7 +304,7 @@ function UserEditorPanel({ mode, onClose }: UserEditorPanelProps) {
       },
       {
         onSuccess: () => {
-            toast.success(t("admin.users.createSuccess"))
+          toast.success(t("admin.users.createSuccess"))
           onClose()
         },
       },
@@ -300,71 +312,68 @@ function UserEditorPanel({ mode, onClose }: UserEditorPanelProps) {
   })
 
   return (
-    <form className="rounded-lg border bg-background p-4" onSubmit={submit}>
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-heading text-lg font-semibold">{isEditing ? t("admin.users.editor.editTitle") : t("admin.users.editor.createTitle")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? t("admin.users.editor.editDescription") : t("admin.users.editor.createDescription")}
-          </p>
-        </div>
-        <Button onClick={onClose} size="icon-sm" type="button" variant="ghost">
-          <X className="size-4" weight="bold" />
-        </Button>
-      </div>
+    <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>{isEditing ? t("admin.users.editor.editTitle") : t("admin.users.editor.createTitle")}</DialogTitle>
+        <DialogDescription>
+          {isEditing ? t("admin.users.editor.editDescription") : t("admin.users.editor.createDescription")}
+        </DialogDescription>
+      </DialogHeader>
 
       {isEditing && userQuery.isLoading ? (
         <FormPageSkeleton />
       ) : userQuery.isError ? (
         <PageState title={t("common.requestFailed")} description={getErrorMessage(userQuery.error)} />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          <AdminInput error={form.formState.errors.user_name?.message} label={t("admin.users.editor.username")} {...form.register("user_name")} />
-          <AdminInput error={form.formState.errors.avatar?.message} label={t("admin.users.editor.avatarUrl")} {...form.register("avatar")} />
-          <AdminInput
-            error={form.formState.errors.password?.message}
-            label={isEditing ? t("admin.users.editor.passwordOptional") : t("admin.users.editor.password")}
-            type="password"
-            {...form.register("password")}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <AdminSelect
-              label={t("admin.users.editor.role")}
-              onValueChange={(value) => form.setValue("role", Number(value) as UserRole, { shouldDirty: true, shouldValidate: true })}
-              options={[
-                { label: getUserRoleLabel(0), value: "0" },
-                { label: getUserRoleLabel(1), value: "1" },
-                { label: getUserRoleLabel(2), value: "2" },
-              ]}
-              value={String(roleValue)}
+        <form className="grid gap-4" onSubmit={submit}>
+          <div className="grid gap-3 md:grid-cols-2">
+            <AdminInput error={form.formState.errors.user_name?.message} label={t("admin.users.editor.username")} {...form.register("user_name")} />
+            <AdminInput error={form.formState.errors.avatar?.message} label={t("admin.users.editor.avatarUrl")} {...form.register("avatar")} />
+            <AdminInput
+              error={form.formState.errors.password?.message}
+              label={isEditing ? t("admin.users.editor.passwordOptional") : t("admin.users.editor.password")}
+              type="password"
+              {...form.register("password")}
             />
-            <AdminSelect
-              label={t("admin.users.editor.status")}
-              onValueChange={(value) => form.setValue("status", Number(value) as UserStatus, { shouldDirty: true, shouldValidate: true })}
-              options={[
-                { label: getUserStatusLabel(0), value: "0" },
-                { label: getUserStatusLabel(1), value: "1" },
-                { label: getUserStatusLabel(2), value: "2" },
-              ]}
-              value={String(statusValue)}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <AdminSelect
+                label={t("admin.users.editor.role")}
+                onValueChange={(value) => form.setValue("role", Number(value) as UserRole, { shouldDirty: true, shouldValidate: true })}
+                options={[
+                  { label: getUserRoleLabel(0), value: "0" },
+                  { label: getUserRoleLabel(1), value: "1" },
+                  { label: getUserRoleLabel(2), value: "2" },
+                ]}
+                value={String(roleValue)}
+              />
+              <AdminSelect
+                label={t("admin.users.editor.status")}
+                onValueChange={(value) => form.setValue("status", Number(value) as UserStatus, { shouldDirty: true, shouldValidate: true })}
+                options={[
+                  { label: getUserStatusLabel(0), value: "0" },
+                  { label: getUserStatusLabel(1), value: "1" },
+                  { label: getUserStatusLabel(2), value: "2" },
+                ]}
+                value={String(statusValue)}
+              />
+            </div>
           </div>
-          <div className="flex gap-2 md:col-span-2">
+          {createMutation.error ? <MutationErrorAlert error={createMutation.error} /> : null}
+          {updateMutation.error ? <MutationErrorAlert error={updateMutation.error} /> : null}
+          <DialogFooter>
+            <Button onClick={onClose} type="button" variant="outline">
+              {t("user.edit.cancel")}
+            </Button>
             <Button
               disabled={isSubmitting || (isEditing && userQuery.isLoading)}
               type="submit"
             >
               {isSubmitting ? t("admin.users.editor.saving") : isEditing ? t("admin.users.editor.update") : t("admin.users.editor.create")}
             </Button>
-            <Button onClick={onClose} type="button" variant="outline">
-              {t("user.edit.cancel")}
-            </Button>
-          </div>
-          {createMutation.error ? <div className="md:col-span-2"><MutationErrorAlert error={createMutation.error} /></div> : null}
-          {updateMutation.error ? <div className="md:col-span-2"><MutationErrorAlert error={updateMutation.error} /></div> : null}
-        </div>
+          </DialogFooter>
+        </form>
       )}
-    </form>
+    </DialogContent>
   )
 }
 

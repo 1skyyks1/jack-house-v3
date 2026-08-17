@@ -13,6 +13,7 @@ import {
   AdminEventsPage,
   AdminHomePage,
   AdminPackFeedbackPage,
+  AdminPackTagsPage,
   AdminPostFilesPage,
   AdminPostsPage,
   AdminTournamentAuditPage,
@@ -45,6 +46,7 @@ import {
   TournamentDetailPage,
   TournamentLeaderboardPage,
   TournamentListPage,
+  TournamentMapperLeaderboardPage,
   TournamentMappoolPage,
   TournamentMatchPage,
   TournamentRatingsPage,
@@ -181,6 +183,10 @@ export const router = createBrowserRouter([
         element: lazyElement(<TournamentLeaderboardPage />),
       },
       {
+        path: "t/:tid/mappers",
+        element: lazyElement(<TournamentMapperLeaderboardPage />),
+      },
+      {
         path: "t/:tid/ratings",
         element: lazyElement(<TournamentRatingsPage />),
       },
@@ -269,6 +275,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireAdminPermission permission="packFeedback">
                 {lazyElement(<AdminPackFeedbackPage />)}
+              </RequireAdminPermission>
+            ),
+          },
+          {
+            path: "packTags",
+            element: (
+              <RequireAdminPermission permission="packTags">
+                {lazyElement(<AdminPackTagsPage />)}
               </RequireAdminPermission>
             ),
           },

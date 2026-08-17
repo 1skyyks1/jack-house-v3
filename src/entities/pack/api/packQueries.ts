@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createPack, createPackFeedback, deletePack, getOsuPackPreview, getPackById, getPackFeedbackList, getPackList, getTagList, importOsuPack, refreshOsuPack, updatePackFeedbackStatus, updatePackTags } from "./packApi"
-import type { CreatePackFeedbackRequest, CreatePackRequest, GetPackFeedbackParams, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackTagsRequest } from "../model/types"
+import { createPack, createPackFeedback, createPackTag, deletePack, deletePackTag, getAdminTagList, getOsuPackPreview, getPackById, getPackFeedbackList, getPackList, getTagList, importOsuPack, refreshOsuPack, updatePackFeedbackStatus, updatePackTag, updatePackTags } from "./packApi"
+import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
 
 export const packQueryKeys = {
   detail: (packId: string) => ["pack", "detail", packId] as const,
@@ -9,6 +9,7 @@ export const packQueryKeys = {
   list: (params: GetPackListParams) => ["pack", "list", params] as const,
   root: ["pack"] as const,
   tags: ["pack", "tags"] as const,
+  tagsAdmin: ["pack", "tags", "admin"] as const,
 }
 
 export function useCreatePackFeedbackMutation() {
@@ -47,6 +48,34 @@ export function usePackTagsQuery() {
     queryFn: getTagList,
     queryKey: packQueryKeys.tags,
     staleTime: 5 * 60_000,
+  })
+}
+
+export function useAdminPackTagsQuery() {
+  return useQuery({ queryFn: getAdminTagList, queryKey: packQueryKeys.tagsAdmin })
+}
+
+export function useCreatePackTagMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: CreatePackTagRequest) => createPackTag(request),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: packQueryKeys.tags }),
+  })
+}
+
+export function useUpdatePackTagMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: UpdatePackTagRequest) => updatePackTag(request),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: packQueryKeys.tags }),
+  })
+}
+
+export function useDeletePackTagMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deletePackTag,
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: packQueryKeys.tags }),
   })
 }
 

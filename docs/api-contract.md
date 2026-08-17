@@ -105,6 +105,7 @@ V3 注意：
 - 用户侧投稿文件上传和 note 编辑已迁移。
 - 后台投稿审核、下载临时 URL、删除和 `.xlsx` 导出在 `/admin/postFiles`。
 - 普通用户投稿必须走 `POST /postFile/upload/:post_id`；`POST /postFile` 仅作为 `ORG/ADMIN` 后台兼容登记入口，用于登记已有 GitHub/external 文件记录，并同样遵守征稿数量上限、单文件大小上限和总大小上限。
+- 投稿详情响应包含派生字段 `locked_at` 与 `is_locked`。普通用户可在上传后的 24 小时内通过 `DELETE /postFile/:file_id` 删除自己的投稿并重传；到期后由后端强制锁定。`ORG/ADMIN` 的审核删除权限不受该窗口限制。
 - 投稿上传默认单文件 20MB、单用户单征稿总大小 100MB；可通过 `POSTFILE_MAX_SIZE_MB`、`POSTFILE_MAX_TOTAL_SIZE_MB` 调整。
 - 投稿扩展名默认白名单由后端控制，可通过 `POSTFILE_ALLOWED_EXTENSIONS`、`POSTFILE_ALLOWED_MIME_TYPES` 收紧。
 - 投稿文件保持原始内容和 MIME，不做压缩、不转格式；后端按原文件内容计算完整 SHA-256 checksum 入库，并用短 hash 前缀加原扩展名作为对象文件名以降低重名风险和路径长度。
@@ -157,6 +158,10 @@ V3 注意：
 - `POST /pack/osu/:bid`
 - `PUT /pack/osu/:bid`
 - `GET /tag`
+- `GET /tag/admin`（ADMIN，含停用标签和使用数量）
+- `POST /tag/admin`（ADMIN）
+- `PATCH /tag/admin/:tag_id`（ADMIN）
+- `DELETE /tag/admin/:tag_id`（ADMIN，仅未关联图包的标签）
 - `PUT /tag/:pack_id`
 - `POST /tag/:pack_id`
 - `GET /packCom/:pack_id`
@@ -167,6 +172,9 @@ V3 注意：
 
 - `/pack` 和 `/pack/:packId` 已迁移。
 - `/newPack` 支持 osu 导入和手动外链创建。
+- Tag 分类已改为后端主数据字段 `category`，可选值为 `pattern | bpm | difficulty`；前端列表筛选、新建和详情维护共用同一套分类逻辑，不再按标签 ID/数组位置切片。
+- Tag 同时返回 `tag_key/name_zh/name_en/sort_order/enabled`；`tag_key` 创建后不可修改，停用标签不会出现在新筛选和新关联中，但历史 Pack 关联保留。
+- 部署本版本前必须在 `jack-house-web/backend` 执行 `npm run migrate:pack-tag-taxonomy`。迁移保留全部 `tag_id`，并逐条比对执行前后的 `(pack_id, tag_id)` 关系，确保 `pack_tags` 完全不变；回滚 SQL 同样不会修改 `pack_tags`。
 - 图包标题、创建者、外链、type 编辑缺后端更新协议，暂未迁移。
 
 ## Event

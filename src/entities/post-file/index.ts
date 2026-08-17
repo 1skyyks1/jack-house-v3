@@ -19,6 +19,6 @@ export {
   useUploadPostFileMutation,
   useUserPostFileListQuery,
 } from "./api/postFileQueries"
-export { formatFileSize, getPostFileStatusLabel } from "./model/types"
+export { formatFileSize, formatPostFileLockCountdown, getPostFileLockedAt, getPostFileLockRemainingMs, getPostFileStatusLabel, isPostFileLocked, POST_FILE_DELETE_WINDOW_MS } from "./model/types"
 export type { PostFile, PostFileStatus, PublicPostFileListItem } from "./model/types"
-export type { GetAdminPostFilesParams, GetUserPostFilesParams, ReviewPostFileRequest, UpdatePostFileRequest } from "./api/postFileApi"
+export type { GetAdminPostFilesParams, GetUserPostFilesParams, ReviewPostFileRequest, UpdatePostFileRequest, UploadPostFileRequest } from "./api/postFileApi"

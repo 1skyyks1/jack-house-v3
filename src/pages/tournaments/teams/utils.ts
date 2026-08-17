@@ -19,13 +19,13 @@ export function isTeamMutable(team: TournamentTeam) {
 export function getTeamStatusLabel(status: number | undefined, t: TFunction) {
   switch (status) {
     case 1:
-      return t("admin.tournaments.teams.status.approved", { defaultValue: "Approved" })
+      return t("tournament.admin.teams.approved", { defaultValue: "Approved" })
     case 2:
-      return t("admin.tournaments.teams.status.submitted", { defaultValue: "Submitted" })
+      return t("tournament.admin.teams.submitted", { defaultValue: "Submitted" })
     case 3:
-      return t("admin.tournaments.teams.status.locked", { defaultValue: "Locked" })
+      return t("tournament.admin.teams.locked", { defaultValue: "Locked" })
     default:
-      return t("admin.tournaments.teams.status.created", { defaultValue: "Created" })
+      return t("tournament.admin.teams.created", { defaultValue: "Created" })
   }
 }
 
