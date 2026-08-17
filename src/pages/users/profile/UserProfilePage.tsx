@@ -8,6 +8,7 @@ import {
   Eye,
   FileArrowUp,
   LinkSimple,
+  PencilSimple,
   Question,
   Trophy,
 } from "@phosphor-icons/react"
@@ -54,6 +55,7 @@ import {
 } from "@/pages/tournaments/performance/playerPerformance"
 import { getTournamentMapCoverUrl, getTournamentPublicPath } from "@/pages/tournaments/_shared/tournamentVisuals"
 import { groupRoundsByMainStage } from "@/pages/tournaments/_shared/tournamentRoundStages"
+import { useAuthStore } from "@/features/auth"
 import { UserPostsSkeleton, UserProfileSkeleton, UserProfileState, UserRoleBadge, UserStatusBadge } from "./components"
 import { parsePage } from "./utils"
 
@@ -72,6 +74,7 @@ export function UserProfilePage() {
   const postFilePage = parsePage(searchParams.get("postFilePage"))
   const locale = i18n.language === "en" ? "en" : "zh"
   const userQuery = useUserDetailQuery(userId)
+  const authUserId = useAuthStore((state) => state.userId)
   const experiencesQuery = useUserTournamentExperiencesQuery(userId)
   const postsQuery = useUserPostListQuery(userId ? { page: postPage, pageSize: USER_POST_PAGE_SIZE, userId } : undefined)
   const postFilesQuery = useUserPostFileListQuery(userId ? { page: postFilePage, pageSize: USER_POST_FILE_PAGE_SIZE, userId } : undefined)
@@ -96,7 +99,7 @@ export function UserProfilePage() {
         }}
       >
         <div className="pointer-events-none absolute -right-24 -top-32 size-80 rounded-full bg-primary/[0.045] blur-3xl" />
-        <UserHero user={userQuery.data} />
+        <UserHero isOwnProfile={authUserId === String(userQuery.data.user_id)} user={userQuery.data} />
         <UserProfileMeta user={userQuery.data} />
       </section>
 
@@ -114,7 +117,7 @@ export function UserProfilePage() {
   )
 }
 
-function UserHero({ user }: { user: UserProfile }) {
+function UserHero({ isOwnProfile, user }: { isOwnProfile: boolean; user: UserProfile }) {
   const { t } = useTranslation()
   const initials = user.user_name.trim().slice(0, 2).toUpperCase() || "JH"
 
@@ -139,7 +142,17 @@ function UserHero({ user }: { user: UserProfile }) {
             {user.status !== 0 ? <UserStatusBadge status={user.status} /> : null}
             <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("user.profile.uid", { id: user.user_id })}</span>
           </div>
-          <h1 className="break-words font-heading text-2xl font-semibold tracking-tight sm:text-4xl">{user.user_name}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="break-words font-heading text-2xl font-semibold tracking-tight sm:text-4xl">{user.user_name}</h1>
+            {isOwnProfile ? (
+              <Button asChild className="rounded-full" size="sm" variant="secondary">
+                <Link to="/user/edit">
+                  <PencilSimple className="size-4" weight="bold" />
+                  {t("common.editProfile")}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-4">
             <UserBadges badges={user.badges ?? []} />
           </div>

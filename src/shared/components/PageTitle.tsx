@@ -27,6 +27,7 @@ function getRouteTitle(pathname: string, t: (key: string) => string) {
   if (pathname.startsWith("/post/")) return t("common.post")
   if (pathname === "/pack" || pathname.startsWith("/pack/")) return t("common.pack")
   if (pathname === "/newPack") return t("pack.new.breadcrumb")
+  if (pathname === "/rewards" || pathname.startsWith("/rewards/")) return t("rewards.title")
   if (pathname === "/tool") return t("tools.title")
   if (pathname === "/tool/omc") return t("mappackCreator.title")
   if (pathname === "/tool/oma") return t("maniaAnalyser.title")
@@ -53,6 +54,7 @@ function getTournamentTitle(pathname: string, t: (key: string) => string) {
 function getAdminTitle(pathname: string, t: (key: string) => string) {
   if (pathname === "/admin" || pathname === "/admin/dashboard") return t("admin.nav.dashboard")
   if (pathname === "/admin/users") return t("admin.nav.users")
+  if (pathname === "/admin/rewards") return t("admin.nav.rewards")
   if (pathname === "/admin/aimg") return t("admin.nav.aiImages")
   if (pathname === "/admin/announcement") return t("admin.nav.announcement")
   if (pathname === "/admin/posts") return t("admin.nav.posts")

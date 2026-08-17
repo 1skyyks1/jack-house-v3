@@ -21,6 +21,7 @@ const adminNavItems: Array<{ key: AdminPermissionKey; to: string }> = [
   { key: "events", to: "/admin/events" },
   { key: "badges", to: "/admin/badges" },
   { key: "users", to: "/admin/users" },
+  { key: "rewards", to: "/admin/rewards" },
   { key: "announcement", to: "/admin/announcement" },
   { key: "posts", to: "/admin/posts" },
   { key: "postFiles", to: "/admin/postFiles" },

@@ -12,6 +12,7 @@ import { enMappackCreator, zhMappackCreator } from "./resources/mappackCreator"
 import { enManiaAnalyser, zhManiaAnalyser } from "./resources/maniaAnalyser"
 import { enAccuracyCalculator, zhAccuracyCalculator } from "./resources/accuracyCalculator"
 import { enAiImage, zhAiImage } from "./resources/aiImage"
+import { enRewards, zhRewards } from "./resources/rewards"
 
 export const zhTranslation = {
   ...zhBase,
@@ -28,6 +29,7 @@ export const zhTranslation = {
   ...zhManiaAnalyser,
   ...zhAccuracyCalculator,
   ...zhAiImage,
+  ...zhRewards,
   tools: {
     ...zhManiaAnalyser.tools,
     ...zhAiImage.tools,
@@ -38,6 +40,7 @@ export const zhTranslation = {
     nav: {
       ...zhAdmin.admin.nav,
       ...zhAiImage.admin.nav,
+      rewards: "积分商城",
     },
   },
 } as const
@@ -57,6 +60,7 @@ export const enTranslation = {
   ...enManiaAnalyser,
   ...enAccuracyCalculator,
   ...enAiImage,
+  ...enRewards,
   tools: {
     ...enManiaAnalyser.tools,
     ...enAiImage.tools,
@@ -67,6 +71,7 @@ export const enTranslation = {
     nav: {
       ...enAdmin.admin.nav,
       ...enAiImage.admin.nav,
+      rewards: "Rewards",
     },
   },
 } as const

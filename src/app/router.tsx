@@ -16,6 +16,7 @@ import {
   AdminPackTagsPage,
   AdminPostFilesPage,
   AdminPostsPage,
+  AdminRewardsPage,
   AdminTournamentAuditPage,
   AdminTournamentBracketPage,
   AdminTournamentContentPage,
@@ -41,6 +42,8 @@ import {
   PackDetailPage,
   PackListPage,
   PostDetailPage,
+  RewardsCartPage,
+  RewardsPage,
   TournamentPausedPage,
   TournamentBracketPage,
   TournamentDetailPage,
@@ -155,6 +158,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "rewards",
+        element: (
+          <RequireAuth>
+            {lazyElement(<RewardsPage />)}
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "rewards/cart",
+        element: (
+          <RequireAuth>
+            {lazyElement(<RewardsCartPage />)}
+          </RequireAuth>
+        ),
+      },
+      {
         path: "event/:eventId",
         element: lazyElement(<EventDetailPage />),
       },
@@ -235,6 +254,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireAdminPermission permission="users">
                 {lazyElement(<AdminUsersPage />)}
+              </RequireAdminPermission>
+            ),
+          },
+          {
+            path: "rewards",
+            element: (
+              <RequireAdminPermission permission="rewards">
+                {lazyElement(<AdminRewardsPage />)}
               </RequireAdminPermission>
             ),
           },

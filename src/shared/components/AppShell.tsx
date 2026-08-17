@@ -1,4 +1,4 @@
-import { HouseIcon, InfoIcon, ListIcon, NewspaperIcon, PencilSimple, ShieldIcon, SignOutIcon, StackIcon, Toolbox, Trophy, UserCircle } from "@phosphor-icons/react"
+import { Coin, HouseIcon, InfoIcon, ListIcon, NewspaperIcon, ShieldIcon, SignOutIcon, StackIcon, Toolbox, Trophy, UserCircle } from "@phosphor-icons/react"
 import { lazy, Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils"
 import { LanguageSwitch } from "./LanguageSwitch"
 import { PageTitle } from "./PageTitle"
 import { ThemeToggle } from "./ThemeToggle"
+import { usePointBalanceQuery, useRewardCartStore } from "@/features/rewards"
 
 const publicNavItems = [
   { to: "/", labelKey: "common.home", icon: HouseIcon, end: true },
@@ -58,6 +59,8 @@ export function AppShell() {
   const queryClient = useQueryClient()
   const canSeeAdmin = hasAdminPermission(permissionsQuery.data?.adminPermissions, "admin")
   const currentUser = currentUserQuery.data
+  const pointBalanceQuery = usePointBalanceQuery(isLogged)
+  const clearRewardCart = useRewardCartStore((state) => state.clear)
   const currentUserId = currentUser?.user_id ? String(currentUser.user_id) : authUserId
   const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/")
   const isHomeRoute = location.pathname === "/"
@@ -107,6 +110,8 @@ export function AppShell() {
     logout()
     queryClient.removeQueries({ queryKey: authQueryKeys.currentUser })
     queryClient.removeQueries({ queryKey: authQueryKeys.permissions })
+    queryClient.removeQueries({ queryKey: ["rewards"] })
+    clearRewardCart()
   }
 
   return (
@@ -146,12 +151,12 @@ export function AppShell() {
                 <Button
                   aria-label={t("common.menu")}
                   className={cn(
-                    "lg:hidden",
+                    "order-2 lg:order-none lg:hidden",
                     useOverlayHeader
                       ? "border border-border/60 bg-background/55 text-foreground hover:bg-background/75 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                       : "text-muted-foreground hover:text-foreground",
                   )}
-                  size="icon"
+                  size="sm"
                   type="button"
                   variant={useOverlayHeader ? "outline" : "ghost"}
                 >
@@ -213,12 +218,12 @@ export function AppShell() {
                 )
               })}
             </div>
-            <div className="ml-2 mr-3 flex items-center gap-2">
+            <div className="order-1 ml-2 mr-1 flex items-center gap-2 lg:order-none lg:mr-3">
               <LanguageSwitch invert={useOverlayHeader} />
               <ThemeToggle disabled={isHomeRoute} invert={useOverlayHeader} />
             </div>
             {isLogged ? (
-              <div className={cn("flex items-center gap-2 border-l pl-3", useOverlayHeader && "border-border/60 dark:border-white/12")}>
+              <div className={cn("order-3 ml-2 flex items-center gap-2 border-l pl-3 lg:order-none lg:ml-0", useOverlayHeader && "border-border/60 dark:border-white/12")}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -238,16 +243,23 @@ export function AppShell() {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-36 min-w-36">
                     {currentUserId ? (
                       <DropdownMenuItem onSelect={() => navigate(`/user/${currentUserId}`)}>
                         <UserCircle className="size-4" weight="bold" />
                         {t("common.profile")}
                       </DropdownMenuItem>
                     ) : null}
-                    <DropdownMenuItem onSelect={() => navigate("/user/edit")}>
-                      <PencilSimple className="size-4" weight="bold" />
-                      {t("common.editProfile")}
+                    <DropdownMenuItem className="group/rewards overflow-hidden" onSelect={() => navigate("/rewards")}>
+                      <Coin className="size-4 text-amber-500 transition duration-200 ease-out group-data-[highlighted]/rewards:rotate-12 group-data-[highlighted]/rewards:scale-110" weight="fill" />
+                      <span className="relative inline-grid min-w-0 overflow-hidden">
+                        <span className="col-start-1 row-start-1 origin-left truncate tabular-nums transition duration-200 ease-out group-data-[highlighted]/rewards:-translate-y-1 group-data-[highlighted]/rewards:scale-95 group-data-[highlighted]/rewards:opacity-0">
+                          {new Intl.NumberFormat().format(pointBalanceQuery.data?.balance ?? 0)}
+                        </span>
+                        <span className="col-start-1 row-start-1 translate-y-1 truncate opacity-0 transition duration-200 ease-out group-data-[highlighted]/rewards:translate-y-0 group-data-[highlighted]/rewards:opacity-100">
+                          {t("rewards.nav")}
+                        </span>
+                      </span>
                     </DropdownMenuItem>
                     {canSeeAdmin ? (
                       <DropdownMenuItem onSelect={() => navigate("/admin/dashboard")}>
@@ -267,6 +279,7 @@ export function AppShell() {
               <Button
                 type="button"
                 className={cn(
+                    "order-3 lg:order-none",
                     useOverlayHeader &&
                     "border border-border/60 bg-background/55 text-foreground hover:bg-background/75 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15",
                 )}
