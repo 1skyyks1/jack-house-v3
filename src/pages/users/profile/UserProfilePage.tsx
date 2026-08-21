@@ -99,8 +99,8 @@ export function UserProfilePage() {
         }}
       >
         <div className="pointer-events-none absolute -right-24 -top-32 size-80 rounded-full bg-primary/[0.045] blur-3xl" />
-        <UserHero isOwnProfile={authUserId === String(userQuery.data.user_id)} user={userQuery.data} />
-        <UserProfileMeta user={userQuery.data} />
+        <UserHero user={userQuery.data} />
+        <UserProfileMeta isOwnProfile={authUserId === String(userQuery.data.user_id)} user={userQuery.data} />
       </section>
 
       <section>
@@ -117,45 +117,38 @@ export function UserProfilePage() {
   )
 }
 
-function UserHero({ isOwnProfile, user }: { isOwnProfile: boolean; user: UserProfile }) {
+function UserHero({ user }: { user: UserProfile }) {
   const { t } = useTranslation()
+  const badges = user.badges ?? []
   const initials = user.user_name.trim().slice(0, 2).toUpperCase() || "JH"
 
   return (
     <header className="relative py-5 sm:py-8">
-      <div className="pointer-events-none absolute -right-20 -top-16 hidden sm:block" aria-hidden="true">
-        <span className="absolute left-1/2 top-1/2 size-96 -translate-x-1/2 -translate-y-1/2 rounded-full border-[18px] border-foreground/[0.035]" />
-        <span className="absolute left-1/2 top-1/2 size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-[11px] border-primary/[0.055]" />
-        <span className="absolute left-1/2 top-1/2 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-foreground/10" />
+      <div className="pointer-events-none absolute -right-8 -top-4 sm:-right-20 sm:-top-16" aria-hidden="true">
+        <span className="absolute left-1/2 top-1/2 size-56 -translate-x-1/2 -translate-y-1/2 rounded-full border-[12px] border-foreground/[0.035] sm:size-96 sm:border-[18px]" />
+        <span className="absolute left-1/2 top-1/2 size-80 -translate-x-1/2 -translate-y-1/2 rounded-full border-[7px] border-primary/[0.055] sm:size-[34rem] sm:border-[11px]" />
+        <span className="absolute left-1/2 top-1/2 size-[25rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-foreground/10 sm:size-[44rem]" />
       </div>
-      {isOwnProfile ? (
-        <div className="relative z-10 mb-3 flex justify-end sm:absolute sm:right-0 sm:top-5 sm:mb-0">
-          <Button asChild className="rounded-full" size="sm" variant="secondary">
-            <Link to="/user/edit">
-              <PencilSimple className="size-4" weight="bold" />
-              {t("common.editProfile")}
-            </Link>
-          </Button>
-        </div>
-      ) : null}
-      <div className="relative flex items-center gap-7 px-2 sm:items-end sm:gap-8 sm:px-4">
+      <div className="relative flex items-center gap-7 px-2 sm:gap-8 sm:px-4">
         <div className="relative grid size-18 shrink-0 place-items-center sm:size-28">
-          <span className="pointer-events-none absolute -inset-2 rounded-full border border-primary/45" aria-hidden="true" />
-          <span className="pointer-events-none absolute -inset-3.5 rounded-full border border-foreground/15" aria-hidden="true" />
+          <span className="pointer-events-none absolute -inset-1 rounded-full border border-primary/25 sm:-inset-2 sm:border-primary/45" aria-hidden="true" />
+          <span className="pointer-events-none absolute -inset-2 rounded-full border border-foreground/[0.08] sm:-inset-3.5 sm:border-foreground/15" aria-hidden="true" />
           <div className="grid size-full place-items-center overflow-hidden rounded-full border-[3px] border-background bg-muted shadow-lg">
             {user.avatar ? <img alt="" className="size-full object-cover" src={user.avatar} /> : <span className="font-heading text-4xl font-semibold text-muted-foreground">{initials}</span>}
           </div>
         </div>
-        <div className="min-w-0 flex-1 pb-1">
+        <div className="flex min-w-0 flex-1 self-stretch flex-col justify-center">
           <div className="mb-2 flex flex-wrap items-center gap-1.5 sm:mb-3 sm:gap-2">
             <UserRoleBadge role={user.role} />
             {user.status !== 0 ? <UserStatusBadge status={user.status} /> : null}
             <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("user.profile.uid", { id: user.user_id })}</span>
           </div>
           <h1 className="break-words font-heading text-2xl font-semibold tracking-tight sm:text-4xl">{user.user_name}</h1>
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-4">
-            <UserBadges badges={user.badges ?? []} />
-          </div>
+          {badges.length > 0 ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-4">
+              <UserBadges badges={badges} />
+            </div>
+          ) : null}
         </div>
       </div>
     </header>
@@ -236,15 +229,30 @@ function UserBadgeGridItem({ badge }: { badge: UserBadge }) {
     : <div className={className}>{content}</div>
 }
 
-function UserProfileMeta({ user }: { user: UserProfile }) {
+function UserProfileMeta({ isOwnProfile, user }: { isOwnProfile: boolean; user: UserProfile }) {
+  const { t } = useTranslation()
   const osuUrl = user.osu_uid ? `https://osu.ppy.sh/u/${user.osu_uid}` : null
 
   return (
-    <div className="-mx-4 flex flex-wrap items-center gap-x-5 gap-y-2 bg-background/45 px-4 py-3 text-sm text-muted-foreground sm:-mx-7 sm:px-7">
-      <ProfileMetaItem icon={<CalendarBlank />} content={formatDate(user.created_time)} />
-      {osuUrl ? <ProfileMetaItem icon={<LinkSimple />} content={<a className="transition hover:text-foreground" href={osuUrl} rel="noreferrer" target="_blank">osu! · {user.osu_uid}</a>} /> : null}
-      {user.qq?.trim() ? <ProfileMetaItem icon={<QqIcon />} content={<CopyableContact value={user.qq} />} /> : null}
-      {user.discord?.trim() ? <ProfileMetaItem icon={<DiscordLogo />} content={<CopyableContact value={user.discord} />} /> : null}
+    <div className="-mx-4 flex items-center gap-3 bg-background/45 px-4 py-3 text-sm text-muted-foreground sm:-mx-7 sm:px-7">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2">
+        <ProfileMetaItem icon={<CalendarBlank />} content={formatDate(user.created_time)} />
+        {osuUrl ? <ProfileMetaItem icon={<LinkSimple />} content={<a className="transition hover:text-foreground" href={osuUrl} rel="noreferrer" target="_blank">osu! · {user.osu_uid}</a>} /> : null}
+        {user.qq?.trim() ? <ProfileMetaItem icon={<QqIcon />} content={<CopyableContact value={user.qq} />} /> : null}
+        {user.discord?.trim() ? <ProfileMetaItem icon={<DiscordLogo />} content={<CopyableContact value={user.discord} />} /> : null}
+      </div>
+      {isOwnProfile ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild aria-label={t("common.editProfile")} className="rounded-full" size="icon-sm" variant="secondary">
+              <Link to="/user/edit">
+                <PencilSimple className="size-4" weight="bold" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("common.editProfile")}</TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   )
 }
@@ -623,11 +631,24 @@ function UserPostRow({ locale, post }: { locale: AppLocale; post: PostListItem }
 }
 
 function UserPostFileRow({ file }: { file: PublicPostFileListItem }) {
-  return (
+  const { t } = useTranslation()
+  const feedback = file.feedback?.trim()
+  const row = (
     <div className="flex min-w-0 items-start justify-between gap-3 rounded-lg p-3 transition hover:bg-background/50">
       <div className="min-w-0 flex-1"><div className="flex min-w-0 items-center gap-2"><FileArrowUp className="size-4 shrink-0 text-muted-foreground" /><span className="min-w-0 truncate font-medium">{file.file_name}</span></div><div className="mt-1 text-xs text-muted-foreground">{formatDate(file.uploaded_time)}</div></div>
       <Badge className={cn("shrink-0", getPostFileStatusClassName(file.status))} variant="outline">{getPostFileStatusLabel(file.status)}</Badge>
     </div>
+  )
+
+  if (!feedback) return row
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{row}</TooltipTrigger>
+      <TooltipContent className="max-w-xs whitespace-pre-wrap">
+        <span className="font-medium">{t("post.submission.feedbackLabel")}：</span>{feedback}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

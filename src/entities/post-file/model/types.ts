@@ -18,7 +18,7 @@ export type PostFile = {
   locked_at: string
 }
 
-export type PublicPostFileListItem = Pick<PostFile, "file_id" | "file_name" | "post_id" | "size" | "status" | "uploaded_time" | "user_id">
+export type PublicPostFileListItem = Pick<PostFile, "feedback" | "file_id" | "file_name" | "post_id" | "size" | "status" | "uploaded_time" | "user_id">
 
 export const POST_FILE_DELETE_WINDOW_MS = 24 * 60 * 60 * 1000
 

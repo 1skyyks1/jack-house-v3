@@ -10,7 +10,7 @@ export {
   useUpdatePostMutation,
   useUserPostListQuery,
 } from "./api/postQueries"
-export { getEditablePostTypesForRole, isPostSubmissionActive, resolvePostContent, resolvePostListTitle } from "./model/types"
+export { getEditablePostTypesForRole, isPostSubmissionActive, resolvePostContent, resolvePostListCoverImage, resolvePostListTitle } from "./model/types"
 export type {
   EditablePostType,
   ForumPreviewGroup,

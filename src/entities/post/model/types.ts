@@ -41,6 +41,8 @@ export type PostListItem = {
   folder_id: number | null
   title_zh: string | null
   title_en: string | null
+  cover_image_zh: string | null
+  cover_image_en: string | null
   user_name?: string
   role?: number
 }
@@ -81,6 +83,14 @@ export function resolvePostListTitle(post: PostListItem, locale: AppLocale) {
   }
 
   return post.title_en || post.title_zh || i18n.t("common.noTitle")
+}
+
+export function resolvePostListCoverImage(post: PostListItem, locale: AppLocale) {
+  if (locale === "zh") {
+    return post.cover_image_zh || post.cover_image_en || null
+  }
+
+  return post.cover_image_en || post.cover_image_zh || null
 }
 
 export function isPostSubmissionActive(endDate?: string | null) {

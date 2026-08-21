@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarBlank, ChatText, Clock, Flag, MagnifyingGlass, Megaphone, NotePencil, User } from "@phosphor-icons/react"
+import { CalendarBlank, ChatText, Clock, Flag, MagnifyingGlass, Megaphone, NotePencil, User } from "@phosphor-icons/react"
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -23,6 +23,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   isPostSubmissionActive,
+  resolvePostListCoverImage,
   resolvePostListTitle,
   usePostListQuery,
   usePostSearchQuery,
@@ -254,7 +255,10 @@ type PostListCardProps = {
 
 function PostListCard({ locale, post }: PostListCardProps) {
   const { t } = useTranslation()
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
   const title = resolvePostListTitle(post, locale)
+  const coverImage = resolvePostListCoverImage(post, locale)
+  const visibleCoverImage = coverImage && coverImage !== failedImageUrl ? coverImage : null
   const meta = getPostTypeMeta(post.type)
   const Icon = meta.icon
   const isRequest = Number(post.type) === 1
@@ -269,8 +273,16 @@ function PostListCard({ locale, post }: PostListCardProps) {
       )}
     >
       <span className={cn("absolute inset-y-0 left-0 w-1", meta.accentClassName)} />
-      <Link className="block p-4 pl-5 sm:p-5 sm:pl-6" to={`/post/${post.post_id}`}>
-        <div className="flex gap-4">
+      {visibleCoverImage ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-[54%] overflow-hidden opacity-60 transition duration-500 [mask-image:linear-gradient(104deg,transparent_0%,transparent_10%,black_58%,black_100%)] [-webkit-mask-image:linear-gradient(104deg,transparent_0%,transparent_10%,black_58%,black_100%)] sm:w-[42%] group-hover:opacity-75"
+        >
+          <img alt="" className="size-full object-cover object-right-top saturate-75 transition duration-700 ease-out group-hover:saturate-100" decoding="async" loading="lazy" onError={() => setFailedImageUrl(visibleCoverImage)} src={visibleCoverImage} />
+        </div>
+      ) : null}
+      <Link className="relative z-10 block p-4 pl-5 sm:p-5 sm:pl-6" to={`/post/${post.post_id}`}>
+        <div className={cn("flex gap-4", visibleCoverImage && "sm:pr-[20%]")}>
           <div className={cn("mt-0.5 hidden size-10 shrink-0 place-items-center rounded-xl sm:grid", meta.iconClassName)}>
             <Icon className="size-5" weight="bold" />
           </div>
@@ -287,11 +299,10 @@ function PostListCard({ locale, post }: PostListCardProps) {
               ) : null}
             </div>
 
-            <div className="flex items-start justify-between gap-4">
+            <div>
               <h2 className="break-words font-heading text-lg font-semibold leading-snug text-foreground transition group-hover:text-primary">
                 {title}
               </h2>
-              <ArrowRight className="mt-1 hidden size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary sm:block" weight="bold" />
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
