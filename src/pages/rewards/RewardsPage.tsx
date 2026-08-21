@@ -215,13 +215,14 @@ function animateRewardToCart(button: HTMLElement) {
     fill: "forwards",
   })
 
+  target.animate([
+    { transform: "scale(1)" },
+    { transform: "scale(1.14)" },
+    { transform: "scale(1)" },
+  ], { delay: 420, duration: 240, easing: "ease-out" })
+
   void flight.finished.finally(() => {
     flyer.remove()
-    target.animate([
-      { transform: "scale(1)" },
-      { transform: "scale(1.14)" },
-      { transform: "scale(1)" },
-    ], { duration: 240, easing: "ease-out" })
   })
 }
 

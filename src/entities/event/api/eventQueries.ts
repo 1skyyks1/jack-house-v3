@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   createEventStages,
   createEvent,
@@ -52,6 +52,7 @@ export function useEventStagesQuery(eventId: string | undefined) {
 export function useEventRankQuery(eventId: string | undefined, params: GetEventRankParams) {
   return useQuery({
     enabled: Boolean(eventId),
+    placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[3] === eventId ? keepPreviousData(previousData) : undefined,
     queryFn: () => getEventRank(eventId as string, params),
     queryKey: eventQueryKeys.eventRank(eventId ?? "", params),
   })
@@ -60,6 +61,7 @@ export function useEventRankQuery(eventId: string | undefined, params: GetEventR
 export function useEventStageRankQuery(stageId: number | undefined, params: GetEventRankParams) {
   return useQuery({
     enabled: typeof stageId === "number",
+    placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[3] === stageId ? keepPreviousData(previousData) : undefined,
     queryFn: () => getEventStageRank(stageId as number, params),
     queryKey: eventQueryKeys.stageRank(stageId ?? 0, params),
   })

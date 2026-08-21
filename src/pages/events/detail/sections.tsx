@@ -1,4 +1,5 @@
 import { ArrowSquareOut, ChartBar, ClockCountdown, Medal } from "@phosphor-icons/react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import {
@@ -13,15 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AppAlert, getErrorMessage, PageState } from "@/shared/components"
+import { AppAlert, getErrorMessage } from "@/shared/components"
 import type { EventCopy } from "./utils"
 import {
   EVENT_LEADERBOARD_PAGE_SIZE,
@@ -40,29 +34,35 @@ type EventHeroProps = {
     name: string
     start: string
   }
+  navigation?: ReactNode
   status: ReturnType<typeof getEventStatus>
 }
 
-export function EventHero({ copy, event, status }: EventHeroProps) {
+export function EventHero({ copy, event, navigation, status }: EventHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
-      <div className="grid gap-5 p-6 md:grid-cols-[minmax(0,1fr)_18rem] md:items-end md:p-8">
+      <div className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_15rem] md:items-end md:p-6">
         <div className="max-w-3xl">
           <EventStatusBadge status={status} />
-          <h1 className="mt-4 font-heading text-4xl font-semibold tracking-tight md:text-5xl">{event.name}</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight md:text-4xl">{event.name}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             {formatShortDateTime(event.start)} - {formatShortDateTime(event.end)}
           </p>
         </div>
-        <div className="rounded-2xl border bg-muted/35 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="md:text-right">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:justify-end">
             <ClockCountdown className="size-4" weight="bold" />
             {copy.countdown}
           </div>
-          <div className="mt-2 font-heading text-2xl font-semibold">{formatCountdown(event.end)}</div>
+          <div className="mt-1.5 font-heading text-xl font-semibold">{formatCountdown(event.end)}</div>
         </div>
       </div>
+      {navigation ? (
+        <div className="overflow-x-auto overscroll-x-contain border-t p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {navigation}
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -94,36 +94,34 @@ export function ScorePanel({ copy, cooldown, isSubmitting, onSubmitScore, totalS
   const hasScore = Boolean(totalScore?.totalRank)
 
   return (
-    <Card>
-      <CardContent className="py-0 px-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-              <ChartBar className="size-4" weight="bold" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="font-heading text-lg font-semibold">{copy.myScore}</h2>
-            </div>
+    <section>
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+            <ChartBar className="size-4" weight="bold" />
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            {hasScore ? (
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-muted/25 px-3 py-2">
-                <ScoreMetric label={copy.totalRank} value={`#${totalScore?.totalRank ?? "-"}`} />
-                <ScoreMetric label={copy.totalScore} value={formatScore(totalScore?.totalScore)} />
-              </div>
-            ) : (
-              <div className="min-w-0 rounded-xl bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                {copy.noScore}
-              </div>
-            )}
-            <Button className="shrink-0" disabled={isSubmitting || cooldown > 0} size="sm" onClick={onSubmitScore} type="button">
-              {cooldown > 0 ? `${copy.submitScore} (${formatCooldown(cooldown)})` : copy.submitScore}
-            </Button>
+          <div className="min-w-0">
+            <h2 className="font-heading text-lg font-semibold">{copy.myScore}</h2>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+          {hasScore ? (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-muted/25 px-3 py-2">
+              <ScoreMetric label={copy.totalRank} value={`#${totalScore?.totalRank ?? "-"}`} />
+              <ScoreMetric label={copy.totalScore} value={formatScore(totalScore?.totalScore)} />
+            </div>
+          ) : (
+            <div className="min-w-0 rounded-xl bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+              {copy.noScore}
+            </div>
+          )}
+          <Button className="shrink-0" disabled={isSubmitting || cooldown > 0} size="sm" onClick={onSubmitScore} type="button">
+            {cooldown > 0 ? `${copy.submitScore} (${formatCooldown(cooldown)})` : copy.submitScore}
+          </Button>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -145,22 +143,17 @@ type StageGridProps = {
 export function StageGrid({ copy, scoresById, stages }: StageGridProps) {
   const { t } = useTranslation()
   if (stages.length === 0) {
-    return <PageState className="max-w-none" title={t("event.noStagesTitle")} description={t("event.noStagesDescription")} />
+    return <div className="py-2 text-sm text-muted-foreground">{t("event.noStagesDescription")}</div>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{t("event.stagesTitle")}</CardTitle>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="grid gap-3 md:grid-cols-2">
-          {stages.map((stage) => (
-            <StageCard key={stage.id} score={scoresById.get(stage.id)} scoreLabel={copy.score} stage={stage} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <section>
+      <div className="grid gap-2 md:grid-cols-2">
+        {stages.map((stage) => (
+          <StageCard key={stage.id} score={scoresById.get(stage.id)} scoreLabel={copy.score} stage={stage} />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -229,33 +222,31 @@ type LeaderboardCardProps =
     copy: EventCopy
     error: unknown
     highlightedRows: EventTotalRankItem[]
+    hasMore: boolean
     isError: boolean
     isLoading: boolean
-    onPageChange: (page: number) => void
-    page: number
+    isLoadingMore: boolean
+    onLoadMore: () => void
     rows: EventTotalRankItem[]
-    total: number
-    totalPages: number
     type: "event"
   }
   | {
     copy: EventCopy
     error: unknown
     highlightedRows: EventStageRankItem[]
+    hasMore: boolean
     isError: boolean
     isLoading: boolean
-    onPageChange: (page: number) => void
-    page: number
+    isLoadingMore: boolean
+    onLoadMore: () => void
     rows: EventStageRankItem[]
-    total: number
-    totalPages: number
     type: "stage"
   }
 
 export function LeaderboardCard(props: LeaderboardCardProps) {
-  const { copy, error, highlightedRows, isError, isLoading, onPageChange, page, rows, total, totalPages, type } = props
-  const remainingRankStart = HIGHLIGHTED_RANK_COUNT + (page - 1) * EVENT_LEADERBOARD_PAGE_SIZE + 1
-  const remainingRows = rows.slice(remainingRankStart - 1, remainingRankStart - 1 + EVENT_LEADERBOARD_PAGE_SIZE)
+  const { copy, error, hasMore, highlightedRows, isError, isLoading, isLoadingMore, onLoadMore, rows, type } = props
+  const remainingRankStart = HIGHLIGHTED_RANK_COUNT + 1
+  const remainingRows = rows.slice(HIGHLIGHTED_RANK_COUNT)
   const podiumRows = highlightedRows.length > 0 ? highlightedRows : rows.slice(0, HIGHLIGHTED_RANK_COUNT)
 
   return (
@@ -274,7 +265,7 @@ export function LeaderboardCard(props: LeaderboardCardProps) {
             startRank={1}
           />
           <div className="overflow-hidden rounded-xl bg-muted/20">
-            <div className="grid grid-cols-[5rem_minmax(0,1fr)_auto] border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="grid grid-cols-[5rem_minmax(0,1fr)_auto] gap-4 border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <span>{copy.totalRank}</span>
               <span>{copy.username}</span>
               <span className="text-right">{type === "event" ? copy.totalScore : copy.score}</span>
@@ -303,9 +294,7 @@ export function LeaderboardCard(props: LeaderboardCardProps) {
           {copy.noScore}
         </div>
       )}
-      {!isLoading && !isError ? (
-        <PaginationBar onPageChange={onPageChange} page={page} total={total} totalPages={totalPages} />
-      ) : null}
+      {!isLoading && !isError ? <LeaderboardLoadMore hasMore={hasMore} isLoading={isLoadingMore} onLoadMore={onLoadMore} /> : null}
     </div>
   )
 }
@@ -479,7 +468,7 @@ function LeaderboardSkeleton() {
         ))}
       </div>
       <div className="overflow-hidden rounded-xl bg-muted/20">
-        <div className="grid grid-cols-[5rem_minmax(0,1fr)_auto] border-b px-4 py-3">
+        <div className="grid grid-cols-[5rem_minmax(0,1fr)_auto] gap-4 border-b px-4 py-3">
           <Skeleton className="h-4 w-10" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="ml-auto h-4 w-16" />
@@ -501,67 +490,25 @@ function LeaderboardSkeleton() {
   )
 }
 
-function PaginationBar({ onPageChange, page, total, totalPages }: { onPageChange: (page: number) => void; page: number; total: number; totalPages: number }) {
+function LeaderboardLoadMore({ hasMore, isLoading, onLoadMore }: { hasMore: boolean; isLoading: boolean; onLoadMore: () => void }) {
   const { t } = useTranslation()
-  const safeTotalPages = Math.max(totalPages, 1)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMore || isLoading) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) onLoadMore()
+    }, { rootMargin: "240px" })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, onLoadMore])
 
   return (
-    <div className="flex flex-col gap-3 px-1 pt-1 text-sm sm:flex-row sm:items-center sm:justify-between">
-      <span className="text-muted-foreground">
-        {t("event.pageSummary", { page, total: safeTotalPages, count: total })}
-      </span>
-      <Pagination className="mx-0 w-auto justify-start sm:justify-end">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              aria-disabled={page <= 1}
-              className={cn(page <= 1 && "pointer-events-none opacity-40")}
-              href="#"
-              onClick={(event) => {
-                event.preventDefault()
-                if (page > 1) onPageChange(page - 1)
-              }}
-            />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext
-              aria-disabled={page >= safeTotalPages}
-              className={cn(page >= safeTotalPages && "pointer-events-none opacity-40")}
-              href="#"
-              onClick={(event) => {
-                event.preventDefault()
-                if (page < safeTotalPages) onPageChange(page + 1)
-              }}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+    <div ref={sentinelRef} aria-live="polite" className="grid min-h-8 place-items-center" role="status">
+      {isLoading ? <span className="text-sm text-muted-foreground">{t("event.loadingMore")}</span> : null}
     </div>
-  )
-}
-
-export function EventSummaryCard({ event, stageCount }: { event: { end: string; start: string }; stageCount: number }) {
-  const { t } = useTranslation()
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("event.summaryTitle")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("event.start")}</span>
-          <span className="text-right">{formatShortDateTime(event.start)}</span>
-        </div>
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("event.end")}</span>
-          <span className="text-right">{formatShortDateTime(event.end)}</span>
-        </div>
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("event.stages")}</span>
-          <span>{stageCount}</span>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 

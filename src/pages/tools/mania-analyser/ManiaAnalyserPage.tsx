@@ -359,7 +359,7 @@ export function ManiaAnalyserPage() {
             ) : null}
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1.4fr)_7rem_7rem_minmax(10rem,1fr)]">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-[minmax(12rem,1.4fr)_7rem_7rem_minmax(10rem,1fr)]">
           <Field label={t("maniaAnalyser.algorithm")}>
             <Select onValueChange={(value) => setAlgorithm(value as ManiaAnalyserAlgorithm)} value={algorithm}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
@@ -616,6 +616,7 @@ const ETTERNA_SKILLS: ManiaEtternaSkill[] = [
 
 function AnalysisSummaries({ result }: { result: ManiaAnalysisResult }) {
   const { t } = useTranslation()
+  const isNarrowScreen = useMediaQuery("(max-width: 639px)")
   const pattern = result.pattern
   const distribution = useMemo(() => buildPatternDistribution(pattern?.topClusters ?? []), [pattern])
   const chartData = useMemo(() => ETTERNA_SKILLS.map((skill) => ({
@@ -638,9 +639,9 @@ function AnalysisSummaries({ result }: { result: ManiaAnalysisResult }) {
           {result.isVibro ? <Badge className="border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300" variant="outline">Vibro</Badge> : null}
         </div>
 
-        <div className="mt-1 h-[23rem] overflow-hidden">
-          <ChartContainer className="mx-auto h-[23rem] w-full max-w-2xl aspect-auto" config={etternaChartConfig} initialDimension={{ height: 368, width: 560 }}>
-              <RadarChart data={chartData} margin={{ bottom: 8, left: 24, right: 24, top: 12 }} outerRadius="90%">
+        <div className="mt-1 h-[18rem] overflow-hidden sm:h-[23rem]">
+          <ChartContainer className="mx-auto h-[18rem] w-full max-w-2xl aspect-auto sm:h-[23rem]" config={etternaChartConfig} initialDimension={isNarrowScreen ? { height: 288, width: 320 } : { height: 368, width: 560 }}>
+              <RadarChart data={chartData} margin={isNarrowScreen ? { bottom: 6, left: 16, right: 16, top: 8 } : { bottom: 8, left: 24, right: 24, top: 12 }} outerRadius={isNarrowScreen ? "78%" : "90%"}>
                 <ChartTooltip content={<ChartTooltipContent hideIndicator hideLabel formatter={(value, _name, item) => (
                   <div className="flex min-w-36 items-center justify-between gap-4">
                     <span className="text-muted-foreground">{String(item.payload.label)}</span>
@@ -666,10 +667,10 @@ function AnalysisSummaries({ result }: { result: ManiaAnalysisResult }) {
           {pattern && pattern.svAmount > 0 ? <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300" variant="outline">{t("maniaAnalyser.svDetected")}</Badge> : null}
         </div>
 
-        <div className="mt-1 h-[23rem] overflow-hidden">
+        <div className="mt-1 h-[18rem] overflow-hidden sm:h-[23rem]">
           {distribution.length ? (
-              <div className="relative mx-auto h-[23rem] w-full max-w-xl">
-                <ChartContainer className="size-full aspect-auto" config={patternChartConfig} initialDimension={{ height: 368, width: 520 }}>
+              <div className="relative mx-auto h-[18rem] w-full max-w-xl sm:h-[23rem]">
+                <ChartContainer className="size-full aspect-auto" config={patternChartConfig} initialDimension={isNarrowScreen ? { height: 288, width: 320 } : { height: 368, width: 520 }}>
                   <PieChart>
                     <ChartTooltip content={<ChartTooltipContent hideIndicator hideLabel formatter={(_value, _name, item) => (
                       <div className="flex min-w-40 items-center justify-between gap-4">
@@ -680,11 +681,11 @@ function AnalysisSummaries({ result }: { result: ManiaAnalysisResult }) {
                     <Pie
                       data={distribution}
                       dataKey="amount"
-                      innerRadius={98}
+                      innerRadius={isNarrowScreen ? 72 : 98}
                       label={PatternPieLabel}
                       labelLine={{ stroke: "var(--border)", strokeWidth: 1 }}
                       nameKey="name"
-                      outerRadius={140}
+                      outerRadius={isNarrowScreen ? 105 : 140}
                       paddingAngle={0}
                       stroke="transparent"
                     >
@@ -744,6 +745,20 @@ function EtternaAxisTick({ cx = 0, cy = 0, data, payload, x = 0, y = 0 }: RadarA
       {item ? <tspan className="fill-foreground font-mono font-semibold tabular-nums" dy="14" x={tickX}>{item.value.toFixed(2)}</tspan> : null}
     </text>
   )
+}
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query)
+    const updateMatches = () => setMatches(mediaQuery.matches)
+    mediaQuery.addEventListener("change", updateMatches)
+    updateMatches()
+    return () => mediaQuery.removeEventListener("change", updateMatches)
+  }, [query])
+
+  return matches
 }
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {

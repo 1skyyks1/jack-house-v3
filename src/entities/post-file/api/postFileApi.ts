@@ -1,3 +1,4 @@
+import { downloadZip } from "client-zip"
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
 import { http } from "@/shared/api/http"
@@ -29,6 +30,15 @@ export type UploadPostFileRequest = {
 export type ReviewPostFileRequest = {
   feedback: string
   status: 1 | 2
+}
+
+type PostFileDownloadManifest = {
+  archiveName: string
+  files: Array<{
+    name: string
+    size: number
+    url: string
+  }>
 }
 
 export async function getAdminPostFiles(params: GetAdminPostFilesParams): Promise<PaginatedEnvelope<PostFile>> {
@@ -94,4 +104,40 @@ export async function deletePostFile(fileId: number): Promise<void> {
 export async function getPostFileDownloadUrl(fileId: number): Promise<string> {
   const response = await http.get(`/postFile/download/${fileId}`)
   return unwrapData<string>(response)
+}
+
+export type DownloadPostFilesArchiveRequest = {
+  onProgress?: (completed: number, total: number) => void
+  postId: number
+}
+
+export async function downloadPostFilesArchive({ onProgress, postId }: DownloadPostFilesArchiveRequest): Promise<{ blob: Blob; fileName: string }> {
+  const response = await http.get(`/postFile/download-manifest/${postId}`)
+  const manifest = unwrapData<PostFileDownloadManifest>(response)
+  let completed = 0
+
+  onProgress?.(completed, manifest.files.length)
+
+  async function* fetchPostFiles() {
+    for (const file of manifest.files) {
+      const fileResponse = await fetch(file.url)
+      if (!fileResponse.ok) {
+        throw new Error(`Failed to download ${file.name} (${fileResponse.status})`)
+      }
+
+      yield {
+        input: fileResponse,
+        name: file.name,
+        size: file.size,
+      }
+
+      completed += 1
+      onProgress?.(completed, manifest.files.length)
+    }
+  }
+
+  const metadata = manifest.files.map((file) => ({ name: file.name, size: file.size }))
+  const blob = await downloadZip(fetchPostFiles(), { metadata }).blob()
+
+  return { blob, fileName: manifest.archiveName }
 }

@@ -30,10 +30,6 @@ export function parseStageTab(tab: EventTab) {
   return Number.isInteger(value) ? value : null
 }
 
-export function getLeaderboardTotalPages(total: number) {
-  return Math.max(Math.ceil(Math.max(total - HIGHLIGHTED_RANK_COUNT, 0) / EVENT_LEADERBOARD_PAGE_SIZE), 1)
-}
-
 export function formatShortDateTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "-"

@@ -128,6 +128,16 @@ function UserHero({ isOwnProfile, user }: { isOwnProfile: boolean; user: UserPro
         <span className="absolute left-1/2 top-1/2 size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full border-[11px] border-primary/[0.055]" />
         <span className="absolute left-1/2 top-1/2 size-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-foreground/10" />
       </div>
+      {isOwnProfile ? (
+        <div className="relative z-10 mb-3 flex justify-end sm:absolute sm:right-0 sm:top-5 sm:mb-0">
+          <Button asChild className="rounded-full" size="sm" variant="secondary">
+            <Link to="/user/edit">
+              <PencilSimple className="size-4" weight="bold" />
+              {t("common.editProfile")}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
       <div className="relative flex items-center gap-7 px-2 sm:items-end sm:gap-8 sm:px-4">
         <div className="relative grid size-18 shrink-0 place-items-center sm:size-28">
           <span className="pointer-events-none absolute -inset-2 rounded-full border border-primary/45" aria-hidden="true" />
@@ -142,17 +152,7 @@ function UserHero({ isOwnProfile, user }: { isOwnProfile: boolean; user: UserPro
             {user.status !== 0 ? <UserStatusBadge status={user.status} /> : null}
             <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("user.profile.uid", { id: user.user_id })}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="break-words font-heading text-2xl font-semibold tracking-tight sm:text-4xl">{user.user_name}</h1>
-            {isOwnProfile ? (
-              <Button asChild className="rounded-full" size="sm" variant="secondary">
-                <Link to="/user/edit">
-                  <PencilSimple className="size-4" weight="bold" />
-                  {t("common.editProfile")}
-                </Link>
-              </Button>
-            ) : null}
-          </div>
+          <h1 className="break-words font-heading text-2xl font-semibold tracking-tight sm:text-4xl">{user.user_name}</h1>
           <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mt-4">
             <UserBadges badges={user.badges ?? []} />
           </div>
@@ -592,7 +592,7 @@ function UserPostsSection({ locale, onPageChange, postsQuery }: { locale: AppLoc
   return (
     <section className="min-w-0 overflow-hidden pb-6 xl:pb-0 xl:pr-6">
       <SectionHeader action={pagination} title={t("user.profile.posts")} />
-      {postsQuery.isLoading ? <UserPostsSkeleton />
+      {postsQuery.isLoading ? <UserPostsSkeleton count={USER_POST_PAGE_SIZE} />
         : postsQuery.isError ? <InlineState title={t("user.profile.postsLoadFailed")} description={getErrorMessage(postsQuery.error)} />
         : postsQuery.data?.data.length ? <div className="min-w-0 space-y-1">{postsQuery.data.data.map((post) => <UserPostRow key={post.post_id} locale={locale} post={post} />)}</div>
         : <InlineState icon={<ChatText weight="duotone" />} title={t("user.profile.noPostsTitle")} />}
@@ -606,7 +606,7 @@ function UserPostFilesSection({ onPageChange, postFilesQuery }: { onPageChange: 
   return (
     <section className="min-w-0 overflow-hidden border-t border-foreground/10 pt-6 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
       <SectionHeader action={pagination} title={t("user.profile.submissions")} />
-      {postFilesQuery.isLoading ? <UserPostsSkeleton />
+      {postFilesQuery.isLoading ? <UserPostsSkeleton count={USER_POST_FILE_PAGE_SIZE} variant="submission" />
         : postFilesQuery.isError ? <InlineState title={t("user.profile.submissionsLoadFailed")} description={getErrorMessage(postFilesQuery.error)} />
         : postFilesQuery.data?.data.length ? <div className="min-w-0 space-y-1">{postFilesQuery.data.data.map((file) => <UserPostFileRow file={file} key={file.file_id} />)}</div>
         : <InlineState icon={<FileArrowUp weight="duotone" />} title={t("user.profile.noSubmissionsTitle")} />}
@@ -619,12 +619,12 @@ function SectionHeader({ action, help, title }: { action?: ReactNode; help?: str
 }
 
 function UserPostRow({ locale, post }: { locale: AppLocale; post: PostListItem }) {
-  return <Link className="group -mx-3 flex min-w-0 items-center justify-between gap-4 px-3 py-4 transition hover:bg-background/50" to={`/post/${post.post_id}`}><span className="min-w-0 flex-1 truncate font-medium transition group-hover:text-primary">{resolvePostListTitle(post, locale)}</span><span className="shrink-0 text-xs text-muted-foreground">{formatDate(post.created_time)}</span></Link>
+  return <Link className="group flex min-w-0 items-center justify-between gap-4 rounded-lg p-3 transition hover:bg-background/50" to={`/post/${post.post_id}`}><span className="min-w-0 flex-1 truncate font-medium transition group-hover:text-primary">{resolvePostListTitle(post, locale)}</span><span className="shrink-0 text-xs text-muted-foreground">{formatDate(post.created_time)}</span></Link>
 }
 
 function UserPostFileRow({ file }: { file: PublicPostFileListItem }) {
   return (
-    <div className="-mx-3 flex min-w-0 items-start justify-between gap-3 px-3 py-4 transition hover:bg-background/50">
+    <div className="flex min-w-0 items-start justify-between gap-3 rounded-lg p-3 transition hover:bg-background/50">
       <div className="min-w-0 flex-1"><div className="flex min-w-0 items-center gap-2"><FileArrowUp className="size-4 shrink-0 text-muted-foreground" /><span className="min-w-0 truncate font-medium">{file.file_name}</span></div><div className="mt-1 text-xs text-muted-foreground">{formatDate(file.uploaded_time)}</div></div>
       <Badge className={cn("shrink-0", getPostFileStatusClassName(file.status))} variant="outline">{getPostFileStatusLabel(file.status)}</Badge>
     </div>

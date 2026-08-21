@@ -61,14 +61,27 @@ export function UserProfileSkeleton() {
   )
 }
 
-export function UserPostsSkeleton() {
+export function UserPostsSkeleton({ count = 4, variant = "post" }: { count?: number; variant?: "post" | "submission" }) {
   return (
-    <div className="space-y-1">
-      {Array.from({ length: 4 }, (_, index) => (
-        <div className="space-y-3 py-4" key={index}>
-          <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-        </div>
+    <div aria-hidden="true" className="space-y-1">
+      {Array.from({ length: count }, (_, index) => (
+        variant === "submission" ? (
+          <div className="flex items-start justify-between gap-3 rounded-lg p-3" key={index}>
+            <div className="min-w-0 flex-1">
+              <div className="flex h-6 items-center gap-2">
+                <div className="size-4 shrink-0 animate-pulse rounded bg-muted" />
+                <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+              </div>
+              <div className="mt-1 h-4 w-24 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="h-5 w-12 shrink-0 animate-pulse rounded-full bg-muted" />
+          </div>
+        ) : (
+          <div className="flex h-12 items-center justify-between gap-4 rounded-lg px-3" key={index}>
+            <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-16 shrink-0 animate-pulse rounded bg-muted" />
+          </div>
+        )
       ))}
     </div>
   )

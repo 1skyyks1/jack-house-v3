@@ -747,7 +747,7 @@ function StatusBadge({ children, tone }: StatusBadgeProps) {
 
 export function PackDetailSkeleton() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-3 sm:px-0">
+    <section className="mx-auto w-full max-w-6xl">
       <div className="h-5 w-28 animate-pulse rounded bg-muted" />
       <div className="mt-4 overflow-hidden rounded-xl border bg-card shadow-sm">
         <div className="h-[24rem] animate-pulse bg-muted" />

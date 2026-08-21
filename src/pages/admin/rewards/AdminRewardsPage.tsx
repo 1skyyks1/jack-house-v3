@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { Coin, Gift, MagnifyingGlass, Package, PencilSimple, Plus, Truck, User } from "@phosphor-icons/react"
-import { useState } from "react"
+import { Coin, Gift, MagnifyingGlass, Package, PencilSimple, Plus, Truck, UploadSimple, User } from "@phosphor-icons/react"
+import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,7 @@ import {
   useRedemptionOrdersQuery,
   useRewardItemsQuery,
   useSaveRewardItemMutation,
+  useUploadRewardImageMutation,
   useUpdateOrderItemMutation,
   RewardStatusBadge,
   formatPoints,
@@ -101,6 +102,9 @@ function RewardItemDialog({ item, onOpenChange, open }: { item: RewardItem | nul
     id_placeholder_en: item.id_placeholder_en ?? item.id_placeholder ?? "",
   } : EMPTY_ITEM)
   const mutation = useSaveRewardItemMutation(item?.id)
+  const uploadMutation = useUploadRewardImageMutation()
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  const imageFileInputRef = useRef<HTMLInputElement>(null)
   const update = <K extends keyof SaveRewardItemRequest>(key: K, value: SaveRewardItemRequest[K]) => setForm((current) => ({ ...current, [key]: value }))
   const isValid = form.name_zh.trim() && form.name_en.trim() && form.point_cost > 0 && form.stock >= 0
   return (
@@ -113,7 +117,54 @@ function RewardItemDialog({ item, onOpenChange, open }: { item: RewardItem | nul
           <Field label={t("rewards.admin.nameEn")} required><Input onChange={(event) => update("name_en", event.target.value)} value={form.name_en} /></Field>
           <Field label={t("rewards.admin.type")}><Select onValueChange={(value) => update("type", value as RewardItemType)} value={form.type}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="virtual">{t("rewards.types.virtual")}</SelectItem><SelectItem value="physical">{t("rewards.types.physical")}</SelectItem></SelectContent></Select></Field>
           <Field label={t("rewards.admin.status")}><Select onValueChange={(value) => update("status", value as RewardItemStatus)} value={form.status}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">{t("rewards.itemStatus.draft")}</SelectItem><SelectItem value="active">{t("rewards.itemStatus.active")}</SelectItem><SelectItem value="inactive">{t("rewards.itemStatus.inactive")}</SelectItem></SelectContent></Select></Field>
-          <Field className="sm:col-span-2" label={t("rewards.admin.imageUrl")}><Input onChange={(event) => update("image_url", event.target.value)} placeholder="https://…" value={form.image_url} />{form.image_url ? <img alt="" className="mt-2 h-28 w-48 rounded-md border object-cover" src={form.image_url} /> : null}</Field>
+          <Field className="sm:col-span-2" label={t("rewards.admin.imageUrl")}>
+            <Input
+              disabled={uploadMutation.isPending}
+              onChange={(event) => update("image_url", event.target.value)}
+              placeholder="https://…"
+              type="url"
+              value={form.image_url}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button disabled={uploadMutation.isPending} onClick={() => imageFileInputRef.current?.click()} size="sm" type="button" variant="outline">
+                <UploadSimple className="size-4" />
+                {uploadMutation.isPending
+                  ? t("rewards.admin.uploadingImage", { progress: uploadProgress ?? 0 })
+                  : t("rewards.admin.uploadImage")}
+              </Button>
+              <input
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="sr-only"
+                disabled={uploadMutation.isPending}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ""
+                  if (!file) return
+                  setUploadProgress(0)
+                  uploadMutation.mutate(
+                    { file, onProgress: setUploadProgress },
+                    {
+                      onSuccess: (result) => {
+                        update("image_url", result.url)
+                        toast.success(t("rewards.admin.imageUploaded"))
+                      },
+                      onSettled: () => setUploadProgress(null),
+                    },
+                  )
+                }}
+                ref={imageFileInputRef}
+                type="file"
+              />
+              <span className="text-xs text-muted-foreground">{t("rewards.admin.imageUploadHint")}</span>
+            </div>
+            {uploadMutation.isPending ? (
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${uploadProgress ?? 0}%` }} />
+              </div>
+            ) : null}
+            {form.image_url ? <img alt="" className="mt-3 h-28 w-48 rounded-md border object-cover" src={form.image_url} /> : null}
+            {uploadMutation.error ? <div className="mt-2"><MutationErrorAlert error={uploadMutation.error} /></div> : null}
+          </Field>
           <Field label={t("rewards.admin.descriptionZh")}><Textarea onChange={(event) => update("description_zh", event.target.value)} rows={4} value={form.description_zh} /></Field>
           <Field label={t("rewards.admin.descriptionEn")}><Textarea onChange={(event) => update("description_en", event.target.value)} rows={4} value={form.description_en} /></Field>
           <Field label={t("rewards.admin.cost")} required><Input min={1} onChange={(event) => update("point_cost", Number(event.target.value))} type="number" value={form.point_cost} /></Field>
@@ -125,7 +176,7 @@ function RewardItemDialog({ item, onOpenChange, open }: { item: RewardItem | nul
           {form.type === "virtual" ? <><Field label={t("rewards.admin.idLabelZh")}><Input onChange={(event) => update("id_label_zh", event.target.value)} placeholder={t("rewards.virtualId")} value={form.id_label_zh} /></Field><Field label={t("rewards.admin.idLabelEn")}><Input onChange={(event) => update("id_label_en", event.target.value)} placeholder="Game ID" value={form.id_label_en} /></Field><Field label={t("rewards.admin.idPlaceholderZh")}><Input onChange={(event) => update("id_placeholder_zh", event.target.value)} value={form.id_placeholder_zh} /></Field><Field label={t("rewards.admin.idPlaceholderEn")}><Input onChange={(event) => update("id_placeholder_en", event.target.value)} value={form.id_placeholder_en} /></Field></> : null}
           {mutation.error ? <div className="sm:col-span-2"><MutationErrorAlert error={mutation.error} /></div> : null}
           </div>
-          <DialogFooter className="mt-6"><Button onClick={() => onOpenChange(false)} variant="outline">{t("rewards.admin.cancel")}</Button><Button disabled={!isValid || mutation.isPending} onClick={() => mutation.mutate(form, { onSuccess: () => { toast.success(t("rewards.admin.itemSaved")); onOpenChange(false) } })}>{mutation.isPending ? t("rewards.admin.saving") : t("rewards.admin.save")}</Button></DialogFooter>
+          <DialogFooter className="mt-6"><Button onClick={() => onOpenChange(false)} variant="outline">{t("rewards.admin.cancel")}</Button><Button disabled={!isValid || mutation.isPending || uploadMutation.isPending} onClick={() => mutation.mutate(form, { onSuccess: () => { toast.success(t("rewards.admin.itemSaved")); onOpenChange(false) } })}>{mutation.isPending ? t("rewards.admin.saving") : t("rewards.admin.save")}</Button></DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

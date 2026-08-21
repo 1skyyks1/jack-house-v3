@@ -50,7 +50,7 @@ export function PackDetailPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-3 sm:px-0">
+    <section className="mx-auto w-full max-w-6xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>

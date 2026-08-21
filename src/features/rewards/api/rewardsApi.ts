@@ -1,3 +1,4 @@
+import axios from "axios"
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
 import { http } from "@/shared/api/http"
@@ -59,6 +60,66 @@ export type SaveRewardItemRequest = {
   id_label_en: string
   id_placeholder_zh: string
   id_placeholder_en: string
+}
+
+type RewardImageUploadGrant = {
+  expiresAt: string | null
+  strategyId: number
+  token: string
+  uploadUrl: string
+}
+
+type PngUrlUploadResponse = {
+  status: boolean
+  message?: string
+  data?: {
+    key: string
+    url: string
+    width: number
+    height: number
+    size: number
+    mimetype: string
+  }
+}
+
+export type UploadRewardImageRequest = {
+  file: File
+  onProgress?: (progress: number) => void
+}
+
+export async function uploadRewardImage({ file, onProgress }: UploadRewardImageRequest) {
+  const grantResponse = await http.post("/rewards/admin/image-upload-token")
+  const grant = unwrapData<RewardImageUploadGrant>(grantResponse)
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("strategy_id", String(grant.strategyId))
+  formData.append("permission", "0")
+
+  try {
+    const response = await axios.post<PngUrlUploadResponse>(grant.uploadUrl, formData, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${grant.token}`,
+      },
+      onUploadProgress: (event) => {
+        if (!event.total) return
+        onProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)))
+      },
+      timeout: 2 * 60_000,
+    })
+    const result = response.data
+
+    if (!result.status || !result.data?.url) {
+      throw new Error(result.message || "PNGURL image upload failed")
+    }
+
+    return result.data
+  } catch (error) {
+    if (axios.isAxiosError<PngUrlUploadResponse>(error)) {
+      throw new Error(error.response?.data?.message || error.message || "PNGURL image upload failed", { cause: error })
+    }
+    throw error
+  }
 }
 
 export async function createRewardItem(request: SaveRewardItemRequest) {

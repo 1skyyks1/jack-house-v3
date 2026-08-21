@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { authQueryKeys, useAuthStore, useCurrentUserQuery, usePermissionsQuery } from "@/features/auth"
 import { logoutSession } from "@/features/auth/api/authApi"
 import { hasAdminPermission } from "@/features/admin-permissions"
@@ -48,6 +49,7 @@ export function AppShell() {
   const navigate = useNavigate()
   const [hasScrolled, setHasScrolled] = useState(false)
   const [homeSectionIndex, setHomeSectionIndex] = useState(0)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isLogged = useAuthStore((state) => state.isLogged)
   const logout = useAuthStore((state) => state.logout)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
@@ -105,13 +107,24 @@ export function AppShell() {
     }
   }, [isHomeRoute, location.pathname])
 
-  const handleLogout = () => {
-    void logoutSession().catch(() => undefined)
-    logout()
-    queryClient.removeQueries({ queryKey: authQueryKeys.currentUser })
-    queryClient.removeQueries({ queryKey: authQueryKeys.permissions })
-    queryClient.removeQueries({ queryKey: ["rewards"] })
-    clearRewardCart()
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    await queryClient.cancelQueries({ queryKey: ["auth"] })
+
+    try {
+      await logoutSession()
+      logout()
+      queryClient.removeQueries({ queryKey: authQueryKeys.currentUser })
+      queryClient.removeQueries({ queryKey: authQueryKeys.permissions })
+      queryClient.removeQueries({ queryKey: ["rewards"] })
+      clearRewardCart()
+    } catch {
+      toast.error(t("common.logoutFailed"))
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   return (
@@ -268,9 +281,9 @@ export function AppShell() {
                       </DropdownMenuItem>
                     ) : null}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={handleLogout} variant="destructive">
+                    <DropdownMenuItem disabled={isLoggingOut} onSelect={() => void handleLogout()} variant="destructive">
                       <SignOutIcon className="size-4" weight="bold" />
-                      {t("common.logout")}
+                      {isLoggingOut ? t("common.loggingOut") : t("common.logout")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -279,7 +292,7 @@ export function AppShell() {
               <Button
                 type="button"
                 className={cn(
-                    "order-3 lg:order-none",
+                    "order-3 ml-2 lg:order-none lg:ml-0",
                     useOverlayHeader &&
                     "border border-border/60 bg-background/55 text-foreground hover:bg-background/75 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15",
                 )}

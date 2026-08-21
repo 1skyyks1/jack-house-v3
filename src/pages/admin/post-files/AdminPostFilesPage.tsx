@@ -12,11 +12,13 @@ import { z } from "zod"
 import {
   formatFileSize,
   getAdminPostFiles,
+  getPostFileLockedAt,
   getPostFileStatusLabel,
   isPostFileLocked,
   useAdminPostFilesQuery,
   useDeletePostFileMutation,
   usePostFileDownloadUrlMutation,
+  usePostFilesArchiveMutation,
   useReviewPostFileMutation,
   type PostFile,
   type PostFileStatus,
@@ -64,7 +66,6 @@ import { formatDate } from "@/shared/lib/date"
 import { usePageParam } from "../_shared/usePageParam"
 
 const PAGE_SIZE = 13
-const ADMIN_POST_FILES_INITIAL_TIME = Date.now()
 
 const createReviewSchema = (t: TFunction) => z.object({
   feedback: z.string().trim().max(1000, t("admin.postFiles.validation.feedbackTooLong")),
@@ -81,31 +82,47 @@ type ReviewTarget = {
   fileName: string
 } | null
 
+type ArchiveProgress = {
+  completed: number
+  total: number
+} | null
+
 export function AdminPostFilesPage() {
   const { t } = useTranslation()
   const [page, setPage] = usePageParam("page")
-  const [postId, setPostId] = useState<number | null>(null)
+  const [postId, setPostId] = useState<number | null | undefined>(undefined)
   const [status, setStatus] = useState<PostFileStatus | null>(null)
   const [keyword, setKeyword] = useState("")
   const [keywordDraft, setKeywordDraft] = useState("")
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget>(null)
+  const [archiveProgress, setArchiveProgress] = useState<ArchiveProgress>(null)
   const [isExporting, setIsExporting] = useState(false)
-  const [now, setNow] = useState(ADMIN_POST_FILES_INITIAL_TIME)
+  const [now, setNow] = useState(() => Date.now())
   const keywordTimerRef = useRef<number | null>(null)
-  const postFilesQuery = useAdminPostFilesQuery({ keyword, page, pageSize: PAGE_SIZE, post_id: postId, status })
   const requestPostsQuery = usePostListQuery({ page: 1, pageSize: 100, type: 1 })
+  const selectedPostId = postId === undefined ? (requestPostsQuery.data?.data[0]?.post_id ?? null) : postId
+  const postFilesQuery = useAdminPostFilesQuery({ keyword, page, pageSize: PAGE_SIZE, post_id: selectedPostId, status })
   const reviewMutation = useReviewPostFileMutation()
   const deleteMutation = useDeletePostFileMutation()
   const downloadMutation = usePostFileDownloadUrlMutation()
+  const archiveMutation = usePostFilesArchiveMutation()
 
   useEffect(() => () => {
     if (keywordTimerRef.current) window.clearTimeout(keywordTimerRef.current)
   }, [])
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(intervalId)
-  }, [])
+    const nextLockTime = (postFilesQuery.data?.data ?? [])
+      .filter((file) => !isPostFileLocked(file, now))
+      .map((file) => getPostFileLockedAt(file)?.getTime() ?? Number.POSITIVE_INFINITY)
+      .reduce((earliest, lockTime) => Math.min(earliest, lockTime), Number.POSITIVE_INFINITY)
+
+    if (!Number.isFinite(nextLockTime)) return
+
+    const delay = Math.min(Math.max(nextLockTime - Date.now() + 50, 0), 2_147_483_647)
+    const timeoutId = window.setTimeout(() => setNow(Date.now()), delay)
+    return () => window.clearTimeout(timeoutId)
+  }, [now, postFilesQuery.data?.data])
 
   const exportPostFiles = async () => {
     setIsExporting(true)
@@ -116,7 +133,7 @@ export function AdminPostFilesPage() {
         keyword,
         page: 1,
         pageSize: Math.max(total, PAGE_SIZE),
-        post_id: postId,
+        post_id: selectedPostId,
         status,
       })
 
@@ -132,6 +149,23 @@ export function AdminPostFilesPage() {
     } finally {
       setIsExporting(false)
     }
+  }
+
+  const downloadSelectedPostArchive = () => {
+    if (selectedPostId === null) return
+
+    setArchiveProgress(null)
+    archiveMutation.mutate({
+      postId: selectedPostId,
+      onProgress: (completed, total) => setArchiveProgress({ completed, total }),
+    }, {
+      onSuccess: ({ blob, fileName }) => {
+        downloadBlob(blob, fileName)
+        toast.success(t("admin.postFiles.archiveReady"))
+      },
+      onError: (error) => toast.error(getErrorMessage(error)),
+      onSettled: () => setArchiveProgress(null),
+    })
   }
 
   const columns: Array<ColumnDef<PostFile>> = [
@@ -165,7 +199,9 @@ export function AdminPostFilesPage() {
       header: () => <span className="block text-center">{t("admin.postFiles.table.status")}</span>,
       cell: ({ row }) => (
         <div className="flex w-24 justify-center">
-          {isPostFileLocked(row.original, now) ? <StatusWithFeedback feedback={row.original.feedback} status={row.original.status} /> : null}
+          {isPostFileLocked(row.original, now)
+            ? <StatusWithFeedback feedback={row.original.feedback} status={row.original.status} />
+            : <AdminBadge>{t("admin.postFiles.notLocked")}</AdminBadge>}
         </div>
       ),
     },
@@ -267,13 +303,13 @@ export function AdminPostFilesPage() {
   return (
     <AdminPage>
       <div className="flex flex-col gap-4">
-        <div className="grid gap-2 lg:grid-cols-[14rem_9rem_minmax(22rem,1fr)_auto_auto]">
+        <div className="grid gap-2 lg:grid-cols-[14rem_9rem_minmax(18rem,1fr)_auto_auto_auto]">
           <Select
             onValueChange={(value) => {
               setPostId(value === "all" ? null : Number(value))
               applyFilters()
             }}
-            value={postId === null ? "all" : String(postId)}
+            value={selectedPostId === null ? "all" : String(selectedPostId)}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t("admin.postFiles.filters.allRequestPosts")} />
@@ -315,11 +351,25 @@ export function AdminPostFilesPage() {
           <Button onClick={applyFilters} type="button" variant="outline">
             {t("admin.postFiles.filters.apply")}
           </Button>
+          <Button
+            disabled={selectedPostId === null || archiveMutation.isPending}
+            onClick={downloadSelectedPostArchive}
+            title={selectedPostId === null ? t("admin.postFiles.filters.selectPostToDownload") : undefined}
+            type="button"
+            variant="outline"
+          >
+            <DownloadSimpleIcon data-icon="inline-start" weight="bold" />
+            {archiveMutation.isPending ? t("admin.postFiles.filters.archiving") : t("admin.postFiles.filters.downloadAll")}
+          </Button>
           <Button disabled={isExporting} onClick={exportPostFiles} type="button" variant="outline">
             <DownloadSimpleIcon data-icon="inline-start" weight="bold" />
             {isExporting ? t("admin.postFiles.filters.exporting") : t("admin.postFiles.filters.exportCsv")}
           </Button>
         </div>
+
+        {archiveMutation.isPending ? (
+          <ArchiveDownloadProgress progress={archiveProgress} />
+        ) : null}
 
         <Dialog open={Boolean(reviewTarget)} onOpenChange={(open) => {
           if (!open) setReviewTarget(null)
@@ -366,6 +416,39 @@ export function AdminPostFilesPage() {
         {downloadMutation.error ? <MutationErrorAlert error={downloadMutation.error} /> : null}
       </div>
     </AdminPage>
+  )
+}
+
+function ArchiveDownloadProgress({ progress }: { progress: ArchiveProgress }) {
+  const { t } = useTranslation()
+  const completed = progress?.completed ?? 0
+  const total = progress?.total ?? 0
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+
+  return (
+    <div
+      aria-label={t("admin.postFiles.filters.archiveProgress", { completed, total })}
+      aria-valuemax={total || undefined}
+      aria-valuemin={0}
+      aria-valuenow={completed}
+      className="rounded-lg border bg-card px-4 py-3"
+      role="progressbar"
+    >
+      <div className="mb-2 flex items-center justify-between gap-4 text-sm">
+        <span className="font-medium">
+          {total > 0
+            ? t("admin.postFiles.filters.archiveProgress", { completed, total })
+            : t("admin.postFiles.filters.archiving")}
+        </span>
+        <span className="tabular-nums text-muted-foreground">{percent}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-200"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
   )
 }
 

@@ -1,5 +1,6 @@
 export {
   deletePostFile,
+  downloadPostFilesArchive,
   getAdminPostFiles,
   getMyPostFiles,
   getPostFilesByUserId,
@@ -14,6 +15,7 @@ export {
   useDeletePostFileMutation,
   useMyPostFilesQuery,
   usePostFileDownloadUrlMutation,
+  usePostFilesArchiveMutation,
   useReviewPostFileMutation,
   useUpdatePostFileMutation,
   useUploadPostFileMutation,

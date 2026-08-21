@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   deletePostFile,
+  downloadPostFilesArchive,
   getAdminPostFiles,
   getMyPostFiles,
   getPostFilesByUserId,
@@ -94,5 +95,11 @@ export function useDeletePostFileMutation() {
 export function usePostFileDownloadUrlMutation() {
   return useMutation({
     mutationFn: getPostFileDownloadUrl,
+  })
+}
+
+export function usePostFilesArchiveMutation() {
+  return useMutation({
+    mutationFn: downloadPostFilesArchive,
   })
 }

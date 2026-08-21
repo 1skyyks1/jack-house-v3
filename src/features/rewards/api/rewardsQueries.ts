@@ -7,10 +7,12 @@ import {
   getRedemptionOrders,
   getRewardItems,
   redeemRewards,
+  uploadRewardImage,
   updateOrderItem,
   updateRewardItem,
   type RedeemRequest,
   type SaveRewardItemRequest,
+  type UploadRewardImageRequest,
 } from "./rewardsApi"
 
 export const rewardQueryKeys = {
@@ -55,6 +57,12 @@ export function useSaveRewardItemMutation(id?: number) {
   return useMutation({
     mutationFn: (request: SaveRewardItemRequest) => id ? updateRewardItem(id, request) : createRewardItem(request),
     onSuccess: async () => queryClient.invalidateQueries({ queryKey: rewardQueryKeys.root }),
+  })
+}
+
+export function useUploadRewardImageMutation() {
+  return useMutation({
+    mutationFn: (request: UploadRewardImageRequest) => uploadRewardImage(request),
   })
 }
 
