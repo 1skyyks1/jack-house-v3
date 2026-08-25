@@ -506,7 +506,7 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
           <div className="space-y-4">
             {maps.length > 0 ? (
               <div>
-                <div className="flex w-fit max-w-full flex-wrap gap-1 rounded bg-black/35 p-1 shadow-sm">
+                <div className="flex w-fit max-w-[min(100%,36.25rem)] flex-wrap gap-1 rounded bg-black/35 p-1 shadow-sm">
                   {maps.map((map) => {
                     const isActive = selectedMapId === map.map_id
                     return (
