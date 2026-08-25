@@ -44,11 +44,15 @@ import { formatDate } from "@/shared/lib/date"
 import { usePageParam } from "../_shared/usePageParam"
 
 const PAGE_SIZE = 7
+const absoluteUrlSchema = z.string().url()
+
+const isValidRedirectUrl = (value: string) =>
+  value === "" || /^\/(?!\/)/.test(value) || absoluteUrlSchema.safeParse(value).success
 
 const createUploadSchema = (t: TFunction) => z.object({
   file: z.instanceof(File, { message: t("admin.badges.validation.chooseImage") }),
   name: z.string().trim().min(1, t("admin.badges.validation.nameRequired")).max(120, t("admin.badges.validation.nameTooLong")),
-  redirect_url: z.string().trim().url(t("admin.badges.validation.redirectInvalid")).or(z.literal("")),
+  redirect_url: z.string().trim().refine(isValidRedirectUrl, t("admin.badges.validation.redirectInvalid")),
 })
 
 type UploadFormValues = z.infer<ReturnType<typeof createUploadSchema>>
