@@ -11,6 +11,7 @@ export type PackFilterTagGroup = {
 
 export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPackListParams {
   return {
+    graveyard: searchParams.get("graveyard") === "1",
     loved: searchParams.get("loved") === "1",
     page: parsePositiveInteger(searchParams.get("page"), 1),
     pageSize: PACK_LIST_PAGE_SIZE,
@@ -24,6 +25,7 @@ export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPa
 
 export function getDefaultFilters(): GetPackListParams {
   return {
+    graveyard: false,
     loved: false,
     page: 1,
     pageSize: PACK_LIST_PAGE_SIZE,
@@ -41,6 +43,7 @@ export function serializeFilters(filters: GetPackListParams) {
   if (filters.page > 1) params.set("page", String(filters.page))
   if (filters.searchKeys) params.set("q", filters.searchKeys)
   if (filters.type !== -1) params.set("type", String(filters.type))
+  if (filters.graveyard) params.set("graveyard", "1")
   if (filters.ranked) params.set("ranked", "1")
   if (filters.loved) params.set("loved", "1")
   if (filters.sort !== 0) params.set("sort", String(filters.sort))
@@ -50,12 +53,13 @@ export function serializeFilters(filters: GetPackListParams) {
 }
 
 export function hasActiveAdvancedFilters(filters: GetPackListParams) {
-  return filters.type !== -1 || Boolean(filters.ranked) || Boolean(filters.loved) || filters.sort !== 0 || filters.tags.length > 0
+  return filters.type !== -1 || Boolean(filters.graveyard) || Boolean(filters.ranked) || Boolean(filters.loved) || filters.sort !== 0 || filters.tags.length > 0
 }
 
 export function getActiveFilterCount(filters: GetPackListParams) {
   let count = 0
   if (filters.type !== -1) count += 1
+  if (filters.graveyard) count += 1
   if (filters.ranked) count += 1
   if (filters.loved) count += 1
   if (filters.sort !== 0) count += 1

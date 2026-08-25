@@ -24,6 +24,7 @@ import type {
 export async function getPackList(params: GetPackListParams): Promise<PaginatedEnvelope<PackListItem>> {
   const response = await http.get("/pack", {
     params: {
+      graveyard: params.graveyard ? 1 : undefined,
       loved: params.loved ? 1 : undefined,
       page: params.page,
       pageSize: params.pageSize,

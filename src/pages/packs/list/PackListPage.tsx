@@ -162,16 +162,22 @@ export function PackListPage() {
 
               <FilterGroup icon={Tag} label={t("pack.list.status")}>
                 <FilterButton
+                  active={Boolean(filters.graveyard)}
+                  onClick={() => updateFilters({ graveyard: !filters.graveyard })}
+                >
+                  {t("pack.rankStatus.graveyard")}
+                </FilterButton>
+                <FilterButton
                   active={Boolean(filters.ranked)}
                   onClick={() => updateFilters({ ranked: !filters.ranked })}
                 >
-                  Ranked
+                  {t("pack.rankStatus.ranked")}
                 </FilterButton>
                 <FilterButton
                   active={Boolean(filters.loved)}
                   onClick={() => updateFilters({ loved: !filters.loved })}
                 >
-                  Loved
+                  {t("pack.rankStatus.loved")}
                 </FilterButton>
               </FilterGroup>
 

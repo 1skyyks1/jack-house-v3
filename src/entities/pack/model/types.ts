@@ -79,6 +79,7 @@ export type PackDetail = PackListItem & {
 }
 
 export type GetPackListParams = {
+  graveyard?: boolean
   loved?: boolean
   page: number
   pageSize: number
