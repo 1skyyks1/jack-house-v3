@@ -3,7 +3,9 @@ import {
   Clock,
   Columns,
   DownloadSimple,
+  FlagPennant,
   Gauge,
+  HouseLine,
   MusicNote,
   PencilSimple,
   PlayCircle,
@@ -37,6 +39,8 @@ import {
   usePackTagsQuery,
   useRefreshOsuPackMutation,
   useUpdatePackTagsMutation,
+  useUpdatePackOriginalMutation,
+  useUpdatePackRecommendationMutation,
   type PackDetail,
   type PackFeedbackSubmissionCategory,
   type PackMap,
@@ -68,6 +72,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { AppAlert, InlineSkeleton, MutationErrorAlert, SectionTitle } from "@/shared/components"
@@ -132,7 +137,13 @@ export function PackInfoPanel({ canMaintain, pack }: PackInfoPanelProps) {
   )
 }
 
-const feedbackCategories: PackFeedbackSubmissionCategory[] = ["incorrect_tag", "duplicate", "copyright_or_violation", "other"]
+const feedbackCategories: PackFeedbackSubmissionCategory[] = [
+  "incorrect_tag",
+  "outdated_info",
+  "duplicate",
+  "copyright_or_violation",
+  "other",
+]
 
 function PackFeedbackDialog({ pack }: { pack: PackDetail }) {
   const { t } = useTranslation()
@@ -251,7 +262,7 @@ function PackMaintenanceDialog({ pack }: PackMaintenancePanelProps) {
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("pack.detail.maintenanceTitle")}</DialogTitle>
-          <DialogDescription>{t("pack.detail.maintenanceDescription")}</DialogDescription>
+          <DialogDescription className="sr-only">{t("pack.detail.maintenanceDescription")}</DialogDescription>
         </DialogHeader>
         <PackMaintenancePanel key={`${pack.pack_id}:${pack.updated_time}`} pack={pack} />
       </DialogContent>
@@ -292,10 +303,12 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
   const deleteMutation = useDeletePackMutation()
   const refreshMutation = useRefreshOsuPackMutation()
   const updateTagsMutation = useUpdatePackTagsMutation()
+  const updateRecommendationMutation = useUpdatePackRecommendationMutation()
+  const updateOriginalMutation = useUpdatePackOriginalMutation()
   const [isEditingTags, setIsEditingTags] = useState(false)
   const [selectedTags, setSelectedTags] = useState<number[]>(() => pack.tags?.map((tag) => tag.tag_id) ?? [])
   const selectedTagSet = new Set(selectedTags)
-  const isUpdating = deleteMutation.isPending || refreshMutation.isPending || updateTagsMutation.isPending
+  const isUpdating = deleteMutation.isPending || refreshMutation.isPending || updateTagsMutation.isPending || updateRecommendationMutation.isPending || updateOriginalMutation.isPending
   const isRefreshDisabled = !pack.osu_bid || isUpdatedToday(pack.updated_time) || isUpdating
 
   const toggleTag = (tagId: number) => {
@@ -355,6 +368,44 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
 
   return (
     <div className="grid gap-5">
+      <div className="flex items-center justify-between gap-4 py-1">
+        <div className="inline-flex min-w-0 items-center gap-2 text-sm font-medium">
+          <FlagPennant className="size-4 text-primary" weight="bold" />
+          {t("pack.detail.recommendationTitle")}
+        </div>
+        <Switch
+          aria-label={t("pack.detail.recommendationTitle")}
+          checked={pack.is_recommended}
+          disabled={isUpdating}
+          onCheckedChange={(recommended) => {
+            updateRecommendationMutation.mutate(
+              { packId: pack.pack_id, recommended },
+              { onSuccess: () => toast.success(t(recommended ? "pack.detail.recommendSuccess" : "pack.detail.unrecommendSuccess")) },
+            )
+          }}
+        />
+      </div>
+      {updateRecommendationMutation.error ? <MutationErrorAlert error={updateRecommendationMutation.error} /> : null}
+
+      <div className="flex items-center justify-between gap-4 py-1">
+        <div className="inline-flex min-w-0 items-center gap-2 text-sm font-medium">
+          <HouseLine className="size-4 text-primary" weight="fill" />
+          {t("pack.detail.originalTitle")}
+        </div>
+        <Switch
+          aria-label={t("pack.detail.originalTitle")}
+          checked={pack.is_original}
+          disabled={isUpdating}
+          onCheckedChange={(original) => {
+            updateOriginalMutation.mutate(
+              { original, packId: pack.pack_id },
+              { onSuccess: () => toast.success(t(original ? "pack.detail.originalSuccess" : "pack.detail.unoriginalSuccess")) },
+            )
+          }}
+        />
+      </div>
+      {updateOriginalMutation.error ? <MutationErrorAlert error={updateOriginalMutation.error} /> : null}
+
       <div className="grid gap-2">
         <Button
           disabled={isRefreshDisabled}

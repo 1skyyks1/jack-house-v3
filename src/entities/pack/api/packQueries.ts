@@ -1,15 +1,55 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createPack, createPackFeedback, createPackTag, deletePack, deletePackTag, getAdminTagList, getOsuPackPreview, getPackById, getPackFeedbackList, getPackList, getTagList, importOsuPack, refreshOsuPack, updatePackFeedbackStatus, updatePackTag, updatePackTags } from "./packApi"
-import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
+import { createPack, createPackFeedback, createPackTag, deletePack, deletePackTag, getAdminTagList, getOsuPackPreview, getPackById, getPackFeedbackList, getPackLeaderboard, getPackList, getTagList, importOsuPack, refreshOsuPack, submitPackBeatmapScore, updatePackFeedbackStatus, updatePackOriginal, updatePackRecommendation, updatePackTag, updatePackTags } from "./packApi"
+import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackLeaderboardParams, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackOriginalRequest, UpdatePackRecommendationRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
 
 export const packQueryKeys = {
   detail: (packId: string) => ["pack", "detail", packId] as const,
   feedback: (params: GetPackFeedbackParams) => ["pack", "feedback", params] as const,
   feedbackRoot: ["pack", "feedback"] as const,
   list: (params: GetPackListParams) => ["pack", "list", params] as const,
+  leaderboard: (params: GetPackLeaderboardParams) => ["pack", "leaderboard", params] as const,
+  leaderboardRoot: ["pack", "leaderboard"] as const,
   root: ["pack"] as const,
   tags: ["pack", "tags"] as const,
   tagsAdmin: ["pack", "tags", "admin"] as const,
+}
+
+export function usePackLeaderboardQuery(params: GetPackLeaderboardParams) {
+  return useQuery({
+    enabled: Boolean(params.packId) && Number.isInteger(params.beatmapId) && params.beatmapId > 0,
+    queryFn: () => getPackLeaderboard(params),
+    queryKey: packQueryKeys.leaderboard(params),
+  })
+}
+
+export function useSubmitPackBeatmapScoreMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ beatmapId, packId }: Pick<GetPackLeaderboardParams, "beatmapId" | "packId">) => submitPackBeatmapScore(packId, beatmapId),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: packQueryKeys.leaderboardRoot }),
+  })
+}
+
+export function useUpdatePackRecommendationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: UpdatePackRecommendationRequest) => updatePackRecommendation(request),
+    onSuccess: async (_data, request) => Promise.all([
+      queryClient.invalidateQueries({ queryKey: packQueryKeys.detail(String(request.packId)) }),
+      queryClient.invalidateQueries({ queryKey: packQueryKeys.root }),
+    ]),
+  })
+}
+
+export function useUpdatePackOriginalMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: UpdatePackOriginalRequest) => updatePackOriginal(request),
+    onSuccess: async (_data, request) => Promise.all([
+      queryClient.invalidateQueries({ queryKey: packQueryKeys.detail(String(request.packId)) }),
+      queryClient.invalidateQueries({ queryKey: packQueryKeys.root }),
+    ]),
+  })
 }
 
 export function useCreatePackFeedbackMutation() {

@@ -13,9 +13,11 @@ export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPa
   return {
     graveyard: searchParams.get("graveyard") === "1",
     loved: searchParams.get("loved") === "1",
+    original: searchParams.get("original") === "1",
     page: parsePositiveInteger(searchParams.get("page"), 1),
     pageSize: PACK_LIST_PAGE_SIZE,
     ranked: searchParams.get("ranked") === "1",
+    recommended: searchParams.get("recommended") === "1",
     searchKeys: searchParams.get("q") ?? "",
     sort: parseSort(searchParams.get("sort")),
     tags: parseNumberList(searchParams.get("tags")),
@@ -27,9 +29,11 @@ export function getDefaultFilters(): GetPackListParams {
   return {
     graveyard: false,
     loved: false,
+    original: false,
     page: 1,
     pageSize: PACK_LIST_PAGE_SIZE,
     ranked: false,
+    recommended: false,
     searchKeys: "",
     sort: 0,
     tags: [],
@@ -45,7 +49,9 @@ export function serializeFilters(filters: GetPackListParams) {
   if (filters.type !== -1) params.set("type", String(filters.type))
   if (filters.graveyard) params.set("graveyard", "1")
   if (filters.ranked) params.set("ranked", "1")
+  if (filters.recommended) params.set("recommended", "1")
   if (filters.loved) params.set("loved", "1")
+  if (filters.original) params.set("original", "1")
   if (filters.sort !== 0) params.set("sort", String(filters.sort))
   if (filters.tags.length > 0) params.set("tags", filters.tags.join(","))
 
@@ -53,7 +59,7 @@ export function serializeFilters(filters: GetPackListParams) {
 }
 
 export function hasActiveAdvancedFilters(filters: GetPackListParams) {
-  return filters.type !== -1 || Boolean(filters.graveyard) || Boolean(filters.ranked) || Boolean(filters.loved) || filters.sort !== 0 || filters.tags.length > 0
+  return filters.type !== -1 || Boolean(filters.graveyard) || Boolean(filters.ranked) || Boolean(filters.loved) || Boolean(filters.original) || Boolean(filters.recommended) || filters.sort !== 0 || filters.tags.length > 0
 }
 
 export function getActiveFilterCount(filters: GetPackListParams) {
@@ -62,6 +68,8 @@ export function getActiveFilterCount(filters: GetPackListParams) {
   if (filters.graveyard) count += 1
   if (filters.ranked) count += 1
   if (filters.loved) count += 1
+  if (filters.recommended) count += 1
+  if (filters.original) count += 1
   if (filters.sort !== 0) count += 1
   count += filters.tags.length
   return count

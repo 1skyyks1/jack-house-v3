@@ -64,6 +64,12 @@ export type PackListItem = {
   last_updated: string | null
   submitted_date: string | null
   cover_id: number | null
+  is_original: boolean
+  is_recommended: boolean
+  original_at: string | null
+  original_by: number | null
+  recommended_at: string | null
+  recommended_by: number | null
   created_time: string
   updated_time: string
   tags?: PackTag[]
@@ -81,13 +87,72 @@ export type PackDetail = PackListItem & {
 export type GetPackListParams = {
   graveyard?: boolean
   loved?: boolean
+  original?: boolean
   page: number
   pageSize: number
   ranked?: boolean
+  recommended?: boolean
   searchKeys?: string
   sort: PackSort
   tags: number[]
   type: PackTypeFilter
+}
+
+export type UpdatePackRecommendationRequest = {
+  packId: number | string
+  recommended: boolean
+}
+
+export type UpdatePackOriginalRequest = {
+  original: boolean
+  packId: number | string
+}
+
+export type PackLeaderboardUser = {
+  avatar: string | null
+  user_name: string
+}
+
+export type PackLeaderboardEntry = {
+  accuracy: number | null
+  build_id: number | null
+  is_lazer: boolean
+  max_combo: number | null
+  mods: Array<{ acronym: string; settings?: Record<string, unknown> }> | null
+  played_at?: string | null
+  rank: number
+  score: number
+  score_rank: string | null
+  statistics: {
+    good?: number
+    great?: number
+    meh?: number
+    miss?: number
+    ok?: number
+    perfect?: number
+  } | null
+  updated_time: string
+  user: PackLeaderboardUser
+  user_id: number
+}
+
+export type PackLeaderboardResponse = {
+  activeEventId: number | null
+  canSubmit: boolean
+  data: PackLeaderboardEntry[]
+  enabled: boolean
+  page: number
+  pageSize: number
+  personal: PackLeaderboardEntry | null
+  total: number
+  totalPages: number
+}
+
+export type GetPackLeaderboardParams = {
+  beatmapId: number
+  packId: number | string
+  page: number
+  pageSize: number
 }
 
 export type OsuPackPreview = {
@@ -125,7 +190,12 @@ export type RefreshOsuPackRequest = {
   packId: number | string
 }
 
-export type PackFeedbackSubmissionCategory = "incorrect_tag" | "duplicate" | "copyright_or_violation" | "other"
+export type PackFeedbackSubmissionCategory =
+  | "incorrect_tag"
+  | "outdated_info"
+  | "duplicate"
+  | "copyright_or_violation"
+  | "other"
 export type PackFeedbackCategory = PackFeedbackSubmissionCategory | "incorrect_info" | "broken_link" | "inappropriate"
 export type PackFeedbackStatus = 0 | 1 | 2
 

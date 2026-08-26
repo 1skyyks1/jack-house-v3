@@ -165,13 +165,9 @@ type StageCardProps = {
 
 export function StageCard({ score, scoreLabel, stage }: StageCardProps) {
   const { t } = useTranslation()
-  return (
-    <a
-      className="group relative block h-24 overflow-hidden rounded-xl bg-muted text-white shadow-sm"
-      href={`https://osu.ppy.sh/b/${stage.map_id}`}
-      rel="noreferrer"
-      target="_blank"
-    >
+  const className = "group relative block h-24 overflow-hidden rounded-xl bg-muted text-white shadow-sm"
+  const content = (
+    <>
       {stage.url ? (
         <div
           className="absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-105"
@@ -196,7 +192,13 @@ export function StageCard({ score, scoreLabel, stage }: StageCardProps) {
           ) : null}
         </div>
       </div>
-    </a>
+    </>
+  )
+
+  return stage.pack_id ? (
+    <Link className={className} to={`/pack/${stage.pack_id}?beatmap=${stage.map_id}`}>{content}</Link>
+  ) : (
+    <a className={className} href={`https://osu.ppy.sh/b/${stage.map_id}`} rel="noreferrer" target="_blank">{content}</a>
   )
 }
 

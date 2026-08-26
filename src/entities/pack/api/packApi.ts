@@ -7,11 +7,13 @@ import type {
   CreatePackFeedbackRequest,
   GetPackFeedbackParams,
   GetPackListParams,
+  GetPackLeaderboardParams,
   ImportOsuPackRequest,
   OsuPackPreview,
   PackDetail,
   PackFeedback,
   PackListItem,
+  PackLeaderboardResponse,
   PackTag,
   AdminPackTag,
   CreatePackTagRequest,
@@ -19,6 +21,8 @@ import type {
   UpdatePackTagsRequest,
   UpdatePackTagRequest,
   UpdatePackFeedbackStatusRequest,
+  UpdatePackRecommendationRequest,
+  UpdatePackOriginalRequest,
 } from "../model/types"
 
 export async function getPackList(params: GetPackListParams): Promise<PaginatedEnvelope<PackListItem>> {
@@ -26,9 +30,11 @@ export async function getPackList(params: GetPackListParams): Promise<PaginatedE
     params: {
       graveyard: params.graveyard ? 1 : undefined,
       loved: params.loved ? 1 : undefined,
+      original: params.original ? 1 : undefined,
       page: params.page,
       pageSize: params.pageSize,
       ranked: params.ranked ? 1 : undefined,
+      recommended: params.recommended ? 1 : undefined,
       searchKeys: params.searchKeys || undefined,
       sort: params.sort,
       tags: params.tags.length > 0 ? params.tags : undefined,
@@ -37,6 +43,24 @@ export async function getPackList(params: GetPackListParams): Promise<PaginatedE
   })
 
   return unwrapPagination<PackListItem>(response)
+}
+
+export async function getPackLeaderboard(params: GetPackLeaderboardParams): Promise<PackLeaderboardResponse> {
+  return http.get(`/pack/${params.packId}/beatmap/${params.beatmapId}/leaderboard`, {
+    params: { page: params.page, pageSize: params.pageSize },
+  }) as unknown as PackLeaderboardResponse
+}
+
+export async function submitPackBeatmapScore(packId: number | string, beatmapId: number): Promise<void> {
+  await http.post(`/pack/${packId}/beatmap/${beatmapId}/score`)
+}
+
+export async function updatePackRecommendation(request: UpdatePackRecommendationRequest): Promise<void> {
+  await http.patch(`/pack/${request.packId}/recommendation`, { recommended: request.recommended })
+}
+
+export async function updatePackOriginal(request: UpdatePackOriginalRequest): Promise<void> {
+  await http.patch(`/pack/${request.packId}/original`, { original: request.original })
 }
 
 export async function getPackById(packId: string): Promise<PackDetail> {

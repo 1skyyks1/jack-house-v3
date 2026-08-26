@@ -5,7 +5,7 @@ export const HIGHLIGHTED_RANK_COUNT = 3
 export const EVENT_LEADERBOARD_PAGE_SIZE = 10
 export const SCORE_COOLDOWN_SECONDS = 30 * 60
 
-export type EventTab = "overview" | "leaderboard" | `stage-${number}`
+export type EventTab = "overview" | "leaderboard"
 
 export type EventCopy = {
   countdown: string
@@ -21,13 +21,6 @@ export type EventCopy = {
   totalRank: string
   totalScore: string
   username: string
-}
-
-export function parseStageTab(tab: EventTab) {
-  if (!tab.startsWith("stage-")) return null
-
-  const value = Number(tab.slice("stage-".length))
-  return Number.isInteger(value) ? value : null
 }
 
 export function formatShortDateTime(value: string) {

@@ -1,9 +1,13 @@
 import {
   ArrowClockwise,
   ArrowRight,
+  BookmarkSimple,
   CaretDown,
+  CheckCircle,
+  CrownSimple,
   DownloadSimple,
   FunnelSimple,
+  HouseLine,
   MagnifyingGlass,
   Plus,
   Tag,
@@ -148,50 +152,73 @@ export function PackListPage() {
 
           <CollapsibleContent>
             <div className="space-y-4 border-t pt-4">
-              <FilterGroup icon={FunnelSimple} label={t("pack.list.type")}>
-                {packTypeFilters.map((type) => (
-                  <FilterButton
-                    active={filters.type === type}
-                    key={type}
-                    onClick={() => updatePackType(type)}
-                  >
-                    {getPackTypeLabel(type)}
-                  </FilterButton>
-                ))}
-              </FilterGroup>
+              <div className="grid gap-4 lg:grid-cols-2 lg:gap-x-6">
+                <FilterGroup icon={FunnelSimple} label={t("pack.list.type")}>
+                  {packTypeFilters.map((type) => (
+                    <FilterButton
+                      active={filters.type === type}
+                      key={type}
+                      onClick={() => updatePackType(type)}
+                    >
+                      {getPackTypeLabel(type)}
+                    </FilterButton>
+                  ))}
+                </FilterGroup>
 
-              <FilterGroup icon={Tag} label={t("pack.list.status")}>
-                <FilterButton
-                  active={Boolean(filters.graveyard)}
-                  onClick={() => updateFilters({ graveyard: !filters.graveyard })}
-                >
-                  {t("pack.rankStatus.graveyard")}
-                </FilterButton>
-                <FilterButton
-                  active={Boolean(filters.ranked)}
-                  onClick={() => updateFilters({ ranked: !filters.ranked })}
-                >
-                  {t("pack.rankStatus.ranked")}
-                </FilterButton>
-                <FilterButton
-                  active={Boolean(filters.loved)}
-                  onClick={() => updateFilters({ loved: !filters.loved })}
-                >
-                  {t("pack.rankStatus.loved")}
-                </FilterButton>
-              </FilterGroup>
-
-              <FilterGroup icon={ArrowRight} label={t("pack.list.sort")}>
-                {sortFilters.map((sort) => (
+                <FilterGroup icon={BookmarkSimple} label={t("pack.list.curation")}>
                   <FilterButton
-                    active={filters.sort === sort}
-                    key={sort}
-                    onClick={() => updateFilters({ sort })}
+                    active={Boolean(filters.recommended)}
+                    highlightTone="featured"
+                    onClick={() => updateFilters({ recommended: !filters.recommended })}
                   >
-                    {getSortLabel(sort, t)}
+                    <CrownSimple className="size-3.5" weight="fill" />
+                    {t("pack.list.recommendedOnly")}
                   </FilterButton>
-                ))}
-              </FilterGroup>
+                  <FilterButton
+                    active={Boolean(filters.original)}
+                    highlightTone="original"
+                    onClick={() => updateFilters({ original: !filters.original })}
+                  >
+                    <HouseLine className="size-3.5" weight="fill" />
+                    {t("pack.list.originalOnly")}
+                  </FilterButton>
+                </FilterGroup>
+
+                <FilterGroup icon={CheckCircle} label={t("pack.list.status")}>
+                  <FilterButton
+                    active={Boolean(filters.graveyard)}
+                    onClick={() => updateFilters({ graveyard: !filters.graveyard })}
+                  >
+                    {t("pack.rankStatus.graveyard")}
+                  </FilterButton>
+                  <FilterButton
+                    active={Boolean(filters.ranked)}
+                    highlightTone="ranked"
+                    onClick={() => updateFilters({ ranked: !filters.ranked })}
+                  >
+                    {t("pack.rankStatus.ranked")}
+                  </FilterButton>
+                  <FilterButton
+                    active={Boolean(filters.loved)}
+                    highlightTone="loved"
+                    onClick={() => updateFilters({ loved: !filters.loved })}
+                  >
+                    {t("pack.rankStatus.loved")}
+                  </FilterButton>
+                </FilterGroup>
+
+                <FilterGroup icon={ArrowRight} label={t("pack.list.sort")}>
+                  {sortFilters.map((sort) => (
+                    <FilterButton
+                      active={filters.sort === sort}
+                      key={sort}
+                      onClick={() => updateFilters({ sort })}
+                    >
+                      {getSortLabel(sort, t)}
+                    </FilterButton>
+                  ))}
+                </FilterGroup>
+              </div>
 
               <TagFilterGroup
                 isError={tagsQuery.isError}
@@ -247,7 +274,7 @@ type FilterGroupProps = {
 function FilterGroup({ children, icon: Icon, label }: FilterGroupProps) {
   return (
     <div className="grid gap-2 lg:grid-cols-[5.5rem_minmax(0,1fr)] lg:items-center">
-      <div className="flex h-8 items-center gap-2 text-sm font-medium text-muted-foreground">
+      <div className="flex h-8 items-center gap-2 text-sm font-semibold text-muted-foreground">
         <Icon className="size-4" weight="bold" />
         {label}
       </div>
@@ -259,15 +286,37 @@ function FilterGroup({ children, icon: Icon, label }: FilterGroupProps) {
 type FilterButtonProps = {
   active: boolean
   children: ReactNode
+  highlightTone?: "featured" | "loved" | "original" | "ranked"
   onClick: () => void
 }
 
-function FilterButton({ active, children, onClick }: FilterButtonProps) {
+const filterHighlightClasses = {
+  featured: {
+    active: "border-amber-500 bg-amber-500 font-semibold text-amber-950 shadow-sm shadow-amber-500/20 hover:bg-amber-600",
+    inactive: "border-amber-500/35 bg-amber-500/5 font-semibold text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200",
+  },
+  original: {
+    active: "border-sky-600 bg-sky-600 font-semibold text-white shadow-sm shadow-sky-500/20 hover:bg-sky-700",
+    inactive: "border-sky-500/35 bg-sky-500/5 font-semibold text-sky-700 hover:bg-sky-500/10 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200",
+  },
+  ranked: {
+    active: "border-emerald-600 bg-emerald-600 font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-700",
+    inactive: "border-emerald-500/35 bg-emerald-500/5 font-semibold text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200",
+  },
+  loved: {
+    active: "border-pink-600 bg-pink-600 font-semibold text-white shadow-sm shadow-pink-500/20 hover:bg-pink-700",
+    inactive: "border-pink-500/35 bg-pink-500/5 font-semibold text-pink-700 hover:bg-pink-500/10 hover:text-pink-800 dark:text-pink-300 dark:hover:text-pink-200",
+  },
+} as const
+
+function FilterButton({ active, children, highlightTone, onClick }: FilterButtonProps) {
+  const highlightClass = highlightTone ? filterHighlightClasses[highlightTone][active ? "active" : "inactive"] : null
   return (
     <Button
       className={cn(
         "h-8",
-        !active && "text-muted-foreground",
+        !active && !highlightTone && "text-muted-foreground",
+        highlightClass,
       )}
       onClick={onClick}
       type="button"
@@ -318,13 +367,13 @@ function TagFilterGroup({ isError, isLoading, onToggleTag, packType, selectedTag
 
   return (
     <div className="grid gap-3 lg:grid-cols-[5.5rem_minmax(0,1fr)] lg:items-start">
-      <div className="flex h-8 items-center gap-2 text-sm font-medium text-muted-foreground">
+      <div className="flex h-8 items-center gap-2 text-sm font-semibold text-muted-foreground">
         <Tag className="size-4" weight="bold" />
         {t("pack.list.tags")}
       </div>
       <div className="space-y-3">
         {groups.map((group) => (
-          <div className="grid gap-2 sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:items-center" key={group.label}>
+          <div className="grid gap-2 sm:grid-cols-[4rem_minmax(0,1fr)] sm:items-center" key={group.label}>
             <div className="flex h-8 items-center text-xs font-semibold uppercase text-muted-foreground">{group.label}</div>
             <div className="flex flex-wrap gap-2">
               {group.tags.map((tag) => (
@@ -359,8 +408,11 @@ function PackCard({ pack }: PackCardProps) {
   ]
 
   return (
-    <Card size="sm" className="group relative h-36 overflow-hidden py-0">
-      <Link className="relative block h-full overflow-hidden text-white" to={`/pack/${pack.pack_id}`}>
+    <Card
+      size="sm"
+      className="group relative h-36 overflow-hidden py-0"
+    >
+      <Link className="relative block h-full overflow-hidden rounded-[inherit] text-white" to={`/pack/${pack.pack_id}`}>
         {coverUrl ? (
           <img alt="" className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-[1.03]" src={coverUrl} />
         ) : (
@@ -375,6 +427,12 @@ function PackCard({ pack }: PackCardProps) {
             <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
           </div>
           <div className="min-w-0 pr-4">
+            {pack.is_recommended ? (
+              <div className="mb-1 inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.14em] text-amber-300 drop-shadow-sm">
+                <CrownSimple aria-hidden="true" className="size-4" weight="fill" />
+                <span>{t("pack.recommended")}</span>
+              </div>
+            ) : null}
             <h2 className="truncate font-heading text-base font-semibold leading-tight">
               {getPackDisplayTitle(pack)}
             </h2>

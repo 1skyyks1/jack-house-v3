@@ -7,6 +7,7 @@ export type EventStageSummary = {
   map_id: number
   mapper: string
   minio_bg?: string
+  pack_id?: number | null
   title: string
   url?: string
 }
