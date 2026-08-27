@@ -49,7 +49,7 @@ import {
   type PackTag,
   type PackTypeFilter,
 } from "@/entities/pack"
-import { getErrorMessage, InlineSkeleton } from "@/shared/components"
+import { getErrorMessage, InlineSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import {
   filterTagIdsByType,
@@ -262,7 +262,7 @@ export function PackListPage() {
             />
           </>
         ) : (
-          <PackState description={t("pack.list.noResultsDescription")} title={t("pack.list.noResultsTitle")} unframed />
+          <PackState description={t("pack.list.noResultsDescription")} title={t("pack.list.noResultsTitle")} />
         )}
       </section>
     </section>
@@ -606,25 +606,10 @@ function getSortLabel(sort: PackSort, t: ReturnType<typeof useTranslation>["t"])
 type PackStateProps = {
   description: string
   title: string
-  unframed?: boolean
 }
 
-function PackState({ description, title, unframed = false }: PackStateProps) {
-  if (!unframed) {
-    return (
-      <Card className="p-8 text-center">
-        <h2 className="font-heading text-xl font-semibold">{title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-      </Card>
-    )
-  }
-
-  return (
-    <div className="py-12 text-center">
-      <h2 className="font-heading text-lg font-semibold">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
-    </div>
-  )
+function PackState({ description, title }: PackStateProps) {
+  return <PageState className="py-12 sm:py-14" description={description} headingLevel="h2" title={title} />
 }
 
 function PackGridSkeleton() {

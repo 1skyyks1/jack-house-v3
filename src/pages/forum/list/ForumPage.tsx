@@ -33,7 +33,7 @@ import {
   type PostTypeFilter,
 } from "@/entities/post"
 import { i18n, type AppLocale } from "@/shared/i18n/client"
-import { getErrorMessage, ListSkeleton } from "@/shared/components"
+import { getErrorMessage, ListSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/shared/lib/date"
 
@@ -411,12 +411,7 @@ type ForumStateProps = {
 }
 
 function ForumState({ title, description }: ForumStateProps) {
-  return (
-    <Card className="p-8 text-center">
-      <h2 className="font-heading text-xl font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </Card>
-  )
+  return <PageState className="py-12 sm:py-14" description={description} headingLevel="h2" title={title} />
 }
 
 function ForumListSkeleton() {

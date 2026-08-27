@@ -1,4 +1,3 @@
-import { ChartLineUp } from "@phosphor-icons/react"
 import { lazy, Suspense, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -11,6 +10,7 @@ import {
 } from "@/entities/dashboard"
 import { AdminPage } from "@/features/admin-shell"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageState } from "@/shared/components"
 import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint } from "./DashboardCharts"
 
 const analyticsDays = 14
@@ -47,16 +47,7 @@ export function AdminDashboardPage() {
     <AdminPage className="h-full min-h-0">
       <div className="min-h-0 flex-1">
         {analyticsError ? (
-          <section className="rounded-lg border border-dashed bg-card p-4">
-            <div className="flex items-start gap-3">
-              <span className="rounded-md bg-muted p-2 text-muted-foreground">
-                <ChartLineUp className="size-5" weight="bold" />
-              </span>
-              <div>
-                <h2 className="font-heading text-lg font-semibold">{t("admin.dashboard.noTrafficData")}</h2>
-              </div>
-            </div>
-          </section>
+          <PageState description={t("admin.dashboard.noTrafficData")} headingLevel="h2" title={t("common.requestFailed")} />
         ) : chartLoading ? (
           <DashboardLoadingSkeleton />
         ) : !hasDashboardCharts ? (
