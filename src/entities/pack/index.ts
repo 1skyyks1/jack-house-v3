@@ -8,6 +8,7 @@ export {
   useOsuPackPreviewMutation,
   usePackDetailQuery,
   usePackFeedbackListQuery,
+  usePackLeaderboardInfiniteQuery,
   usePackListQuery,
   usePackLeaderboardQuery,
   usePackTagsQuery,

@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
 import { createPack, createPackFeedback, createPackTag, deletePack, deletePackTag, getAdminTagList, getOsuPackPreview, getPackById, getPackFeedbackList, getPackLeaderboard, getPackList, getTagList, importOsuPack, refreshOsuPack, submitPackBeatmapScore, updatePackFeedbackStatus, updatePackOriginal, updatePackRecommendation, updatePackTag, updatePackTags } from "./packApi"
-import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackLeaderboardParams, GetPackListParams, ImportOsuPackRequest, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackOriginalRequest, UpdatePackRecommendationRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
+import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackLeaderboardParams, GetPackListParams, ImportOsuPackRequest, PackLeaderboardResponse, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackOriginalRequest, UpdatePackRecommendationRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
 
 export const packQueryKeys = {
   detail: (packId: string) => ["pack", "detail", packId] as const,
@@ -19,6 +19,17 @@ export function usePackLeaderboardQuery(params: GetPackLeaderboardParams) {
     enabled: Boolean(params.packId) && Number.isInteger(params.beatmapId) && params.beatmapId > 0,
     queryFn: () => getPackLeaderboard(params),
     queryKey: packQueryKeys.leaderboard(params),
+  })
+}
+
+export function usePackLeaderboardInfiniteQuery(params: Omit<GetPackLeaderboardParams, "page">) {
+  const queryKey = [...packQueryKeys.leaderboardRoot, "infinite", params] as const
+  return useInfiniteQuery<PackLeaderboardResponse, Error, InfiniteData<PackLeaderboardResponse>, typeof queryKey, number>({
+    enabled: Boolean(params.packId) && Number.isInteger(params.beatmapId) && params.beatmapId > 0,
+    getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => getPackLeaderboard({ ...params, page: pageParam }),
+    queryKey,
   })
 }
 

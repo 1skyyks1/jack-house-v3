@@ -111,37 +111,41 @@ export function PackListPage() {
       <Collapsible onOpenChange={setIsFilterOpen} open={isFilterOpen}>
         <section className="space-y-4">
           <form className="flex flex-col gap-3 md:flex-row" onSubmit={submitSearch}>
-            <div className="relative min-w-0 flex-1">
-              <Label className="sr-only" htmlFor="packSearch">{t("pack.list.searchLabel")}</Label>
-              <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" weight="bold" />
-              <Input
-                className="pl-9"
-                defaultValue={filters.searchKeys}
-                id="packSearch"
-                name="search"
-                placeholder={t("pack.list.searchPlaceholder")}
-              />
-            </div>
-            <Button type="submit">
-              <MagnifyingGlass className="size-4" weight="bold" />
-              {t("pack.list.search")}
-            </Button>
-            <CollapsibleTrigger asChild>
-              <Button aria-expanded={isFilterOpen} type="button" variant={hasAdvancedFilters ? "default" : "outline"}>
-                <FunnelSimple className="size-4" weight="bold" />
-                {t("pack.list.filters")}
-                {hasAdvancedFilters ? (
-                    <Badge className="ml-1 h-5 min-w-5 bg-background/20 px-1.5 text-primary-foreground" variant="secondary">
-                    {getActiveFilterCount(filters)}
-                  </Badge>
-                ) : null}
-                <CaretDown className={cn("size-4 transition", isFilterOpen && "rotate-180")} weight="bold" />
+            <div className="flex gap-2 md:contents">
+              <div className="relative min-w-0 flex-1">
+                <Label className="sr-only" htmlFor="packSearch">{t("pack.list.searchLabel")}</Label>
+                <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" weight="bold" />
+                <Input
+                  className="pl-9"
+                  defaultValue={filters.searchKeys}
+                  id="packSearch"
+                  name="search"
+                  placeholder={t("pack.list.searchPlaceholder")}
+                />
+              </div>
+              <Button className="shrink-0" type="submit">
+                <MagnifyingGlass className="size-4" weight="bold" />
+                {t("pack.list.search")}
               </Button>
-            </CollapsibleTrigger>
-            <Button onClick={clearFilters} type="button" variant="outline">
-              <ArrowClockwise className="size-4" weight="bold" />
-              {t("pack.list.reset")}
-            </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 md:contents">
+              <CollapsibleTrigger asChild>
+                <Button aria-expanded={isFilterOpen} type="button" variant={hasAdvancedFilters ? "default" : "outline"}>
+                  <FunnelSimple className="size-4" weight="bold" />
+                  {t("pack.list.filters")}
+                  {hasAdvancedFilters ? (
+                    <Badge className="ml-1 h-5 min-w-5 bg-background/20 px-1.5 text-primary-foreground" variant="secondary">
+                      {getActiveFilterCount(filters)}
+                    </Badge>
+                  ) : null}
+                  <CaretDown className={cn("size-4 transition", isFilterOpen && "rotate-180")} weight="bold" />
+                </Button>
+              </CollapsibleTrigger>
+              <Button onClick={clearFilters} type="button" variant="outline">
+                <ArrowClockwise className="size-4" weight="bold" />
+                {t("pack.list.reset")}
+              </Button>
+            </div>
             <Button asChild>
               <Link to="/newPack">
                 <Plus className="size-4" weight="bold" />
@@ -151,8 +155,8 @@ export function PackListPage() {
           </form>
 
           <CollapsibleContent>
-            <div className="space-y-4 border-t pt-4">
-              <div className="grid gap-4 lg:grid-cols-2 lg:gap-x-6">
+            <div className="space-y-3 border-t pt-3 sm:space-y-4 sm:pt-4">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-x-6">
                 <FilterGroup icon={FunnelSimple} label={t("pack.list.type")}>
                   {packTypeFilters.map((type) => (
                     <FilterButton
@@ -258,7 +262,7 @@ export function PackListPage() {
             />
           </>
         ) : (
-          <PackState title={t("pack.list.noResultsTitle")} description={t("pack.list.noResultsDescription")} />
+          <PackState description={t("pack.list.noResultsDescription")} title={t("pack.list.noResultsTitle")} unframed />
         )}
       </section>
     </section>
@@ -273,12 +277,12 @@ type FilterGroupProps = {
 
 function FilterGroup({ children, icon: Icon, label }: FilterGroupProps) {
   return (
-    <div className="grid gap-2 lg:grid-cols-[5.5rem_minmax(0,1fr)] lg:items-center">
-      <div className="flex h-8 items-center gap-2 text-sm font-semibold text-muted-foreground">
-        <Icon className="size-4" weight="bold" />
+    <div className="grid grid-cols-[minmax(3.25rem,max-content)_minmax(0,1fr)] items-center gap-1.5 sm:grid-cols-1 sm:gap-2 lg:grid-cols-[5.5rem_minmax(0,1fr)]">
+      <div className="flex h-7 items-center gap-2 whitespace-nowrap text-xs font-semibold text-muted-foreground sm:h-8 sm:text-sm">
+        <Icon className="hidden size-4 sm:block" weight="bold" />
         {label}
       </div>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      <div className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-2 sm:overflow-visible">{children}</div>
     </div>
   )
 }
@@ -314,8 +318,8 @@ function FilterButton({ active, children, highlightTone, onClick }: FilterButton
   return (
     <Button
       className={cn(
-        "h-8",
-        !active && !highlightTone && "text-muted-foreground",
+        "h-7 shrink-0 gap-1.5 border px-2 text-xs sm:h-8 sm:gap-2 sm:px-3 sm:text-sm",
+        !active && !highlightTone && "border-input bg-background text-muted-foreground",
         highlightClass,
       )}
       onClick={onClick}
@@ -366,16 +370,16 @@ function TagFilterGroup({ isError, isLoading, onToggleTag, packType, selectedTag
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[5.5rem_minmax(0,1fr)] lg:items-start">
-      <div className="flex h-8 items-center gap-2 text-sm font-semibold text-muted-foreground">
-        <Tag className="size-4" weight="bold" />
+    <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-[5.5rem_minmax(0,1fr)] lg:items-start">
+      <div className="hidden h-8 items-center gap-2 text-sm font-semibold text-muted-foreground sm:flex">
+        <Tag className="hidden size-4 sm:block" weight="bold" />
         {t("pack.list.tags")}
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
         {groups.map((group) => (
-          <div className="grid gap-2 sm:grid-cols-[4rem_minmax(0,1fr)] sm:items-center" key={group.label}>
-            <div className="flex h-8 items-center text-xs font-semibold uppercase text-muted-foreground">{group.label}</div>
-            <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-[minmax(3rem,max-content)_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-2" key={group.label}>
+            <div className="flex h-7 items-center whitespace-nowrap text-xs font-semibold uppercase text-muted-foreground sm:h-8">{group.label}</div>
+            <div className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-2 sm:overflow-visible">
               {group.tags.map((tag) => (
                 <FilterButton
                   active={selectedTags.includes(tag.tag_id)}
@@ -602,14 +606,24 @@ function getSortLabel(sort: PackSort, t: ReturnType<typeof useTranslation>["t"])
 type PackStateProps = {
   description: string
   title: string
+  unframed?: boolean
 }
 
-function PackState({ description, title }: PackStateProps) {
+function PackState({ description, title, unframed = false }: PackStateProps) {
+  if (!unframed) {
+    return (
+      <Card className="p-8 text-center">
+        <h2 className="font-heading text-xl font-semibold">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      </Card>
+    )
+  }
+
   return (
-    <Card className="p-8 text-center">
-      <h2 className="font-heading text-xl font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </Card>
+    <div className="py-12 text-center">
+      <h2 className="font-heading text-lg font-semibold">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+    </div>
   )
 }
 
