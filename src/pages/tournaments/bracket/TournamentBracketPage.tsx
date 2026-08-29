@@ -36,7 +36,7 @@ export function TournamentBracketPage() {
 
   return (
     <main className="flex min-h-[calc(100dvh-4rem)] flex-col gap-4 pb-6">
-      <div className="sticky top-[calc(4rem+1px)] z-30 bg-background/92 backdrop-blur">
+      <div className="sticky top-16 z-30 bg-background/92 backdrop-blur">
         <div className={cn("w-full px-3 py-2 sm:px-6 lg:px-8", viewMode === "list" && "mx-auto max-w-6xl")}>
           <TournamentBreadcrumb current={t("tournament.common.schedule")} tournament={tournamentQuery.data} tournamentId={tid} />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
