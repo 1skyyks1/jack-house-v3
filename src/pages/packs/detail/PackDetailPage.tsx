@@ -7,6 +7,7 @@ import {
 } from "@/entities/pack"
 import { PackComments } from "@/features/comments"
 import { useAuthStore, usePermissionsQuery } from "@/features/auth"
+import { ManiaWorkbench, ManiaWorkbenchOverlay, useManiaWorkbenchWideLayout } from "@/widgets/mania-workbench"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +17,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { PageState } from "@/shared/components"
+import { cn } from "@/lib/utils"
 import { PackDescription, PackDetailSkeleton, PackInfoPanel, PackShowcase } from "./components"
 import { PackLeaderboard } from "./PackLeaderboard"
 
@@ -27,6 +29,8 @@ export function PackDetailPage() {
   const isLogged = useAuthStore((state) => state.isLogged)
   const permissionsQuery = usePermissionsQuery()
   const [selectedMapId, setSelectedMapId] = useState<number | null>(null)
+  const [isWorkbenchOpen, setIsWorkbenchOpen] = useState(false)
+  const isWideWorkbenchLayout = useManiaWorkbenchWideLayout()
   const maps = useMemo(
     () => [...(packQuery.data?.maps ?? [])].sort((left, right) => toFiniteNumber(left.rating) - toFiniteNumber(right.rating)),
     [packQuery.data?.maps],
@@ -65,7 +69,7 @@ export function PackDetailPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -80,34 +84,59 @@ export function PackDetailPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <PackShowcase
-          maps={maps}
-          onSelectMap={selectMap}
-          pack={packQuery.data}
-          selectedMap={selectedMap}
-          selectedMapId={selectedMap?.map_id ?? null}
-        />
+      <div className={cn(
+        isWorkbenchOpen && isWideWorkbenchLayout
+          ? "xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-4"
+          : "",
+      )}>
+        <section className="min-w-0">
 
-        <div className="grid min-h-0 divide-y border-t bg-muted/20 lg:h-[18rem] lg:grid-cols-2 lg:items-stretch lg:divide-x lg:divide-y-0">
-          <PackDescription className="h-[18rem] lg:h-full" description={packQuery.data.description} />
-          <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
-        </div>
+          <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <PackShowcase
+              maps={maps}
+              onSelectMap={selectMap}
+              onOpenWorkbench={() => setIsWorkbenchOpen((open) => !open)}
+              pack={packQuery.data}
+              selectedMap={selectedMap}
+              selectedMapId={selectedMap?.map_id ?? null}
+            />
 
-        {selectedMap?.beatmap_id ? (
-          <PackLeaderboard
-            beatmapId={selectedMap.beatmap_id}
-            key={selectedMap.beatmap_id}
-            packId={packQuery.data.pack_id}
-            title={packQuery.data.title_unicode || packQuery.data.title}
-            version={selectedMap.version}
+            <div className="grid min-h-0 divide-y border-t bg-muted/20 lg:h-[18rem] lg:grid-cols-2 lg:items-stretch lg:divide-x lg:divide-y-0">
+              <PackDescription className="h-[18rem] lg:h-full" description={packQuery.data.description} />
+              <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
+            </div>
+
+            {selectedMap?.beatmap_id ? (
+              <PackLeaderboard
+                beatmapId={selectedMap.beatmap_id}
+                key={selectedMap.beatmap_id}
+                packId={packQuery.data.pack_id}
+                title={packQuery.data.title_unicode || packQuery.data.title}
+                version={selectedMap.version}
+              />
+            ) : null}
+
+            <div className="border-t">
+              <PackComments packId={packId} />
+            </div>
+          </div>
+        </section>
+        {isWorkbenchOpen && isWideWorkbenchLayout ? (
+          <ManiaWorkbench
+            beatmapId={selectedMap?.beatmap_id ?? null}
+            open={isWorkbenchOpen}
+            version={selectedMap?.version}
           />
         ) : null}
-
-        <div className="border-t">
-          <PackComments packId={packId} />
-        </div>
       </div>
-    </section>
+      {isWorkbenchOpen && !isWideWorkbenchLayout ? (
+        <ManiaWorkbenchOverlay
+          beatmapId={selectedMap?.beatmap_id ?? null}
+          label={t("pack.detail.previewAndAnalyse")}
+          onClose={() => setIsWorkbenchOpen(false)}
+          version={selectedMap?.version}
+        />
+      ) : null}
+    </div>
   )
 }

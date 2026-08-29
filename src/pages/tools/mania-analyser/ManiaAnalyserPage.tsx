@@ -50,17 +50,16 @@ import {
   createLocalManiaBeatmapSource,
   downloadManiaAnalysisImage,
   getManiaBeatmapCover,
-  getManiaBeatmapSource,
   LocalBeatmapError,
   MANIA_ANALYSER_ALGORITHMS,
   runManiaAnalysis,
   type ManiaAnalyserAlgorithm,
   type ManiaAnalysisResult,
   type ManiaAnalysisImageLabels,
-  type ManiaBeatmapSource,
   type ManiaConversion,
   type ManiaEtternaSkill,
 } from "@/features/mania-analyser"
+import { getManiaBeatmapSource, type ManiaBeatmapSource } from "@/features/mania-source"
 import { getErrorMessage } from "@/shared/components"
 import { ApiError } from "@/shared/api/errors"
 import { cn } from "@/lib/utils"
@@ -189,6 +188,7 @@ export function ManiaAnalyserPage() {
       const source = localFile
         ? await createLocalManiaBeatmapSource(localFile, deleteCoverUrl)
         : await getManiaBeatmapSource(beatmapId as number)
+      if (source.beatmap.keyCount !== 4) throw new Error(t("maniaAnalyser.only4k"))
       const result = await runManiaAnalysis(source.osuText, options)
       setAnalysis({ elapsedMs: performance.now() - startedAt, options, result, source })
       setSpeedRate(String(rate))

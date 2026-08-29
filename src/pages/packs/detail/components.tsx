@@ -530,12 +530,13 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
 type PackShowcaseProps = {
   pack: PackDetail
   maps: PackMap[]
+  onOpenWorkbench: () => void
   onSelectMap: (mapId: number) => void
   selectedMap: PackMap | null
   selectedMapId: number | null
 }
 
-export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMapId }: PackShowcaseProps) {
+export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selectedMap, selectedMapId }: PackShowcaseProps) {
   const { t } = useTranslation()
   const coverUrl = getPackCoverUrl(pack)
   const status = getPackRankStatus(pack.status)
@@ -639,19 +640,18 @@ export function PackShowcase({ maps, onSelectMap, pack, selectedMap, selectedMap
             ) : null}
             {selectedMap?.beatmap_id ? (
               <Button
-                asChild
                 className="h-9 w-full min-w-0 border-primary/45 bg-primary/90 text-primary-foreground shadow-sm hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:text-primary-foreground"
+                onClick={onOpenWorkbench}
+                type="button"
                 variant="outline"
               >
-                <Link to={`/tool/oma?beatmapId=${selectedMap.beatmap_id}`}>
-                  <ChartLineUp className="size-4" weight="bold" />
-                  {t("pack.detail.analyseWithOma")}
-                </Link>
+                <ChartLineUp className="size-4" weight="bold" />
+                {t("pack.detail.previewAndAnalyse")}
               </Button>
             ) : selectedMap ? (
               <Button className="h-9 w-full min-w-0" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
                 <ChartLineUp className="size-4" weight="bold" />
-                {t("pack.detail.analyseWithOma")}
+                {t("pack.detail.previewAndAnalyse")}
               </Button>
             ) : null}
             {downloadLinks.map((link) => (

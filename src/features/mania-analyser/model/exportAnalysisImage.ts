@@ -1,4 +1,5 @@
-import type { ManiaAnalysisOptions, ManiaAnalysisResult, ManiaBeatmapSource, ManiaEtternaSkill } from "./types"
+import type { ManiaBeatmapSource } from "@/features/mania-source"
+import type { ManiaAnalysisOptions, ManiaAnalysisResult, ManiaEtternaSkill } from "./types"
 
 const WIDTH = 1600
 const HEIGHT = 2000

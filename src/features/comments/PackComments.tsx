@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ChatText } from "@phosphor-icons/react"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -49,6 +49,8 @@ export function PackComments({ packId }: PackCommentsProps) {
     resolver: zodResolver(createCommentSchema(t)),
     defaultValues: { content: "" },
   })
+  const commentContent = useWatch({ control: form.control, name: "content" })
+  const showSubmitButton = commentContent.trim().length > 0
 
   const submitComment = (values: CommentFormValues) => {
     if (!isLogged) {
@@ -76,31 +78,28 @@ export function PackComments({ packId }: PackCommentsProps) {
   }
 
   return (
-    <section className="p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
+    <section className="p-4 sm:p-5">
+      <div className="flex min-h-9 items-center justify-between gap-4">
         <SectionTitle>{t("pack.comments.title")}</SectionTitle>
+        {showSubmitButton ? (
+          <Button disabled={createMutation.isPending} size="sm" type="submit" form="pack-comment-form">
+            {createMutation.isPending ? t("post.posting") : isLogged ? t("post.postComment") : t("post.loginToComment")}
+          </Button>
+        ) : null}
       </div>
 
-      <form className="mt-5 space-y-3" onSubmit={form.handleSubmit(submitComment)}>
+      <form className="mt-3 space-y-2" id="pack-comment-form" onSubmit={form.handleSubmit(submitComment)}>
         <Textarea
-          className="min-h-24"
+          className="min-h-20"
           placeholder={isLogged ? t("post.commentPlaceholder") : t("post.commentLoginPlaceholder")}
           aria-invalid={Boolean(form.formState.errors.content)}
           {...form.register("content")}
         />
         <FormFieldError message={form.formState.errors.content?.message} />
         {createMutation.isError ? <MutationErrorAlert error={createMutation.error} /> : null}
-        <div className="flex justify-end">
-          <Button
-            disabled={createMutation.isPending}
-            type="submit"
-          >
-            {createMutation.isPending ? t("post.posting") : isLogged ? t("post.postComment") : t("post.loginToComment")}
-          </Button>
-        </div>
       </form>
 
-      <div className={cn("mt-6 divide-y", !isEmpty && "rounded-lg border")}>
+      <div className={cn("mt-4 divide-y", !isEmpty && "rounded-lg border")}>
         {commentsQuery.isLoading ? (
           <CommentSkeleton />
         ) : commentsQuery.isError ? (

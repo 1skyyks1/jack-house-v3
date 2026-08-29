@@ -1,4 +1,4 @@
-import type { ManiaBeatmapSource } from "./types"
+import type { ManiaBeatmapSource } from "@/features/mania-source"
 
 const MAX_LOCAL_BEATMAP_SIZE = 2 * 1024 * 1024
 
@@ -37,6 +37,7 @@ export async function createLocalManiaBeatmapSource(file: File, coverUrl: string
       coverUrl,
       creator: metadata.get("Creator") || "",
       difficultyRating: null,
+      keyCount: getKeyCount(sections.get("Difficulty") ?? []),
       mode,
       title: metadata.get("TitleUnicode") || metadata.get("Title") || file.name.replace(/\.osu$/i, ""),
       totalLength: getTotalLength(sections.get("HitObjects") ?? []),
@@ -84,6 +85,12 @@ function getBaseBpm(lines: string[]) {
     }
   }
   return null
+}
+
+function getKeyCount(lines: string[]) {
+  const difficulty = parseKeyValues(lines)
+  const circleSize = Number(difficulty.get("CircleSize"))
+  return Number.isFinite(circleSize) ? Math.round(circleSize) : null
 }
 
 function getTotalLength(lines: string[]) {

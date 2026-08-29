@@ -150,10 +150,10 @@ type CommentStateProps = {
 
 export function CommentState({ description, icon, title }: CommentStateProps) {
   return (
-    <div className={cn("text-center", icon ? "py-12" : "p-6")}>
-      {icon ? <div className="mx-auto mb-3 grid size-10 place-items-center text-primary/60 [&>svg]:size-8">{icon}</div> : null}
+    <div className={cn("text-center", icon ? "py-5" : "p-5")}>
+      {icon ? <div className="mx-auto mb-2 grid size-8 place-items-center text-primary/60 [&>svg]:size-6">{icon}</div> : null}
       <h3 className={cn("font-heading", icon ? "text-sm font-medium text-muted-foreground" : "text-lg font-semibold")}>{title}</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
     </div>
   )
 }
