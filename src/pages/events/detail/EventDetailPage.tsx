@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import {
   getEventStatus,
   useEventRankQuery,
+  useEventStageRankQuery,
   useEventStagesQuery,
   useEventUserScoreQuery,
   useSubmitEventScoreMutation,
@@ -22,6 +23,7 @@ import {
   EventRules,
   LeaderboardCard,
   ScorePanel,
+  StageCard,
   StageGrid,
 } from "./sections"
 import {
@@ -29,6 +31,7 @@ import {
   HIGHLIGHTED_RANK_COUNT,
   SCORE_COOLDOWN_SECONDS,
   getEventCopy,
+  parseStageTab,
   type EventTab,
 } from "./utils"
 
@@ -40,13 +43,19 @@ export function EventDetailPage() {
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
   const [tab, setTab] = useState<EventTab>("overview")
   const [eventRankBatch, setEventRankBatch] = useState(1)
+  const [stageRankBatch, setStageRankBatch] = useState(1)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [cooldown, setCooldown] = useState(0)
   const stagesQuery = useEventStagesQuery(eventId)
   const userScoreQuery = useEventUserScoreQuery(eventId, isLogged)
   const eventRankQuerySize = HIGHLIGHTED_RANK_COUNT + eventRankBatch * EVENT_LEADERBOARD_PAGE_SIZE
+  const stageRankQuerySize = HIGHLIGHTED_RANK_COUNT + stageRankBatch * EVENT_LEADERBOARD_PAGE_SIZE
   const eventRankQuery = useEventRankQuery(eventId, { page: 1, pageSize: eventRankQuerySize })
   const topEventRankQuery = useEventRankQuery(eventId, { page: 1, pageSize: HIGHLIGHTED_RANK_COUNT })
+  const activeStageIndex = parseStageTab(tab)
+  const activeStage = typeof activeStageIndex === "number" ? stagesQuery.data?.data[activeStageIndex] : undefined
+  const stageRankQuery = useEventStageRankQuery(activeStage?.id, { page: 1, pageSize: stageRankQuerySize })
+  const topStageRankQuery = useEventStageRankQuery(activeStage?.id, { page: 1, pageSize: HIGHLIGHTED_RANK_COUNT })
   const submitScoreMutation = useSubmitEventScoreMutation(eventId ?? "")
   const stageScoresById = useMemo(() => {
     const map = new Map<number, EventUserStageScore>()
@@ -113,6 +122,7 @@ export function EventDetailPage() {
         value={tab}
         onValueChange={(value) => {
           setTab(value as EventTab)
+          setStageRankBatch(1)
         }}
       >
         <EventHero
@@ -129,6 +139,11 @@ export function EventDetailPage() {
                 <Trophy className="size-4" weight="bold" />
                 {copy.leaderboard}
               </TabsTrigger>
+              {stages.map((stage, index) => (
+                <TabsTrigger className="flex-none shrink-0" key={stage.id} value={`stage-${index}`}>
+                  {t("event.stageTab", { index: index + 1 })}
+                </TabsTrigger>
+              ))}
             </TabsList>
           )}
         />
@@ -187,6 +202,26 @@ export function EventDetailPage() {
             type="event"
           />
         </TabsContent>
+
+        {stages.map((stage, index) => (
+          <TabsContent className="mt-4" key={stage.id} value={`stage-${index}`}>
+            <div className="min-w-0 space-y-4">
+              <StageCard stage={stage} />
+              <LeaderboardCard
+                copy={copy}
+                error={activeStage?.id === stage.id ? stageRankQuery.error ?? topStageRankQuery.error : null}
+                highlightedRows={activeStage?.id === stage.id ? topStageRankQuery.data?.data ?? [] : []}
+                isError={activeStage?.id === stage.id ? stageRankQuery.isError || topStageRankQuery.isError : false}
+                isLoading={activeStage?.id === stage.id && stageRankQuery.isLoading}
+                isLoadingMore={activeStage?.id === stage.id && stageRankQuery.isFetching && !stageRankQuery.isLoading}
+                hasMore={activeStage?.id === stage.id && (stageRankQuery.data?.data.length ?? 0) < (stageRankQuery.data?.total ?? 0)}
+                onLoadMore={() => setStageRankBatch((batch) => batch + 1)}
+                rows={activeStage?.id === stage.id ? stageRankQuery.data?.data ?? [] : []}
+                type="stage"
+              />
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
     </section>
   )

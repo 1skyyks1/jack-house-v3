@@ -12,3 +12,4 @@ export {
 export { getUserRoleLabel, getUserStatusLabel } from "./model/types"
 export type { CreateUserRequest, GetUserListParams, UpdateUserRequest, UserSearchItem } from "./api/userApi"
 export type { UserBadge, UserProfile, UserRole, UserStatus, UserTournamentExperience } from "./model/types"
+export { UserHoverCard } from "./ui/UserHoverCard"

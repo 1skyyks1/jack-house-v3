@@ -1,4 +1,4 @@
-export { createPack, createPackFeedback, deletePack, getOsuPackPreview, getPackById, getPackFeedbackList, getPackLeaderboard, getPackList, getTagList, importOsuPack, submitPackBeatmapScore, updatePackFeedbackStatus, updatePackOriginal, updatePackRecommendation } from "./api/packApi"
+export { createPack, createPackFeedback, deletePack, getOsuPackPreview, getPackById, getPackFeedbackList, getPackLeaderboard, getPackList, getTagList, importOsuPack, syncAllFeaturedScores, syncPackScores, updatePackFeedbackStatus, updatePackLeaderboard, updatePackOriginal, updatePackRecommendation } from "./api/packApi"
 export {
   packQueryKeys,
   useCreatePackMutation,
@@ -19,7 +19,9 @@ export {
   useUpdatePackTagsMutation,
   useUpdatePackTagMutation,
   useUpdatePackFeedbackStatusMutation,
-  useSubmitPackBeatmapScoreMutation,
+  useSyncPackScoresMutation,
+  useSyncAllFeaturedScoresMutation,
+  useUpdatePackLeaderboardMutation,
   useUpdatePackRecommendationMutation,
   useUpdatePackOriginalMutation,
 } from "./api/packQueries"
@@ -55,6 +57,8 @@ export type {
   PackListItem,
   PackLeaderboardEntry,
   PackLeaderboardResponse,
+  PackScoreSyncResponse,
+  PackScoreSyncSummary,
   PackMap,
   PackRankStatus,
   PackSort,
@@ -71,4 +75,5 @@ export type {
   UpdatePackFeedbackStatusRequest,
   UpdatePackRecommendationRequest,
   UpdatePackOriginalRequest,
+  UpdatePackLeaderboardRequest,
 } from "./model/types"

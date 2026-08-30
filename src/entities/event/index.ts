@@ -9,6 +9,7 @@ export {
   getEventStageRank,
   getEventStages,
   getEventUserScore,
+  importEventStages,
   submitEventScore,
   updateEvent,
   updateEventStage,
@@ -25,6 +26,7 @@ export {
   useEventStageRankQuery,
   useEventStagesQuery,
   useEventUserScoreQuery,
+  useImportEventStagesMutation,
   useSubmitEventScoreMutation,
   useUpdateEventMutation,
   useUpdateEventStageMutation,
@@ -45,4 +47,6 @@ export type {
   CreateEventStagesRequest,
   GetEventListParams,
   GetEventRankParams,
+  ImportedEventStage,
+  ImportEventStagesResponse,
 } from "./model/types"

@@ -1,15 +1,24 @@
-import { ChartBar, Trophy } from "@phosphor-icons/react"
+import { ChartBar, Question, Trophy } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
+import gradeA from "@/assets/pic/osu/grades/grade-a.svg"
+import gradeB from "@/assets/pic/osu/grades/grade-b.svg"
+import gradeC from "@/assets/pic/osu/grades/grade-c.svg"
+import gradeD from "@/assets/pic/osu/grades/grade-d.svg"
+import gradeSSilver from "@/assets/pic/osu/grades/grade-s-silver.svg"
+import gradeS from "@/assets/pic/osu/grades/grade-s.svg"
+import gradeSSSilver from "@/assets/pic/osu/grades/grade-ss-silver.svg"
+import gradeSS from "@/assets/pic/osu/grades/grade-ss.svg"
 import {
   usePackLeaderboardInfiniteQuery,
-  useSubmitPackBeatmapScoreMutation,
+  useSyncPackScoresMutation,
   type PackLeaderboardEntry,
 } from "@/entities/pack"
+import { UserHoverCard } from "@/entities/user"
 import { useAuthStore } from "@/features/auth"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { AppAlert, getErrorMessage } from "@/shared/components"
 
@@ -27,7 +36,7 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
   const isLogged = useAuthStore((state) => state.isLogged)
   const openLoginDialog = useAuthStore((state) => state.openLoginDialog)
   const leaderboardQuery = usePackLeaderboardInfiniteQuery({ beatmapId, packId, pageSize: PAGE_SIZE })
-  const submitMutation = useSubmitPackBeatmapScoreMutation()
+  const submitMutation = useSyncPackScoresMutation()
   const leaderboard = leaderboardQuery.data?.pages[0]
   const entries = leaderboardQuery.data?.pages.flatMap((page) => page.data) ?? []
 
@@ -48,14 +57,13 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
       openLoginDialog(`/pack/${packId}?beatmap=${beatmapId}`)
       return
     }
-    submitMutation.mutate(
-      { beatmapId, packId },
-      { onSuccess: () => toast.success(t("pack.leaderboard.submitSuccess")) },
-    )
+    submitMutation.mutate(packId, {
+      onSuccess: (response) => toast.success(t("pack.leaderboard.submitSuccess", response.data)),
+    })
   }
 
   return (
-    <section className="border-t p-5 sm:p-6">
+    <section className="@container/leaderboard border-t p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="inline-flex items-center gap-2 font-heading text-lg font-semibold">
@@ -67,16 +75,33 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {leaderboard.activeEventId ? (
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/event/${leaderboard.activeEventId}`}>{t("pack.leaderboard.openEvent")}</Link>
-            </Button>
-          ) : null}
           {leaderboard.canSubmit ? (
-            <Button disabled={submitMutation.isPending} onClick={submitScore} size="sm" type="button">
-              <ChartBar className="size-4" weight="bold" />
-              {submitMutation.isPending ? t("pack.leaderboard.submitting") : t("pack.leaderboard.submit")}
-            </Button>
+            <>
+              <Button disabled={submitMutation.isPending} onClick={submitScore} size="sm" type="button">
+                <ChartBar className="size-4" weight="bold" />
+                {submitMutation.isPending ? t("pack.leaderboard.submitting") : t("pack.leaderboard.submit")}
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      aria-label={t("pack.leaderboard.submitHelpLabel")}
+                      className="inline-flex size-6 cursor-help items-center justify-center text-muted-foreground transition hover:text-foreground"
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <Question aria-hidden="true" className="size-4" weight="bold" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="w-80 max-w-[calc(100vw-2rem)] flex-col items-start whitespace-normal p-3 leading-5">
+                    <p>{t("pack.leaderboard.submitDescription")}</p>
+                    <p className="mt-2 text-background/75">
+                      <span className="font-semibold text-background">Tips：</span>{t("pack.leaderboard.submitTip")}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
           ) : null}
         </div>
       </div>
@@ -85,15 +110,15 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
 
       {entries.length > 0 ? (
         <div className="mt-5">
-          <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] gap-0.5 border-b px-0.5 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid-cols-[2.25rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] lg:gap-2 lg:px-2 lg:text-xs">
-            <span className="text-left" aria-label={t("pack.leaderboard.rank")}>#</span>
+          <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] gap-0.5 border-b px-0.5 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 lg:text-[11px] @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2 @5xl/leaderboard:text-xs">
+            <span className="text-left">{t("pack.leaderboard.rank")}</span>
             <span className="text-left">{t("pack.leaderboard.player")}</span>
-            <span className="hidden lg:block">320</span>
-            <span className="hidden lg:block">300</span>
-            <span className="hidden lg:block">200</span>
-            <span className="hidden lg:block">100</span>
-            <span className="hidden lg:block">50</span>
-            <span className="hidden lg:block">Miss</span>
+            <span className="hidden text-sky-300 lg:block">320</span>
+            <span className="hidden text-sky-400 lg:block">300</span>
+            <span className="hidden text-green-400 lg:block">200</span>
+            <span className="hidden text-lime-400 lg:block">100</span>
+            <span className="hidden text-amber-300 lg:block">50</span>
+            <span className="hidden text-red-400 lg:block">Miss</span>
             <span>{t("pack.leaderboard.score")}</span>
             <span>{t("pack.leaderboard.accuracy")}</span>
             <span className="hidden lg:block">{t("pack.leaderboard.grade")}</span>
@@ -143,31 +168,44 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
     <div
       aria-current={isCurrentUser ? "true" : undefined}
       className={cn(
-        "grid grid-cols-[1.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] items-center gap-0.5 px-0.5 py-2 lg:grid-cols-[2.25rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] lg:gap-2 lg:px-2",
+        "grid grid-cols-[2.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] items-center gap-0.5 px-0.5 py-1.5 lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2",
         isCurrentUser && "bg-primary/10",
       )}
     >
-      <span className="font-heading text-xs font-semibold tabular-nums sm:text-sm">#{entry.rank}</span>
-      <Link className="flex min-w-0 items-center gap-2 text-xs hover:opacity-80 sm:text-sm" to={`/user/${entry.user_id}`}>
-        <Avatar className="hidden sm:flex" size="sm">
-          {entry.user.avatar ? <AvatarImage alt={entry.user.user_name} src={entry.user.avatar} /> : null}
-          <AvatarFallback>{entry.user.user_name.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <span className={cn("truncate font-medium", isCurrentUser && "font-semibold text-primary")}>{entry.user.user_name}</span>
-      </Link>
+      <span className="text-xs font-semibold tabular-nums">#{entry.rank}</span>
+      <UserHoverCard
+        avatar={entry.user.avatar}
+        userId={entry.user_id}
+        userName={entry.user.user_name}
+      >
+        <Link
+          className={cn(
+            "block min-w-0 truncate text-[13px] font-medium hover:text-primary",
+            isCurrentUser && "font-semibold text-primary",
+          )}
+          to={`/user/${entry.user_id}`}
+        >
+          {entry.user.user_name}
+        </Link>
+      </UserHoverCard>
       <StatisticValue entry={entry} name="perfect" />
       <StatisticValue entry={entry} name="great" />
       <StatisticValue entry={entry} name="good" />
       <StatisticValue entry={entry} name="ok" />
       <StatisticValue entry={entry} name="meh" />
       <StatisticValue entry={entry} name="miss" />
-      <span className="text-center font-mono text-xs font-semibold tabular-nums sm:text-sm">
+      <span className="text-center text-xs tabular-nums">
         {formatScore(entry.score)}
       </span>
-      <span className="text-center font-mono text-[10px] tabular-nums sm:text-xs">
+      <span
+        className={cn(
+          "text-center text-xs font-medium tabular-nums",
+          entry.accuracy === 1 && "text-emerald-300",
+        )}
+      >
         {formatAccuracy(entry.accuracy)}
       </span>
-      <span className="hidden text-center text-xs font-semibold lg:block">{entry.score_rank || ""}</span>
+      <GradeIcon entry={entry} />
       <ScoreMods entry={entry} />
       <ScoreDate abbreviated className="text-center lg:hidden" entry={entry} />
       <ScoreDate className="hidden text-center lg:block" entry={entry} />
@@ -178,23 +216,90 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
 function StatisticValue({ entry, name }: { entry: PackLeaderboardEntry; name: keyof NonNullable<PackLeaderboardEntry["statistics"]> }) {
   const value = entry.statistics?.[name]
   return (
-    <span className="hidden text-center font-mono text-[11px] tabular-nums lg:block">
+    <span
+      className={cn(
+        "hidden text-center text-xs font-medium tabular-nums lg:block",
+        statisticColor[name],
+        value === 0 && "opacity-45",
+      )}
+    >
       {value === undefined || value === null ? "" : formatScore(value)}
     </span>
   )
 }
 
-function ScoreMods({ entry }: { entry: PackLeaderboardEntry }) {
-  const mods = entry.mods?.map((mod) => mod.acronym).filter(Boolean).join("") || (entry.mods ? "NM" : "")
+const statisticColor: Record<keyof NonNullable<PackLeaderboardEntry["statistics"]>, string> = {
+  perfect: "text-sky-300",
+  great: "text-sky-400",
+  good: "text-green-400",
+  ok: "text-lime-400",
+  meh: "text-amber-300",
+  miss: "text-red-400",
+}
+
+const gradeIcon = {
+  A: gradeA,
+  B: gradeB,
+  C: gradeC,
+  D: gradeD,
+  S: gradeS,
+  SH: gradeSSilver,
+  SS: gradeSS,
+  SSH: gradeSSSilver,
+} as const
+
+function GradeIcon({ entry }: { entry: PackLeaderboardEntry }) {
+  const rawRank = entry.score_rank?.toUpperCase()
+  if (!rawRank) return <span className="hidden lg:block" />
+
+  const hasSilverMod = entry.mods?.some((mod) => ["HD", "FI", "FL"].includes(mod.acronym.toUpperCase())) ?? false
+  const normalizedRank = rawRank === "XH"
+    ? "SSH"
+    : rawRank === "X"
+      ? hasSilverMod ? "SSH" : "SS"
+      : rawRank === "SH"
+        ? "SH"
+        : rawRank === "SS" && hasSilverMod
+          ? "SSH"
+          : rawRank === "S" && hasSilverMod
+            ? "SH"
+            : rawRank
+  const icon = gradeIcon[normalizedRank as keyof typeof gradeIcon]
+
   return (
-    <span className="flex min-w-0 items-center justify-center gap-1 overflow-hidden text-[9px] font-semibold sm:text-[10px]">
+    <span className="hidden items-center justify-center lg:flex">
+      {icon ? <img alt={normalizedRank} className="h-5 w-10 object-contain" src={icon} /> : rawRank}
+    </span>
+  )
+}
+
+function ScoreMods({ entry }: { entry: PackLeaderboardEntry }) {
+  const mods = entry.mods
+    ?.map((mod) => mod.acronym)
+    .filter((acronym) => acronym && acronym.toUpperCase() !== "CL")
+    .map((acronym) => acronym.toUpperCase()) ?? []
+  return (
+    <span className="flex min-w-0 items-center justify-center gap-0.5 overflow-hidden text-[9px] font-semibold">
       {entry.is_lazer ? (
         <span className="shrink-0 rounded bg-fuchsia-500/15 px-1 py-0.5 text-[8px] font-bold uppercase leading-none text-fuchsia-500 lg:text-[9px]">
           <span className="lg:hidden">L</span>
           <span className="hidden lg:inline">Lazer</span>
         </span>
       ) : null}
-      <span className="truncate">{mods}</span>
+      {mods.map((mod) => (
+        <span
+          className={cn(
+            "flex h-6 min-w-9 shrink-0 items-center justify-center px-2 font-bold leading-none [clip-path:polygon(12%_0,88%_0,100%_50%,88%_100%,12%_100%,0_50%)]",
+            mod === "NF"
+              ? "bg-[#f06d68] text-[#67252b]"
+              : "bg-[#8468f4] text-[#2d176f]",
+          )}
+          key={mod}
+          title={mod}
+        >
+          {mod}
+        </span>
+      ))}
     </span>
   )
 }
@@ -205,7 +310,7 @@ function ScoreDate({ abbreviated = false, className = "", entry }: { abbreviated
   if (!date) return null
   const locale = i18n.resolvedLanguage?.startsWith("zh") ? "zh-CN" : "en-GB"
   return (
-    <span className={`whitespace-nowrap text-[10px] text-muted-foreground sm:text-xs ${className}`}>
+    <span className={`whitespace-nowrap text-xs font-medium text-muted-foreground ${className}`}>
       {formatDate(date, locale, abbreviated)}
     </span>
   )

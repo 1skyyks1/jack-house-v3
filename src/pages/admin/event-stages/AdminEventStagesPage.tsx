@@ -1,12 +1,13 @@
-import { FloppyDisk, Plus, Trash } from "@phosphor-icons/react"
+import { DownloadSimple, FloppyDisk, Plus, Trash } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   useCreateEventStagesMutation,
   useDeleteEventStageMutation,
   useEventStagesQuery,
+  useImportEventStagesMutation,
   useUpdateEventStageMutation,
   type EventStageMutationRequest,
   type EventStageSummary,
@@ -38,6 +39,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getErrorMessage, MutationErrorAlert, PageState } from "@/shared/components"
 
 const MAX_BG_SIZE = 1024 * 1024
+const STAGE_DRAFT_STORAGE_PREFIX = "jackhouse:admin:event-stage-draft:"
 
 type EditableStage = {
   artist: string
@@ -61,9 +63,11 @@ export function AdminEventStagesPage() {
   const normalizedEventId = eventId ?? ""
   const stagesQuery = useEventStagesQuery(normalizedEventId)
   const createMutation = useCreateEventStagesMutation(normalizedEventId)
+  const importMutation = useImportEventStagesMutation()
   const updateMutation = useUpdateEventStageMutation(normalizedEventId)
   const deleteMutation = useDeleteEventStageMutation(normalizedEventId)
-  const [newStages, setNewStages] = useState<EditableStage[]>([])
+  const [newStages, setNewStages] = useState<EditableStage[]>(() => loadStageDraft(normalizedEventId))
+  const [beatmapsetId, setBeatmapsetId] = useState("")
   const [editingDrafts, setEditingDrafts] = useState<Record<number, ExistingStageDraft>>({})
   const [deletingStage, setDeletingStage] = useState<EventStageSummary | null>(null)
 
@@ -74,6 +78,10 @@ export function AdminEventStagesPage() {
   const canSubmitNewStages = useMemo(() => {
     return newStages.length > 0 && newStages.every((stage) => isValidStageDraft(stage) && stage.file)
   }, [newStages])
+
+  useEffect(() => {
+    saveStageDraft(normalizedEventId, newStages)
+  }, [newStages, normalizedEventId])
 
   if (!eventId) {
     return <PageState title={t("admin.eventStages.missingIdTitle")} description={t("admin.eventStages.missingIdDescription")} />
@@ -95,6 +103,45 @@ export function AdminEventStagesPage() {
         title: "",
       },
     ])
+  }
+
+  const importBeatmapset = () => {
+    const numericBeatmapsetId = Number(beatmapsetId)
+    if (!Number.isSafeInteger(numericBeatmapsetId) || numericBeatmapsetId <= 0) {
+      toast.error(t("admin.eventStages.import.invalidId"))
+      return
+    }
+
+    importMutation.mutate(numericBeatmapsetId, {
+      onSuccess: ({ data }) => {
+        const existingIds = new Set([
+          ...(stagesQuery.data?.data.map((stage) => Number(stage.map_id)) ?? []),
+          ...newStages.map((stage) => Number(stage.map_id)),
+        ])
+        const importedIds = new Set<number>()
+        const importedStages = data.filter((stage) => {
+          const mapId = Number(stage.map_id)
+          if (existingIds.has(mapId) || importedIds.has(mapId)) return false
+          importedIds.add(mapId)
+          return true
+        }).map((stage): EditableStage => ({
+          artist: "",
+          file: null,
+          id: crypto.randomUUID(),
+          map_id: String(stage.map_id),
+          mapper: "",
+          title: stage.title,
+        }))
+
+        if (importedStages.length === 0) {
+          toast.info(t("admin.eventStages.import.noNewStages"))
+          return
+        }
+
+        setNewStages((current) => [...current, ...importedStages])
+        toast.success(t("admin.eventStages.import.success", { count: importedStages.length }))
+      },
+    })
   }
 
   const submitNewStages = () => {
@@ -138,6 +185,24 @@ export function AdminEventStagesPage() {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-64 flex-1 gap-2 lg:min-w-80 lg:flex-initial">
+            <Input
+              aria-label={t("admin.eventStages.import.inputLabel")}
+              className="min-w-0 lg:w-52"
+              disabled={importMutation.isPending}
+              inputMode="numeric"
+              placeholder={t("admin.eventStages.import.placeholder")}
+              value={beatmapsetId}
+              onChange={(event) => setBeatmapsetId(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") importBeatmapset()
+              }}
+            />
+            <Button disabled={importMutation.isPending || !beatmapsetId.trim()} onClick={importBeatmapset} type="button" variant="outline">
+              <DownloadSimple className="size-4" weight="bold" />
+              {importMutation.isPending ? t("admin.eventStages.import.importing") : t("admin.eventStages.import.button")}
+            </Button>
+          </div>
           <Button onClick={addStage} type="button" variant="outline">
             <Plus className="size-4" weight="bold" />
             {t("admin.eventStages.addStage")}
@@ -150,6 +215,7 @@ export function AdminEventStagesPage() {
       </div>
 
       {createMutation.error ? <MutationErrorAlert error={createMutation.error} /> : null}
+      {importMutation.error ? <MutationErrorAlert error={importMutation.error} /> : null}
       {updateMutation.error ? <MutationErrorAlert error={updateMutation.error} /> : null}
       {deleteMutation.error ? <MutationErrorAlert error={deleteMutation.error} /> : null}
 
@@ -486,9 +552,7 @@ function toStageMutationRequest(stage: EditableStage): EventStageMutationRequest
 
 function isValidStageDraft(stage: Pick<EditableStage, "artist" | "map_id" | "mapper" | "title">) {
   return Boolean(
-    stage.artist.trim()
-    && stage.mapper.trim()
-    && stage.title.trim()
+    stage.title.trim()
     && Number.isInteger(Number(stage.map_id))
     && Number(stage.map_id) > 0,
   )
@@ -498,4 +562,57 @@ function omitKey<T extends Record<number, unknown>>(record: T, key: number): T {
   const next = { ...record }
   delete next[key]
   return next
+}
+
+function loadStageDraft(eventId: string): EditableStage[] {
+  if (!eventId || typeof window === "undefined") return []
+
+  try {
+    const rawDraft = window.sessionStorage.getItem(`${STAGE_DRAFT_STORAGE_PREFIX}${eventId}`)
+    if (!rawDraft) return []
+    const parsedDraft: unknown = JSON.parse(rawDraft)
+    if (!Array.isArray(parsedDraft)) return []
+
+    return parsedDraft.flatMap((item) => {
+      if (!isStoredStageDraft(item)) return []
+      return [{
+        artist: item.artist,
+        file: null,
+        id: item.id || crypto.randomUUID(),
+        map_id: item.map_id,
+        mapper: item.mapper,
+        title: item.title,
+      }]
+    })
+  } catch {
+    return []
+  }
+}
+
+function saveStageDraft(eventId: string, stages: EditableStage[]) {
+  if (!eventId || typeof window === "undefined") return
+
+  const storageKey = `${STAGE_DRAFT_STORAGE_PREFIX}${eventId}`
+  try {
+    if (stages.length === 0) {
+      window.sessionStorage.removeItem(storageKey)
+      return
+    }
+
+    window.sessionStorage.setItem(storageKey, JSON.stringify(stages.map((stage) => ({
+      artist: stage.artist,
+      id: stage.id,
+      map_id: stage.map_id,
+      mapper: stage.mapper,
+      title: stage.title,
+    }))))
+  } catch {
+    // Storage can be unavailable in private browsing or when the quota is exhausted.
+  }
+}
+
+function isStoredStageDraft(value: unknown): value is Omit<EditableStage, "file"> {
+  if (!value || typeof value !== "object") return false
+  const draft = value as Record<string, unknown>
+  return ["artist", "id", "map_id", "mapper", "title"].every((key) => typeof draft[key] === "string")
 }

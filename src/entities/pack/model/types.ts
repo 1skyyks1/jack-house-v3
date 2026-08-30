@@ -66,6 +66,9 @@ export type PackListItem = {
   cover_id: number | null
   is_original: boolean
   is_recommended: boolean
+  leaderboard_enabled: boolean
+  leaderboard_enabled_at: string | null
+  leaderboard_enabled_by: number | null
   original_at: string | null
   original_by: number | null
   recommended_at: string | null
@@ -85,6 +88,7 @@ export type PackDetail = PackListItem & {
 }
 
 export type GetPackListParams = {
+  featured?: boolean
   graveyard?: boolean
   loved?: boolean
   original?: boolean
@@ -106,6 +110,23 @@ export type UpdatePackRecommendationRequest = {
 export type UpdatePackOriginalRequest = {
   original: boolean
   packId: number | string
+}
+
+export type UpdatePackLeaderboardRequest = {
+  enabled: boolean
+  packId: number | string
+}
+
+export type PackScoreSyncSummary = {
+  created: number
+  matched: number
+  unchanged: number
+  updated: number
+}
+
+export type PackScoreSyncResponse = {
+  data: PackScoreSyncSummary
+  message: string
 }
 
 export type PackLeaderboardUser = {
@@ -137,7 +158,6 @@ export type PackLeaderboardEntry = {
 }
 
 export type PackLeaderboardResponse = {
-  activeEventId: number | null
   canSubmit: boolean
   data: PackLeaderboardEntry[]
   enabled: boolean

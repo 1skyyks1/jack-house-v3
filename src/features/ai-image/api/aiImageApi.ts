@@ -1,6 +1,6 @@
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type {
   AiImageAuditJob,
   AiImageConfig,
@@ -55,7 +55,7 @@ export async function submitAiImage(input: SubmitAiImageInput) {
   if (input.mask) formData.append("mask", input.mask)
 
   const response = await http.post("/tool/aimg/jobs", formData, {
-    timeout: 45_000,
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   })
   return unwrapData<AiImageJob>(response)
 }

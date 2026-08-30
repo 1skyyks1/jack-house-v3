@@ -6,6 +6,7 @@ import { getBackendMessage } from "./contracts/unwrap"
 import { ApiError, getApiErrorKind } from "./errors"
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3000"
+export const UPLOAD_REQUEST_TIMEOUT_MS = 5 * 60_000
 
 export const http = axios.create({
   baseURL: API_BASE_URL,

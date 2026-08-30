@@ -10,6 +10,7 @@ import {
   getEventStageRank,
   getEventStages,
   getEventUserScore,
+  importEventStages,
   submitEventScore,
   updateEvent,
   updateEventStage,
@@ -123,6 +124,12 @@ export function useCreateEventStagesMutation(eventId: string) {
         queryClient.invalidateQueries({ queryKey: eventQueryKeys.detail(eventId) }),
       ])
     },
+  })
+}
+
+export function useImportEventStagesMutation() {
+  return useMutation({
+    mutationFn: importEventStages,
   })
 }
 

@@ -268,7 +268,7 @@ export function LeaderboardCard(props: LeaderboardCardProps) {
           />
           <div className="overflow-hidden rounded-xl bg-muted/20">
             <div className="grid grid-cols-[5rem_minmax(0,1fr)_auto] gap-4 border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <span>{copy.totalRank}</span>
+              <span>{type === "event" ? copy.totalRank : copy.rank}</span>
               <span>{copy.username}</span>
               <span className="text-right">{type === "event" ? copy.totalScore : copy.score}</span>
             </div>

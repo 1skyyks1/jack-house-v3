@@ -40,6 +40,7 @@ import {
   useRefreshOsuPackMutation,
   useUpdatePackTagsMutation,
   useUpdatePackOriginalMutation,
+  useUpdatePackLeaderboardMutation,
   useUpdatePackRecommendationMutation,
   type PackDetail,
   type PackFeedbackSubmissionCategory,
@@ -305,10 +306,11 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
   const updateTagsMutation = useUpdatePackTagsMutation()
   const updateRecommendationMutation = useUpdatePackRecommendationMutation()
   const updateOriginalMutation = useUpdatePackOriginalMutation()
+  const updateLeaderboardMutation = useUpdatePackLeaderboardMutation()
   const [isEditingTags, setIsEditingTags] = useState(false)
   const [selectedTags, setSelectedTags] = useState<number[]>(() => pack.tags?.map((tag) => tag.tag_id) ?? [])
   const selectedTagSet = new Set(selectedTags)
-  const isUpdating = deleteMutation.isPending || refreshMutation.isPending || updateTagsMutation.isPending || updateRecommendationMutation.isPending || updateOriginalMutation.isPending
+  const isUpdating = deleteMutation.isPending || refreshMutation.isPending || updateTagsMutation.isPending || updateRecommendationMutation.isPending || updateOriginalMutation.isPending || updateLeaderboardMutation.isPending
   const isRefreshDisabled = !pack.osu_bid || isUpdatedToday(pack.updated_time) || isUpdating
 
   const toggleTag = (tagId: number) => {
@@ -405,6 +407,25 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
         />
       </div>
       {updateOriginalMutation.error ? <MutationErrorAlert error={updateOriginalMutation.error} /> : null}
+
+      <div className="flex items-center justify-between gap-4 py-1">
+        <div className="inline-flex min-w-0 items-center gap-2 text-sm font-medium">
+          <ChartLineUp className="size-4 text-primary" weight="bold" />
+          {t("pack.detail.leaderboardTitle")}
+        </div>
+        <Switch
+          aria-label={t("pack.detail.leaderboardTitle")}
+          checked={pack.leaderboard_enabled}
+          disabled={isUpdating}
+          onCheckedChange={(enabled) => {
+            updateLeaderboardMutation.mutate(
+              { enabled, packId: pack.pack_id },
+              { onSuccess: () => toast.success(t(enabled ? "pack.detail.leaderboardEnabled" : "pack.detail.leaderboardDisabled")) },
+            )
+          }}
+        />
+      </div>
+      {updateLeaderboardMutation.error ? <MutationErrorAlert error={updateLeaderboardMutation.error} /> : null}
 
       <div className="grid gap-2">
         <Button

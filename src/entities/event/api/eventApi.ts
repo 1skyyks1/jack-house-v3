@@ -1,6 +1,6 @@
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type {
   CreateEventStagesRequest,
   EventItem,
@@ -12,6 +12,7 @@ import type {
   EventUserScoreResponse,
   GetEventListParams,
   GetEventRankParams,
+  ImportEventStagesResponse,
 } from "../model/types"
 
 export async function getEventList(params: GetEventListParams): Promise<PaginatedEnvelope<EventItem>> {
@@ -50,6 +51,11 @@ export async function getEventStages(eventId: string): Promise<EventStagesRespon
   return response as unknown as EventStagesResponse
 }
 
+export async function importEventStages(beatmapsetId: number): Promise<ImportEventStagesResponse> {
+  const response = await http.get(`/event/stage/import/${beatmapsetId}`)
+  return response as unknown as ImportEventStagesResponse
+}
+
 export async function createEventStages(request: CreateEventStagesRequest): Promise<void> {
   const formData = new FormData()
   formData.append("event_id", request.eventId)
@@ -60,6 +66,7 @@ export async function createEventStages(request: CreateEventStagesRequest): Prom
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   })
 }
 

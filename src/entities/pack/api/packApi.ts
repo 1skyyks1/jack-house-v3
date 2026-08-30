@@ -14,6 +14,7 @@ import type {
   PackFeedback,
   PackListItem,
   PackLeaderboardResponse,
+  PackScoreSyncResponse,
   PackTag,
   AdminPackTag,
   CreatePackTagRequest,
@@ -23,7 +24,10 @@ import type {
   UpdatePackFeedbackStatusRequest,
   UpdatePackRecommendationRequest,
   UpdatePackOriginalRequest,
+  UpdatePackLeaderboardRequest,
 } from "../model/types"
+
+const SCORE_SYNC_TIMEOUT_MS = 60_000
 
 export async function getPackList(params: GetPackListParams): Promise<PaginatedEnvelope<PackListItem>> {
   const response = await http.get("/pack", {
@@ -34,6 +38,7 @@ export async function getPackList(params: GetPackListParams): Promise<PaginatedE
       page: params.page,
       pageSize: params.pageSize,
       ranked: params.ranked ? 1 : undefined,
+      featured: params.featured ? 1 : undefined,
       recommended: params.recommended ? 1 : undefined,
       searchKeys: params.searchKeys || undefined,
       sort: params.sort,
@@ -51,8 +56,12 @@ export async function getPackLeaderboard(params: GetPackLeaderboardParams): Prom
   }) as unknown as PackLeaderboardResponse
 }
 
-export async function submitPackBeatmapScore(packId: number | string, beatmapId: number): Promise<void> {
-  await http.post(`/pack/${packId}/beatmap/${beatmapId}/score`)
+export async function syncPackScores(packId: number | string): Promise<PackScoreSyncResponse> {
+  return http.post(`/pack/${packId}/scores/sync`, undefined, { timeout: SCORE_SYNC_TIMEOUT_MS }) as unknown as PackScoreSyncResponse
+}
+
+export async function syncAllFeaturedScores(): Promise<PackScoreSyncResponse> {
+  return http.post("/pack/featured/scores/sync", undefined, { timeout: SCORE_SYNC_TIMEOUT_MS }) as unknown as PackScoreSyncResponse
 }
 
 export async function updatePackRecommendation(request: UpdatePackRecommendationRequest): Promise<void> {
@@ -61,6 +70,10 @@ export async function updatePackRecommendation(request: UpdatePackRecommendation
 
 export async function updatePackOriginal(request: UpdatePackOriginalRequest): Promise<void> {
   await http.patch(`/pack/${request.packId}/original`, { original: request.original })
+}
+
+export async function updatePackLeaderboard(request: UpdatePackLeaderboardRequest): Promise<void> {
+  await http.patch(`/pack/${request.packId}/leaderboard`, { enabled: request.enabled }, { timeout: SCORE_SYNC_TIMEOUT_MS })
 }
 
 export async function getPackById(packId: string): Promise<PackDetail> {

@@ -11,6 +11,7 @@ export type PackFilterTagGroup = {
 
 export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPackListParams {
   return {
+    featured: searchParams.get("featured") === "1",
     graveyard: searchParams.get("graveyard") === "1",
     loved: searchParams.get("loved") === "1",
     original: searchParams.get("original") === "1",
@@ -27,6 +28,7 @@ export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPa
 
 export function getDefaultFilters(): GetPackListParams {
   return {
+    featured: false,
     graveyard: false,
     loved: false,
     original: false,
@@ -49,6 +51,7 @@ export function serializeFilters(filters: GetPackListParams) {
   if (filters.type !== -1) params.set("type", String(filters.type))
   if (filters.graveyard) params.set("graveyard", "1")
   if (filters.ranked) params.set("ranked", "1")
+  if (filters.featured) params.set("featured", "1")
   if (filters.recommended) params.set("recommended", "1")
   if (filters.loved) params.set("loved", "1")
   if (filters.original) params.set("original", "1")
@@ -59,7 +62,7 @@ export function serializeFilters(filters: GetPackListParams) {
 }
 
 export function hasActiveAdvancedFilters(filters: GetPackListParams) {
-  return filters.type !== -1 || Boolean(filters.graveyard) || Boolean(filters.ranked) || Boolean(filters.loved) || Boolean(filters.original) || Boolean(filters.recommended) || filters.sort !== 0 || filters.tags.length > 0
+  return filters.type !== -1 || Boolean(filters.featured) || Boolean(filters.graveyard) || Boolean(filters.ranked) || Boolean(filters.loved) || Boolean(filters.original) || Boolean(filters.recommended) || filters.sort !== 0 || filters.tags.length > 0
 }
 
 export function getActiveFilterCount(filters: GetPackListParams) {
@@ -67,6 +70,7 @@ export function getActiveFilterCount(filters: GetPackListParams) {
   if (filters.type !== -1) count += 1
   if (filters.graveyard) count += 1
   if (filters.ranked) count += 1
+  if (filters.featured) count += 1
   if (filters.loved) count += 1
   if (filters.recommended) count += 1
   if (filters.original) count += 1

@@ -1,7 +1,7 @@
 import { downloadZip } from "client-zip"
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type { PostFile, PostFileStatus, PublicPostFileListItem } from "../model/types"
 
 export type GetAdminPostFilesParams = {
@@ -83,7 +83,7 @@ export async function uploadPostFile(postId: string, request: UploadPostFileRequ
       if (!event.total) return
       request.onUploadProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)))
     },
-    timeout: 5 * 60_000,
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   })
 
   return unwrapData<PostFile>(response)

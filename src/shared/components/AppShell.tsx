@@ -1,4 +1,4 @@
-import { Coin, HouseIcon, InfoIcon, ListIcon, NewspaperIcon, ShieldIcon, SignOutIcon, StackIcon, Toolbox, Trophy, UserCircle } from "@phosphor-icons/react"
+import { ArrowsClockwise, Coin, HouseIcon, InfoIcon, ListIcon, NewspaperIcon, ShieldIcon, SignOutIcon, StackIcon, Toolbox, Trophy, UserCircle } from "@phosphor-icons/react"
 import { lazy, Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
@@ -31,6 +31,7 @@ import { LanguageSwitch } from "./LanguageSwitch"
 import { PageTitle } from "./PageTitle"
 import { ThemeToggle } from "./ThemeToggle"
 import { usePointBalanceQuery, useRewardCartStore } from "@/features/rewards"
+import { useSyncAllFeaturedScoresMutation } from "@/entities/pack"
 
 const publicNavItems = [
   { to: "/", labelKey: "common.home", icon: HouseIcon, end: true },
@@ -63,6 +64,7 @@ export function AppShell() {
   const currentUser = currentUserQuery.data
   const pointBalanceQuery = usePointBalanceQuery(isLogged)
   const clearRewardCart = useRewardCartStore((state) => state.clear)
+  const syncFeaturedScoresMutation = useSyncAllFeaturedScoresMutation()
   const currentUserId = currentUser?.user_id ? String(currentUser.user_id) : authUserId
   const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/")
   const isHomeRoute = location.pathname === "/"
@@ -273,6 +275,18 @@ export function AppShell() {
                           {t("rewards.nav")}
                         </span>
                       </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={syncFeaturedScoresMutation.isPending}
+                      onSelect={() => {
+                        syncFeaturedScoresMutation.mutate(undefined, {
+                          onError: () => toast.error(t("pack.leaderboard.syncFailed")),
+                          onSuccess: (response) => toast.success(t("pack.leaderboard.syncAllSuccess", response.data)),
+                        })
+                      }}
+                    >
+                      <ArrowsClockwise className={cn("size-4", syncFeaturedScoresMutation.isPending && "animate-spin")} weight="bold" />
+                      {syncFeaturedScoresMutation.isPending ? t("pack.leaderboard.syncing") : t("pack.leaderboard.syncAll")}
                     </DropdownMenuItem>
                     {canSeeAdmin ? (
                       <DropdownMenuItem onSelect={() => navigate("/admin/dashboard")}>

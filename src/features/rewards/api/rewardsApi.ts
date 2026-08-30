@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapData, unwrapPagination } from "@/shared/api/contracts/unwrap"
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type {
   FulfillmentStatus,
   PointTransaction,
@@ -105,7 +105,7 @@ export async function uploadRewardImage({ file, onProgress }: UploadRewardImageR
         if (!event.total) return
         onProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)))
       },
-      timeout: 2 * 60_000,
+      timeout: UPLOAD_REQUEST_TIMEOUT_MS,
     })
     const result = response.data
 

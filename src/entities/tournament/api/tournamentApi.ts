@@ -1,4 +1,4 @@
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type {
   CreateTournamentQualMapRequest,
   CreateTournamentRequest,
@@ -75,6 +75,7 @@ export async function uploadTournamentDefaultTeamAvatar(tournamentId: string, fi
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   }) as unknown as Tournament
 }
 
@@ -289,6 +290,7 @@ export async function uploadTournamentTeamAvatar(tournamentId: string, teamId: n
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   }) as unknown as TournamentTeam
 }
 

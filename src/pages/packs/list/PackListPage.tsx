@@ -10,6 +10,7 @@ import {
   HouseLine,
   MagnifyingGlass,
   Plus,
+  Star,
   Tag,
 } from "@phosphor-icons/react"
 import { useState, type ComponentType, type FormEvent, type ReactNode } from "react"
@@ -51,6 +52,7 @@ import {
 } from "@/entities/pack"
 import { getErrorMessage, InlineSkeleton, PageState } from "@/shared/components"
 import { cn } from "@/lib/utils"
+import { CurationInfoTooltip } from "../CurationInfoTooltip"
 import {
   filterTagIdsByType,
   getActiveFilterCount,
@@ -171,11 +173,19 @@ export function PackListPage() {
 
                 <FilterGroup icon={BookmarkSimple} label={t("pack.list.curation")}>
                   <FilterButton
-                    active={Boolean(filters.recommended)}
+                    active={Boolean(filters.featured)}
                     highlightTone="featured"
-                    onClick={() => updateFilters({ recommended: !filters.recommended })}
+                    onClick={() => updateFilters({ featured: !filters.featured })}
                   >
                     <CrownSimple className="size-3.5" weight="fill" />
+                    {t("pack.list.featuredOnly")}
+                  </FilterButton>
+                  <FilterButton
+                    active={Boolean(filters.recommended)}
+                    highlightTone="recommended"
+                    onClick={() => updateFilters({ recommended: !filters.recommended })}
+                  >
+                    <Star className="size-3.5" weight="fill" />
                     {t("pack.list.recommendedOnly")}
                   </FilterButton>
                   <FilterButton
@@ -186,6 +196,7 @@ export function PackListPage() {
                     <HouseLine className="size-3.5" weight="fill" />
                     {t("pack.list.originalOnly")}
                   </FilterButton>
+                  <CurationInfoTooltip />
                 </FilterGroup>
 
                 <FilterGroup icon={CheckCircle} label={t("pack.list.status")}>
@@ -290,7 +301,7 @@ function FilterGroup({ children, icon: Icon, label }: FilterGroupProps) {
 type FilterButtonProps = {
   active: boolean
   children: ReactNode
-  highlightTone?: "featured" | "loved" | "original" | "ranked"
+  highlightTone?: "featured" | "loved" | "original" | "ranked" | "recommended"
   onClick: () => void
 }
 
@@ -302,6 +313,10 @@ const filterHighlightClasses = {
   original: {
     active: "border-sky-600 bg-sky-600 font-semibold text-white shadow-sm shadow-sky-500/20 hover:bg-sky-700",
     inactive: "border-sky-500/35 bg-sky-500/5 font-semibold text-sky-700 hover:bg-sky-500/10 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200",
+  },
+  recommended: {
+    active: "border-violet-600 bg-violet-600 font-semibold text-white shadow-sm shadow-violet-500/20 hover:bg-violet-700",
+    inactive: "border-violet-500/35 bg-violet-500/5 font-semibold text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200",
   },
   ranked: {
     active: "border-emerald-600 bg-emerald-600 font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-700",
@@ -431,10 +446,20 @@ function PackCard({ pack }: PackCardProps) {
             <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
           </div>
           <div className="min-w-0 pr-4">
-            {pack.is_recommended ? (
-              <div className="mb-1 inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.14em] text-amber-300 drop-shadow-sm">
-                <CrownSimple aria-hidden="true" className="size-4" weight="fill" />
-                <span>{t("pack.recommended")}</span>
+            {pack.leaderboard_enabled || pack.is_recommended ? (
+              <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-semibold tracking-[0.14em] drop-shadow-sm">
+                {pack.leaderboard_enabled ? (
+                  <span className="inline-flex items-center gap-1 text-amber-300">
+                    <CrownSimple aria-hidden="true" className="size-4" weight="fill" />
+                    {t("pack.featured")}
+                  </span>
+                ) : null}
+                {pack.is_recommended ? (
+                  <span className="inline-flex items-center gap-1 text-violet-300">
+                    <Star aria-hidden="true" className="size-3.5" weight="fill" />
+                    {t("pack.recommended")}
+                  </span>
+                ) : null}
               </div>
             ) : null}
             <h2 className="truncate font-heading text-base font-semibold leading-tight">

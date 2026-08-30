@@ -106,7 +106,7 @@ export function PackDetailPage() {
               <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
             </div>
 
-            {selectedMap?.beatmap_id ? (
+            {selectedMap?.beatmap_id && Number(selectedMap.rating) >= 0.5 ? (
               <PackLeaderboard
                 beatmapId={selectedMap.beatmap_id}
                 key={selectedMap.beatmap_id}

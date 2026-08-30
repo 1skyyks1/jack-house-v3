@@ -45,6 +45,12 @@ export type EventStageMutationRequest = {
   title: string
 }
 
+export type ImportedEventStage = EventStageMutationRequest
+
+export type ImportEventStagesResponse = {
+  data: ImportedEventStage[]
+}
+
 export type CreateEventStagesRequest = {
   eventId: string
   files: File[]

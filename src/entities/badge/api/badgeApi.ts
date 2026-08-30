@@ -1,6 +1,6 @@
 import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { unwrapPagination } from "@/shared/api/contracts/unwrap"
-import { http } from "@/shared/api/http"
+import { http, UPLOAD_REQUEST_TIMEOUT_MS } from "@/shared/api/http"
 import type { Badge } from "../model/types"
 
 export type GetBadgeListParams = {
@@ -35,6 +35,7 @@ export async function uploadBadge(request: UploadBadgeRequest): Promise<void> {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+    timeout: UPLOAD_REQUEST_TIMEOUT_MS,
   })
 }
 
