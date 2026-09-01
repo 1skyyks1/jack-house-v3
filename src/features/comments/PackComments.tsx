@@ -114,7 +114,6 @@ export function PackComments({ packId }: PackCommentsProps) {
               isDeleting={deleteMutation.isPending}
               key={comment.comment_id}
               onDelete={() => deleteComment(comment.comment_id)}
-              role={comment.role}
               userId={comment.user_id}
               userName={comment.user_name}
             />

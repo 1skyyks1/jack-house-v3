@@ -3,15 +3,13 @@ import { useTranslation } from "react-i18next"
 import {
   useAnalyticsAudienceQuery,
   useAnalyticsDailyQuery,
-  useAnalyticsOverviewQuery,
-  useAnalyticsPagesQuery,
+  useDashboardBusinessAnalyticsQuery,
   type AnalyticsDailyPoint,
-  type AnalyticsPageStats,
 } from "@/entities/dashboard"
 import { AdminPage } from "@/features/admin-shell"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageState } from "@/shared/components"
-import type { DashboardChartSummary, DashboardDailyPoint, DashboardPagePoint } from "./DashboardCharts"
+import type { DashboardChartSummary, DashboardDailyPoint } from "./DashboardCharts"
 
 const analyticsDays = 14
 const analyticsAppId = "jack-house-v3"
@@ -19,29 +17,22 @@ const DashboardCharts = lazy(() => import("./DashboardCharts").then((module) => 
 
 export function AdminDashboardPage() {
   const { t } = useTranslation()
+  const [businessHours, setBusinessHours] = useState(24)
   const [analyticsRange] = useState(() => getLastDaysRange(analyticsDays))
   const analyticsParams = { appId: analyticsAppId, ...analyticsRange }
-  const overviewQuery = useAnalyticsOverviewQuery(analyticsParams)
   const audienceQuery = useAnalyticsAudienceQuery(analyticsParams)
   const dailyQuery = useAnalyticsDailyQuery(analyticsParams)
-  const pagesQuery = useAnalyticsPagesQuery(analyticsParams)
+  const businessQuery = useDashboardBusinessAnalyticsQuery(businessHours)
 
-  const overview = overviewQuery.data?.overview
-  const rawDailyData = dailyQuery.data?.daily ?? []
-  const dailyData = normalizeDaily(rawDailyData, analyticsRange)
-  const pageData = normalizePages(pagesQuery.data?.pages ?? [])
-  const hasDailyLoginUsers = rawDailyData.some(hasLoginUserField)
-  const analyticsError = overviewQuery.isError || dailyQuery.isError || pagesQuery.isError
-  const analyticsLoading = overviewQuery.isLoading || dailyQuery.isLoading || pagesQuery.isLoading
-  const hasAnalyticsOverview = !analyticsError && Boolean(overview)
+  const dailyData = normalizeDaily(dailyQuery.data?.daily ?? [], analyticsRange)
+  const analyticsError = dailyQuery.isError
+  const analyticsLoading = dailyQuery.isLoading
   const chartLoading = analyticsLoading || audienceQuery.isLoading
-  const hasAnalyticsCharts = !analyticsError && (dailyData.length > 0 || pageData.length > 0)
+  const hasAnalyticsCharts = !analyticsError && dailyData.length > 0
   const hasAudienceData = !audienceQuery.isError && Boolean(audienceQuery.data?.timezones.length || audienceQuery.data?.devices.length || audienceQuery.data?.screens.length)
-  const hasDashboardCharts = hasAnalyticsCharts || hasAudienceData
-  const chartSummary = getChartSummary(
-    dailyData,
-    hasAnalyticsOverview ? toNumber(overview?.users) : undefined,
-  )
+  const hasBusinessData = !businessQuery.isError && Boolean(businessQuery.data?.packs.length || businessQuery.data?.osuRequests.total)
+  const hasDashboardCharts = hasAnalyticsCharts || hasAudienceData || hasBusinessData
+  const chartSummary = getChartSummary(dailyData)
 
   return (
     <AdminPage className="h-full min-h-0">
@@ -55,13 +46,13 @@ export function AdminDashboardPage() {
         ) : (
           <Suspense fallback={<DashboardLoadingSkeleton />}>
             <DashboardCharts
-              audienceDevices={audienceQuery.isError ? [] : audienceQuery.data?.devices ?? []}
-              audienceScreens={audienceQuery.isError ? [] : audienceQuery.data?.screens ?? []}
               audienceTimezones={audienceQuery.isError ? [] : audienceQuery.data?.timezones ?? []}
+              businessData={businessQuery.isError ? undefined : businessQuery.data}
+              businessHours={businessHours}
+              businessLoading={businessQuery.isLoading}
               dailyData={analyticsError ? [] : dailyData}
-              hasDailyLoginUsers={hasDailyLoginUsers}
               isLoading={false}
-              pageData={analyticsError ? [] : pageData}
+              onBusinessHoursChange={setBusinessHours}
               summary={chartSummary}
             />
           </Suspense>
@@ -141,24 +132,8 @@ function normalizeDaily(rows: AnalyticsDailyPoint[], range: { from: string; to: 
   })
 }
 
-function hasLoginUserField(row: AnalyticsDailyPoint) {
-  return row.users !== undefined && row.users !== null
-}
-
-function normalizePages(rows: AnalyticsPageStats[]): DashboardPagePoint[] {
-  return rows
-    .filter((row) => isPublicPagePath(row.path))
-    .slice(0, 8)
-    .map((row) => ({
-      label: compactPath(row.path),
-      path: row.path,
-      pv: toNumber(row.pv),
-    }))
-}
-
 function getChartSummary(
   dailyData: DashboardDailyPoint[],
-  loginUsers?: number,
 ): DashboardChartSummary {
   const traffic = dailyData.reduce(
     (total, item) => ({
@@ -168,7 +143,6 @@ function getChartSummary(
     { pv: 0, uv: 0 },
   )
   return {
-    loginUsers,
     traffic,
   }
 }
@@ -214,22 +188,4 @@ function eachDate(from: string, to: string) {
   }
 
   return dates
-}
-
-function compactPath(path: string) {
-  if (path === "/") return "/"
-  const pathname = getPathname(path)
-  return pathname.length > 18 ? `${pathname.slice(0, 16)}...` : pathname
-}
-
-function isPublicPagePath(path: string) {
-  return !getPathname(path).startsWith("/admin")
-}
-
-function getPathname(path: string) {
-  try {
-    return new URL(path, "https://jackhouse.local").pathname
-  } catch {
-    return path.split("?")[0] || path
-  }
 }

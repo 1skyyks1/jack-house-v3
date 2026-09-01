@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
 import { geoEquirectangular, geoPath } from "d3-geo"
 import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson"
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
+import type { DashboardBusinessAnalyticsResponse } from "@/entities/dashboard"
 
 export type DashboardDailyPoint = {
   date: string
@@ -19,14 +21,7 @@ export type DashboardDailyPoint = {
   uv: number
 }
 
-export type DashboardPagePoint = {
-  label: string
-  path: string
-  pv: number
-}
-
 export type DashboardChartSummary = {
-  loginUsers?: number
   traffic: {
     pv: number
     uv: number
@@ -34,13 +29,13 @@ export type DashboardChartSummary = {
 }
 
 type DashboardChartsProps = {
-  audienceDevices: Array<{ device: "desktop" | "mobile" | "tablet" | "unknown"; visitors: number }>
-  audienceScreens: Array<{ height: number; visitors: number; width: number }>
   audienceTimezones: Array<{ timezone: string; visitors: number }>
+  businessData?: DashboardBusinessAnalyticsResponse
+  businessHours: number
+  businessLoading: boolean
   dailyData: DashboardDailyPoint[]
-  hasDailyLoginUsers: boolean
   isLoading: boolean
-  pageData: DashboardPagePoint[]
+  onBusinessHoursChange: (hours: number) => void
   summary: DashboardChartSummary
 }
 
@@ -55,22 +50,30 @@ const trafficChartConfig = {
   },
 } satisfies ChartConfig
 
-const pageChartConfig = {
-  pv: {
+const packChartConfig = {
+  views: {
     color: "var(--chart-3)",
-    label: "PV",
+    label: "Views",
   },
 } satisfies ChartConfig
 
-const userChartConfig = {
-  users: {
+const osuRequestChartConfig = {
+  requests: {
     color: "var(--chart-5)",
-    label: "Users",
+    label: "Requests",
   },
 } satisfies ChartConfig
 
-export function DashboardCharts({ audienceDevices, audienceScreens, audienceTimezones, dailyData, hasDailyLoginUsers, isLoading, pageData, summary }: DashboardChartsProps) {
+export function DashboardCharts({ audienceTimezones, businessData, businessHours, businessLoading, dailyData, isLoading, onBusinessHoursChange, summary }: DashboardChartsProps) {
   const { t } = useTranslation()
+  const osuTrend = (businessData?.osuRequests.trend ?? []).map((item) => ({
+    ...item,
+    label: formatBusinessBucket(item.bucket, businessHours),
+  }))
+  const packData = (businessData?.packs ?? []).slice(0, 8).map((pack) => ({
+    ...pack,
+    label: compactLabel(pack.title, 16),
+  }))
 
   return (
     <div className="space-y-4 xl:grid xl:h-full xl:min-h-0 xl:grid-rows-2 xl:gap-4 xl:space-y-0">
@@ -103,48 +106,41 @@ export function DashboardCharts({ audienceDevices, audienceScreens, audienceTime
         </ChartCard>
 
         <ChartCard
-          badge={t("admin.dashboard.last30Days")}
-          description={t("admin.dashboard.userTrendDescription")}
-          isLoading={isLoading}
+          badge={<BusinessRangePicker onChange={onBusinessHoursChange} value={businessHours} />}
+          description={t("admin.dashboard.osuRequestsDescription")}
+          isLoading={businessLoading}
           loadingLabel={t("admin.dashboard.loadingAnalytics")}
-          stats={[{ label: t("admin.dashboard.loginUsers30"), value: formatNumber(summary.loginUsers) }]}
-          title={t("admin.dashboard.userTrend")}
+          stats={[{ label: t("admin.dashboard.requestTotal"), value: formatNumber(businessData?.osuRequests.total) }]}
+          title={t("admin.dashboard.osuRequests")}
         >
-          {dailyData.length > 0 && hasDailyLoginUsers ? (
-            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={userChartConfig}>
-              <LineChart data={dailyData} margin={{ left: 8, right: 8, top: 8 }}>
+          {osuTrend.length > 0 ? (
+            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={osuRequestChartConfig}>
+              <LineChart data={osuTrend} margin={{ left: 8, right: 8, top: 8 }}>
                 <CartesianGrid vertical={false} />
-                <XAxis axisLine={false} dataKey="dateLabel" tickLine={false} tickMargin={8} />
+                <XAxis axisLine={false} dataKey="label" minTickGap={24} tickLine={false} tickMargin={8} />
                 <YAxis axisLine={false} tickLine={false} tickMargin={8} width={36} />
                 <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-                <Line dataKey="users" dot={{ r: 2 }} stroke="var(--color-users)" strokeWidth={2} type="monotone" />
+                <Line dataKey="requests" dot={false} stroke="var(--color-requests)" strokeWidth={2} type="monotone" />
               </LineChart>
             </ChartContainer>
           ) : (
-            <DashboardChartState label={t(hasDailyLoginUsers ? "admin.dashboard.noTrafficData" : "admin.dashboard.noLoginUserTrendData")} />
+            <DashboardChartState label={t("admin.dashboard.noOsuRequestData")} />
           )}
         </ChartCard>
 
         <ChartCard
-          badge={t("admin.dashboard.last30Days")}
-          description={t("admin.dashboard.deviceAndScreenDescription")}
-          isLoading={isLoading}
+          badge={formatBusinessRange(t, businessHours)}
+          description={t("admin.dashboard.topOsuUsersDescription")}
+          isLoading={businessLoading}
           loadingLabel={t("admin.dashboard.loadingAnalytics")}
-          title={t("admin.dashboard.deviceAndScreen")}
+          title={t("admin.dashboard.topOsuUsers")}
         >
-          {audienceDevices.length > 0 || audienceScreens.length > 0 ? (
-            <div className="grid h-[220px] gap-5 overflow-y-auto md:grid-cols-2 xl:h-full xl:min-h-0">
-              <DistributionList
-                items={audienceDevices.map((item) => ({ label: t(`admin.dashboard.devices.${item.device}`), value: item.visitors }))}
-                title={t("admin.dashboard.deviceDistribution")}
-              />
-              <DistributionList
-                items={audienceScreens.map((item) => ({ label: `${item.width} × ${item.height}`, value: item.visitors }))}
-                title={t("admin.dashboard.screenSizeDistribution")}
-              />
-            </div>
+          {(businessData?.osuRequests.users.length ?? 0) > 0 ? (
+            <DistributionList
+              items={(businessData?.osuRequests.users ?? []).map((user) => ({ label: user.userName, value: user.requests }))}
+            />
           ) : (
-            <DashboardChartState label={t("admin.dashboard.noAudienceData")} />
+            <DashboardChartState label={t("admin.dashboard.noOsuRequestData")} />
           )}
         </ChartCard>
       </section>
@@ -165,24 +161,24 @@ export function DashboardCharts({ audienceDevices, audienceScreens, audienceTime
         </ChartCard>
 
         <ChartCard
-          badge={t("admin.dashboard.topPagesBadge")}
-          description={t("admin.dashboard.topPagesDescription")}
-          isLoading={isLoading}
+          badge={formatBusinessRange(t, businessHours)}
+          description={t("admin.dashboard.topPacksDescription")}
+          isLoading={businessLoading}
           loadingLabel={t("admin.dashboard.loadingAnalytics")}
-          title={t("admin.dashboard.topPages")}
+          title={t("admin.dashboard.topPacks")}
         >
-          {pageData.length > 0 ? (
-            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={pageChartConfig}>
-              <BarChart data={pageData} layout="vertical" margin={{ bottom: 8, left: 8, right: 8, top: 8 }}>
+          {packData.length > 0 ? (
+            <ChartContainer className="h-[220px] w-full xl:h-full xl:min-h-0 xl:aspect-auto" config={packChartConfig}>
+              <BarChart data={packData} layout="vertical" margin={{ bottom: 8, left: 8, right: 8, top: 8 }}>
                 <CartesianGrid horizontal={false} />
                 <XAxis axisLine={false} tickLine={false} type="number" />
                 <YAxis axisLine={false} dataKey="label" tickLine={false} tickMargin={8} type="category" width={92} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="pv" fill="var(--color-pv)" radius={4} />
+                <Bar dataKey="views" fill="var(--color-views)" radius={4} />
               </BarChart>
             </ChartContainer>
           ) : (
-            <DashboardChartState label={t("admin.dashboard.noPageData")} />
+            <DashboardChartState label={t("admin.dashboard.noPackData")} />
           )}
         </ChartCard>
       </section>
@@ -199,7 +195,7 @@ function ChartCard({
   stats,
   title,
 }: {
-  badge: string
+  badge: ReactNode
   children: ReactNode
   description: string
   isLoading: boolean
@@ -223,7 +219,7 @@ function ChartCard({
             </div>
           ) : null}
         </div>
-        <Badge variant="outline">{badge}</Badge>
+        {typeof badge === "string" ? <Badge variant="outline">{badge}</Badge> : badge}
       </div>
       <div className={cn("p-4 xl:min-h-0 xl:flex-1", isLoading && "opacity-70")}>
         {isLoading ? <Skeleton className="h-[220px] w-full rounded-md xl:h-full" aria-label={loadingLabel} /> : children}
@@ -240,12 +236,12 @@ export function DashboardChartState({ label }: { label: string }) {
   )
 }
 
-function DistributionList({ items, title }: { items: Array<{ label: string; value: number }>; title: string }) {
+function DistributionList({ items, title }: { items: Array<{ label: string; value: number }>; title?: string }) {
   const maximum = Math.max(...items.map((item) => item.value), 1)
 
   return (
-    <div className="min-w-0">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+    <div className="h-[220px] min-w-0 overflow-y-auto pr-1 xl:h-full">
+      {title ? <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3> : null}
       <div className="space-y-2.5">
         {items.map((item) => (
           <div key={item.label}>
@@ -261,6 +257,48 @@ function DistributionList({ items, title }: { items: Array<{ label: string; valu
       </div>
     </div>
   )
+}
+
+function BusinessRangePicker({ onChange, value }: { onChange: (hours: number) => void; value: number }) {
+  const { t } = useTranslation()
+  const ranges = [1, 24, 7 * 24, 14 * 24]
+
+  return (
+    <div className="flex shrink-0 rounded-md border bg-background p-0.5">
+      {ranges.map((hours) => (
+        <button
+          className={cn(
+            "rounded px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors",
+            hours === value && "bg-primary text-primary-foreground",
+          )}
+          key={hours}
+          onClick={() => onChange(hours)}
+          type="button"
+        >
+          {formatBusinessRange(t, hours)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function formatBusinessRange(t: TFunction, hours: number) {
+  if (hours === 1) return t("admin.dashboard.lastHour")
+  if (hours === 24) return t("admin.dashboard.last24Hours")
+  if (hours === 7 * 24) return t("admin.dashboard.last7Days")
+  return t("admin.dashboard.last14Days")
+}
+
+function formatBusinessBucket(value: string, hours: number) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat("en-US", hours <= 48
+    ? { day: "2-digit", hour: "2-digit", hour12: false, month: "short" }
+    : { day: "2-digit", month: "short" }).format(date)
+}
+
+function compactLabel(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value
 }
 
 const timezoneMapWidth = 800

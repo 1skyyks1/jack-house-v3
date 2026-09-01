@@ -2,9 +2,7 @@ import { Trash } from "@phosphor-icons/react"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
-import { getUserRoleLabel, type UserRole } from "@/entities/user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Pagination,
@@ -23,7 +21,6 @@ type CommentListItemProps = {
   createdTime: string
   isDeleting: boolean
   onDelete: () => void
-  role?: UserRole
   userId: number
   userName: string
 }
@@ -35,7 +32,6 @@ export function CommentListItem({
   createdTime,
   isDeleting,
   onDelete,
-  role,
   userId,
   userName,
 }: CommentListItemProps) {
@@ -56,7 +52,6 @@ export function CommentListItem({
               <Link className="font-medium hover:text-primary hover:underline" to={`/user/${userId}`}>
                 {userName}
               </Link>
-              <CommentRoleBadge role={role} />
               <span className="text-xs text-muted-foreground">{formatDate(createdTime)}</span>
             </div>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{content}</p>
@@ -77,16 +72,6 @@ export function CommentListItem({
         ) : null}
       </div>
     </article>
-  )
-}
-
-function CommentRoleBadge({ role }: { role?: UserRole }) {
-  const { t } = useTranslation()
-
-  return (
-    <Badge variant="secondary">
-      {role === undefined ? t("common.member") : getUserRoleLabel(role)}
-    </Badge>
   )
 }
 

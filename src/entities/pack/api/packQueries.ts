@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query"
+import type { PaginatedEnvelope } from "@/shared/api/contracts/common"
 import { createPack, createPackFeedback, createPackTag, deletePack, deletePackTag, getAdminTagList, getOsuPackPreview, getPackById, getPackFeedbackList, getPackLeaderboard, getPackList, getTagList, importOsuPack, refreshOsuPack, syncAllFeaturedScores, syncPackScores, updatePackFeedbackStatus, updatePackLeaderboard, updatePackOriginal, updatePackRecommendation, updatePackTag, updatePackTags } from "./packApi"
-import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackLeaderboardParams, GetPackListParams, ImportOsuPackRequest, PackLeaderboardResponse, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackLeaderboardRequest, UpdatePackOriginalRequest, UpdatePackRecommendationRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
+import type { CreatePackFeedbackRequest, CreatePackRequest, CreatePackTagRequest, GetPackFeedbackParams, GetPackLeaderboardParams, GetPackListParams, ImportOsuPackRequest, PackLeaderboardResponse, PackListItem, RefreshOsuPackRequest, UpdatePackFeedbackStatusRequest, UpdatePackLeaderboardRequest, UpdatePackOriginalRequest, UpdatePackRecommendationRequest, UpdatePackTagRequest, UpdatePackTagsRequest } from "../model/types"
 
 export const packQueryKeys = {
   detail: (packId: string) => ["pack", "detail", packId] as const,
@@ -111,6 +112,16 @@ export function usePackListQuery(params: GetPackListParams) {
   return useQuery({
     queryFn: () => getPackList(params),
     queryKey: packQueryKeys.list(params),
+  })
+}
+
+export function usePackListInfiniteQuery(params: GetPackListParams) {
+  const queryKey = [...packQueryKeys.root, "list", "infinite", { ...params, page: 1 }] as const
+  return useInfiniteQuery<PaginatedEnvelope<PackListItem>, Error, InfiniteData<PaginatedEnvelope<PackListItem>>, typeof queryKey, number>({
+    getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => getPackList({ ...params, page: pageParam }),
+    queryKey,
   })
 }
 

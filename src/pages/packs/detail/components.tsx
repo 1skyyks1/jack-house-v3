@@ -1,5 +1,6 @@
 import {
   ChartLineUp,
+  CaretRight,
   Clock,
   Columns,
   DownloadSimple,
@@ -549,6 +550,7 @@ function PackMaintenancePanel({ pack }: PackMaintenancePanelProps) {
 }
 
 type PackShowcaseProps = {
+  compact?: boolean
   pack: PackDetail
   maps: PackMap[]
   onOpenWorkbench: () => void
@@ -557,7 +559,7 @@ type PackShowcaseProps = {
   selectedMapId: number | null
 }
 
-export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selectedMap, selectedMapId }: PackShowcaseProps) {
+export function PackShowcase({ compact = false, maps, onOpenWorkbench, onSelectMap, pack, selectedMap, selectedMapId }: PackShowcaseProps) {
   const { t } = useTranslation()
   const coverUrl = getPackCoverUrl(pack)
   const status = getPackRankStatus(pack.status)
@@ -574,7 +576,14 @@ export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selecte
     <article className="relative overflow-hidden bg-card text-white">
       {coverUrl ? <img alt="" className="absolute inset-0 size-full object-cover" src={coverUrl} /> : <div className="absolute inset-0 bg-muted" />}
       <div className="absolute inset-0 bg-black/58" />
-      <div className="relative z-10 grid min-h-[24rem] gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:p-7">
+      <div
+        className={cn(
+          "relative z-10 grid min-h-[24rem] gap-6 p-5 lg:p-7",
+          compact
+            ? "xl:grid-cols-[minmax(0,1fr)_16rem] xl:gap-4"
+            : "lg:grid-cols-[minmax(0,1fr)_22rem]",
+        )}
+      >
         <div className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-6">
           <div className="space-y-4">
             {maps.length > 0 ? (
@@ -646,7 +655,7 @@ export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selecte
 
         <div className="flex flex-col justify-between gap-5">
           {selectedMap ? (
-            <SelectedMapPanel map={selectedMap} />
+            <SelectedMapPanel compact={compact} map={selectedMap} />
           ) : (
             <div className="rounded bg-black/45 p-4 text-sm text-white/78">{t("pack.detail.noBeatmapMetadata")}</div>
           )}
@@ -666,8 +675,10 @@ export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selecte
                 type="button"
                 variant="outline"
               >
-                <ChartLineUp className="size-4" weight="bold" />
-                {t("pack.detail.previewAndAnalyse")}
+                {compact
+                  ? <CaretRight className="size-4" weight="bold" />
+                  : <ChartLineUp className="size-4" weight="bold" />}
+                {t(compact ? "pack.detail.collapsePreview" : "pack.detail.previewAndAnalyse")}
               </Button>
             ) : selectedMap ? (
               <Button className="h-9 w-full min-w-0" disabled title={t("pack.detail.omaUnavailableHint")} type="button" variant="outline">
@@ -709,18 +720,29 @@ export function PackShowcase({ maps, onOpenWorkbench, onSelectMap, pack, selecte
 }
 
 type SelectedMapPanelProps = {
+  compact?: boolean
   map: PackMap
 }
 
-function SelectedMapPanel({ map }: SelectedMapPanelProps) {
+function SelectedMapPanel({ compact = false, map }: SelectedMapPanelProps) {
   const { t } = useTranslation()
   const stats = [
     { icon: Gauge, label: "OD", value: formatDecimal(map.od, 1), progress: toFiniteNumber(map.od) * 10, color: "#409EFF" },
     { icon: Gauge, label: "HP", value: formatDecimal(map.hp, 1), progress: toFiniteNumber(map.hp) * 10, color: "#f56c6c" },
     { icon: Star, label: t("pack.detail.stats.rating"), value: formatDecimal(map.rating, 2), progress: null },
     { icon: MusicNote, label: "BPM", value: formatDecimal(map.bpm, 0), progress: null },
-    { icon: Clock, label: t("pack.detail.stats.length"), value: formatSeconds(map.length), progress: null },
-    { icon: PlayCircle, label: t("pack.detail.stats.realLength"), value: formatSeconds(map.real_length), progress: null },
+    ...(compact
+      ? [{
+          className: "col-span-2",
+          icon: Clock,
+          label: `${t("pack.detail.stats.length")} (${t("pack.detail.stats.realLength")})`,
+          value: `${formatSeconds(map.length)} (${formatSeconds(map.real_length)})`,
+          progress: null,
+        }]
+      : [
+          { icon: Clock, label: t("pack.detail.stats.length"), value: formatSeconds(map.length), progress: null },
+          { icon: PlayCircle, label: t("pack.detail.stats.realLength"), value: formatSeconds(map.real_length), progress: null },
+        ]),
     { icon: SquaresFour, label: "RC", value: String(map.key_count), progress: null },
     { icon: Columns, label: "LN", value: String(map.ln_count), progress: null },
   ]
@@ -728,7 +750,7 @@ function SelectedMapPanel({ map }: SelectedMapPanelProps) {
   return (
     <div className="grid grid-cols-2 gap-1.5">
       {stats.map((stat) => (
-        <div className="rounded bg-black/45 px-3 py-2" key={stat.label}>
+        <div className={cn("rounded bg-black/45 px-3 py-2", stat.className)} key={stat.label}>
           <div className="flex items-center justify-between gap-3">
             <div className="inline-flex items-center gap-1.5 text-xs text-white/72">
               <stat.icon className="size-3.5" weight="bold" />

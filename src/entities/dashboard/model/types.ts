@@ -10,6 +10,30 @@ export type DashboardUserGrowthResponse = {
   ok: boolean
 }
 
+export type DashboardBusinessAnalyticsResponse = {
+  hours: number
+  ok: boolean
+  osuRequests: {
+    total: number
+    trend: Array<{
+      bucket: string
+      requests: number
+    }>
+    users: Array<{
+      avatar: string | null
+      requests: number
+      userId: number
+      userName: string
+    }>
+  }
+  packs: Array<{
+    artist: string | null
+    packId: number
+    title: string
+    views: number
+  }>
+}
+
 export type AnalyticsStatsRange = {
   appId?: string
   from?: string

@@ -386,6 +386,12 @@ export function toFiniteNumber(value: number | string | null | undefined, fallba
   return Number.isFinite(numberValue) ? numberValue : fallback
 }
 
+export function isPackLeaderboardEligibleMap<T extends Pick<PackMap, "beatmap_id" | "rating">>(
+  map: T | null | undefined,
+): map is T & { beatmap_id: number } {
+  return Number(map?.beatmap_id) > 0 && toFiniteNumber(map?.rating) >= 0.5
+}
+
 const packTagCategoryOrder: PackTagCategory[] = ["pattern", "bpm", "difficulty"]
 
 export function getPackTagCategoryLabel(category: PackTagCategory) {

@@ -1,6 +1,6 @@
 import { getVisiblePackTagGroups, type GetPackListParams, type PackSort, type PackTag, type PackTypeFilter } from "@/entities/pack"
 
-export const PACK_LIST_PAGE_SIZE = 12
+export const PACK_LIST_PAGE_SIZE = 15
 export const packTypeFilters: PackTypeFilter[] = [-1, 0, 1, 2, 3]
 export const sortFilters: PackSort[] = [0, 1, 2]
 
@@ -15,7 +15,7 @@ export function getFiltersFromSearchParams(searchParams: URLSearchParams): GetPa
     graveyard: searchParams.get("graveyard") === "1",
     loved: searchParams.get("loved") === "1",
     original: searchParams.get("original") === "1",
-    page: parsePositiveInteger(searchParams.get("page"), 1),
+    page: 1,
     pageSize: PACK_LIST_PAGE_SIZE,
     ranked: searchParams.get("ranked") === "1",
     recommended: searchParams.get("recommended") === "1",
@@ -46,7 +46,6 @@ export function getDefaultFilters(): GetPackListParams {
 export function serializeFilters(filters: GetPackListParams) {
   const params = new URLSearchParams()
 
-  if (filters.page > 1) params.set("page", String(filters.page))
   if (filters.searchKeys) params.set("q", filters.searchKeys)
   if (filters.type !== -1) params.set("type", String(filters.type))
   if (filters.graveyard) params.set("graveyard", "1")
@@ -88,11 +87,6 @@ export function filterTagIdsByType(tagIds: number[], tags: PackTag[], packType: 
 
   const visibleTagIds = new Set(getPackFilterTagGroups(tags, packType).flatMap((group) => group.tags.map((tag) => tag.tag_id)))
   return tagIds.filter((tagId) => visibleTagIds.has(tagId))
-}
-
-function parsePositiveInteger(value: string | null, fallback: number) {
-  const numberValue = Number(value)
-  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : fallback
 }
 
 function parsePackType(value: string | null): PackTypeFilter {

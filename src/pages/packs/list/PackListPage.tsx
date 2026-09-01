@@ -13,7 +13,7 @@ import {
   Star,
   Tag,
 } from "@phosphor-icons/react"
-import { useState, type ComponentType, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ComponentType, type FormEvent, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useSearchParams } from "react-router-dom"
 import osuDirectIcon from "@/assets/pic/osuDirect.svg"
@@ -25,15 +25,6 @@ import { Card } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   getPackCoverUrl,
@@ -42,7 +33,7 @@ import {
   getPackRankStatus,
   getPackTagLabel,
   getPackTypeLabel,
-  usePackListQuery,
+  usePackListInfiniteQuery,
   usePackTagsQuery,
   type GetPackListParams,
   type PackListItem,
@@ -75,8 +66,11 @@ export function PackListPage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = getFiltersFromSearchParams(searchParams)
-  const packListQuery = usePackListQuery(filters)
+  const packListQuery = usePackListInfiniteQuery(filters)
   const tagsQuery = usePackTagsQuery()
+  const packPages = packListQuery.data?.pages ?? []
+  const packs = [...new Map(packPages.flatMap((page) => page.data).map((pack) => [pack.pack_id, pack])).values()]
+  const packSummary = packPages[0]
   const hasAdvancedFilters = hasActiveAdvancedFilters(filters)
   const [isFilterOpen, setIsFilterOpen] = useState(hasAdvancedFilters)
 
@@ -155,6 +149,14 @@ export function PackListPage() {
               </Link>
             </Button>
           </form>
+
+          {!isFilterOpen ? (
+            <CollapsedQuickFilters
+              filters={filters}
+              onSelectType={updatePackType}
+              onUpdateFilters={updateFilters}
+            />
+          ) : null}
 
           <CollapsibleContent>
             <div className="space-y-3 border-t pt-3 sm:space-y-4 sm:pt-4">
@@ -251,25 +253,26 @@ export function PackListPage() {
       <section className="space-y-4">
         {packListQuery.isLoading ? (
           <PackGridSkeleton />
-        ) : packListQuery.isError ? (
+        ) : packListQuery.isError && !packListQuery.data ? (
           <PackState title={t("pack.list.loadFailedTitle")} description={getErrorMessage(packListQuery.error)} />
-        ) : packListQuery.data && packListQuery.data.data.length > 0 ? (
+        ) : packSummary && packs.length > 0 ? (
           <>
             {isFilterOpen ? (
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{t("pack.list.totalPacks", { count: packListQuery.data.total })}</span>
-                <span>{t("common.pageStatus", { page: packListQuery.data.page, total: Math.max(packListQuery.data.totalPages, 1) })}</span>
+                <span>{t("pack.list.totalPacks", { count: packSummary.total })}</span>
               </div>
             ) : null}
               <div className="grid gap-x-3 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
-              {packListQuery.data.data.map((pack) => (
+              {packs.map((pack) => (
                 <PackCard key={pack.pack_id} pack={pack} />
               ))}
             </div>
-            <PackPagination
-              onPageChange={(page) => updateFilters({ page })}
-              page={packListQuery.data.page}
-              totalPages={packListQuery.data.totalPages}
+            <PackListLoadMore
+              error={packListQuery.isFetchNextPageError ? packListQuery.error : null}
+              hasMore={Boolean(packListQuery.hasNextPage)}
+              isLoading={packListQuery.isFetchingNextPage}
+              onLoadMore={() => void packListQuery.fetchNextPage()}
+              showEnd={packSummary.totalPages > 1}
             />
           </>
         ) : (
@@ -298,9 +301,70 @@ function FilterGroup({ children, icon: Icon, label }: FilterGroupProps) {
   )
 }
 
+type CollapsedQuickFiltersProps = {
+  filters: GetPackListParams
+  onSelectType: (type: PackTypeFilter) => void
+  onUpdateFilters: (filters: Partial<GetPackListParams>) => void
+}
+
+function CollapsedQuickFilters({ filters, onSelectType, onUpdateFilters }: CollapsedQuickFiltersProps) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="hidden items-center gap-4 lg:flex">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="mr-1 shrink-0 text-xs font-semibold text-muted-foreground">{t("pack.list.type")}</span>
+        {packTypeFilters.map((type) => (
+          <FilterButton
+            active={filters.type === type}
+            compact
+            key={type}
+            onClick={() => onSelectType(type)}
+          >
+            {getPackTypeLabel(type)}
+          </FilterButton>
+        ))}
+      </div>
+      <div aria-hidden="true" className="h-5 w-px shrink-0 bg-border" />
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="mr-1 shrink-0 text-xs font-semibold text-muted-foreground">{t("pack.list.curation")}</span>
+        <FilterButton
+          active={Boolean(filters.featured)}
+          compact
+          highlightTone="featured"
+          onClick={() => onUpdateFilters({ featured: !filters.featured })}
+        >
+          <CrownSimple className="size-3.5" weight="fill" />
+          {t("pack.list.featuredOnly")}
+        </FilterButton>
+        <FilterButton
+          active={Boolean(filters.recommended)}
+          compact
+          highlightTone="recommended"
+          onClick={() => onUpdateFilters({ recommended: !filters.recommended })}
+        >
+          <Star className="size-3.5" weight="fill" />
+          {t("pack.list.recommendedOnly")}
+        </FilterButton>
+        <FilterButton
+          active={Boolean(filters.original)}
+          compact
+          highlightTone="original"
+          onClick={() => onUpdateFilters({ original: !filters.original })}
+        >
+          <HouseLine className="size-3.5" weight="fill" />
+          {t("pack.list.originalOnly")}
+        </FilterButton>
+        <CurationInfoTooltip />
+      </div>
+    </div>
+  )
+}
+
 type FilterButtonProps = {
   active: boolean
   children: ReactNode
+  compact?: boolean
   highlightTone?: "featured" | "loved" | "original" | "ranked" | "recommended"
   onClick: () => void
 }
@@ -328,12 +392,15 @@ const filterHighlightClasses = {
   },
 } as const
 
-function FilterButton({ active, children, highlightTone, onClick }: FilterButtonProps) {
+function FilterButton({ active, children, compact = false, highlightTone, onClick }: FilterButtonProps) {
   const highlightClass = highlightTone ? filterHighlightClasses[highlightTone][active ? "active" : "inactive"] : null
   return (
     <Button
       className={cn(
-        "h-7 shrink-0 gap-1.5 border px-2 text-xs sm:h-8 sm:gap-2 sm:px-3 sm:text-sm",
+        "shrink-0 border",
+        compact
+          ? "h-7 gap-1.5 px-2 text-xs"
+          : "h-7 gap-1.5 px-2 text-xs sm:h-8 sm:gap-2 sm:px-3 sm:text-sm",
         !active && !highlightTone && "border-input bg-background text-muted-foreground",
         highlightClass,
       )}
@@ -530,91 +597,48 @@ function StatusBadge({ children, tone }: StatusBadgeProps) {
   )
 }
 
-type PackPaginationProps = {
-  onPageChange: (page: number) => void
-  page: number
-  totalPages: number
+type PackListLoadMoreProps = {
+  error: Error | null
+  hasMore: boolean
+  isLoading: boolean
+  onLoadMore: () => void
+  showEnd: boolean
 }
 
-function PackPagination({ onPageChange, page, totalPages }: PackPaginationProps) {
+function PackListLoadMore({ error, hasMore, isLoading, onLoadMore, showEnd }: PackListLoadMoreProps) {
   const { t } = useTranslation()
-  if (totalPages <= 1) return null
-  const pageItems = getPaginationItems(page, totalPages)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMore || isLoading || error) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) onLoadMore()
+    }, { rootMargin: "40px 0px" })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [error, hasMore, isLoading, onLoadMore])
 
   return (
-    <div className="flex flex-col items-center gap-3 text-sm sm:flex-row sm:justify-between">
-      <span className="text-muted-foreground">
-        {t("common.pageStatus", { page, total: totalPages })}
-      </span>
-      <Pagination className="mx-0 w-auto justify-center sm:justify-end">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              aria-disabled={page <= 1}
-              className={cn(page <= 1 && "pointer-events-none opacity-40")}
-              href="#"
-              onClick={(event) => {
-                event.preventDefault()
-                if (page > 1) onPageChange(page - 1)
-              }}
-            />
-          </PaginationItem>
-          {pageItems.map((item, index) => (
-            <PaginationItem key={`${item}-${index}`}>
-              {item === "ellipsis" ? (
-                <PaginationEllipsis />
-              ) : (
-                <PaginationLink
-                  href="#"
-                  isActive={item === page}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    if (item !== page) onPageChange(item)
-                  }}
-                >
-                  {item}
-                </PaginationLink>
-              )}
-            </PaginationItem>
-          ))}
-          <PaginationItem>
-            <PaginationNext
-              aria-disabled={page >= totalPages}
-              className={cn(page >= totalPages && "pointer-events-none opacity-40")}
-              href="#"
-              onClick={(event) => {
-                event.preventDefault()
-                if (page < totalPages) onPageChange(page + 1)
-              }}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+    <div ref={sentinelRef} aria-live="polite" className="grid min-h-10 place-items-center" role="status">
+      {error ? (
+        <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-destructive">
+          <span>{t("pack.list.loadMoreFailed")}</span>
+          <Button onClick={onLoadMore} size="sm" type="button" variant="outline">
+            {t("pack.list.retryLoad")}
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <ArrowClockwise className="size-4 animate-spin" weight="bold" />
+          {t("pack.list.loadingMore")}
+        </span>
+      ) : !hasMore && showEnd ? (
+        <span className="text-sm text-muted-foreground">{t("pack.list.allLoaded")}</span>
+      ) : null}
     </div>
   )
-}
-
-function getPaginationItems(page: number, totalPages: number) {
-  const items: Array<number | "ellipsis"> = []
-  const visiblePages = new Set<number>([1, totalPages])
-  const start = Math.max(1, page - 2)
-  const end = Math.min(totalPages, page + 2)
-
-  for (let current = start; current <= end; current += 1) {
-    visiblePages.add(current)
-  }
-
-  const pages = Array.from(visiblePages).sort((a, b) => a - b)
-
-  pages.forEach((current, index) => {
-    const previous = pages[index - 1]
-    if (previous && current - previous > 1) {
-      items.push("ellipsis")
-    }
-    items.push(current)
-  })
-
-  return items
 }
 
 function getSortLabel(sort: PackSort, t: ReturnType<typeof useTranslation>["t"]) {

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import {
+  isPackLeaderboardEligibleMap,
   toFiniteNumber,
   usePackDetailQuery,
 } from "@/entities/pack"
@@ -36,8 +37,12 @@ export function PackDetailPage() {
     [packQuery.data?.maps],
   )
   const requestedBeatmapId = Number(searchParams.get("beatmap"))
-  const selectedMap = maps.find((map) => map.map_id === selectedMapId)
-    ?? maps.find((map) => map.beatmap_id === requestedBeatmapId)
+  const defaultMap = packQuery.data?.leaderboard_enabled
+    ? maps.find((map) => isPackLeaderboardEligibleMap(map))
+    : maps[0]
+  const selectedMap = maps.find((map) => map.beatmap_id === requestedBeatmapId)
+    ?? maps.find((map) => map.map_id === selectedMapId)
+    ?? defaultMap
     ?? maps[0]
     ?? null
   const canMaintainPack = isLogged && Boolean(permissionsQuery.data?.adminPermissions.includes("*"))
@@ -93,6 +98,7 @@ export function PackDetailPage() {
 
           <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
             <PackShowcase
+              compact={isWorkbenchOpen && isWideWorkbenchLayout}
               maps={maps}
               onSelectMap={selectMap}
               onOpenWorkbench={() => setIsWorkbenchOpen((open) => !open)}
@@ -106,7 +112,7 @@ export function PackDetailPage() {
               <PackInfoPanel canMaintain={canMaintainPack} pack={packQuery.data} />
             </div>
 
-            {selectedMap?.beatmap_id && Number(selectedMap.rating) >= 0.5 ? (
+            {isPackLeaderboardEligibleMap(selectedMap) ? (
               <PackLeaderboard
                 beatmapId={selectedMap.beatmap_id}
                 key={selectedMap.beatmap_id}

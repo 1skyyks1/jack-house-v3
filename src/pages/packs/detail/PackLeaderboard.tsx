@@ -110,7 +110,7 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
 
       {entries.length > 0 ? (
         <div className="mt-5">
-          <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] gap-0.5 border-b px-0.5 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 lg:text-[11px] @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2 @5xl/leaderboard:text-xs">
+          <div className="grid grid-cols-[1.75rem_minmax(0,1fr)_3.625rem_2.625rem_3.125rem] gap-0.5 border-b px-0.5 py-2 text-center text-[9px] font-semibold uppercase tracking-wide text-muted-foreground min-[360px]:grid-cols-[1.75rem_minmax(0,1fr)_3.625rem_2.625rem_3.125rem_3.375rem] lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 lg:text-[11px] @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2 @5xl/leaderboard:text-xs">
             <span className="text-left">{t("pack.leaderboard.rank")}</span>
             <span className="text-left">{t("pack.leaderboard.player")}</span>
             <span className="hidden text-sky-300 lg:block">320</span>
@@ -123,7 +123,7 @@ export function PackLeaderboard({ beatmapId, packId, title, version }: PackLeade
             <span>{t("pack.leaderboard.accuracy")}</span>
             <span className="hidden lg:block">{t("pack.leaderboard.grade")}</span>
             <span>{t("pack.leaderboard.mods")}</span>
-            <span>{t("pack.leaderboard.date")}</span>
+            <span className="hidden min-[360px]:block lg:block">{t("pack.leaderboard.date")}</span>
           </div>
           <div className="divide-y">
             {entries.map((entry) => (
@@ -168,11 +168,11 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
     <div
       aria-current={isCurrentUser ? "true" : undefined}
       className={cn(
-        "grid grid-cols-[2.5rem_minmax(0,1fr)_3.75rem_2.75rem_2.5rem_3.5rem] items-center gap-0.5 px-0.5 py-1.5 lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2",
+        "grid grid-cols-[1.75rem_minmax(0,1fr)_3.625rem_2.625rem_3.125rem] items-center gap-0.5 px-0.5 py-1.5 min-[360px]:grid-cols-[1.75rem_minmax(0,1fr)_3.625rem_2.625rem_3.125rem_3.375rem] lg:grid-cols-[2.5rem_minmax(5rem,1fr)_repeat(6,2.25rem)_5.25rem_3.75rem_2.5rem_5rem_6.5rem] lg:gap-1 lg:px-1 @5xl/leaderboard:grid-cols-[3rem_minmax(7rem,1fr)_repeat(6,3.25rem)_6rem_4.5rem_3rem_6rem_8.5rem] @5xl/leaderboard:gap-2 @5xl/leaderboard:px-2",
         isCurrentUser && "bg-primary/10",
       )}
     >
-      <span className="text-xs font-semibold tabular-nums">#{entry.rank}</span>
+      <span className="text-[10px] font-semibold tabular-nums lg:text-xs">#{entry.rank}</span>
       <UserHoverCard
         avatar={entry.user.avatar}
         userId={entry.user_id}
@@ -180,7 +180,7 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
       >
         <Link
           className={cn(
-            "block min-w-0 truncate text-[13px] font-medium hover:text-primary",
+            "block min-w-0 truncate text-[11px] font-medium hover:text-primary lg:text-[13px]",
             isCurrentUser && "font-semibold text-primary",
           )}
           to={`/user/${entry.user_id}`}
@@ -194,12 +194,12 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
       <StatisticValue entry={entry} name="ok" />
       <StatisticValue entry={entry} name="meh" />
       <StatisticValue entry={entry} name="miss" />
-      <span className="text-center text-xs tabular-nums">
+      <span className="text-center text-[10px] tabular-nums lg:text-xs">
         {formatScore(entry.score)}
       </span>
       <span
         className={cn(
-          "text-center text-xs font-medium tabular-nums",
+          "text-center text-[10px] font-medium tabular-nums lg:text-xs",
           entry.accuracy === 1 && "text-emerald-300",
         )}
       >
@@ -207,14 +207,15 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: PackLeaderboardEntry;
       </span>
       <GradeIcon entry={entry} />
       <ScoreMods entry={entry} />
-      <ScoreDate abbreviated className="text-center lg:hidden" entry={entry} />
+      <ScoreDate abbreviated className="hidden text-center min-[360px]:block lg:hidden" entry={entry} />
       <ScoreDate className="hidden text-center lg:block" entry={entry} />
     </div>
   )
 }
 
 function StatisticValue({ entry, name }: { entry: PackLeaderboardEntry; name: keyof NonNullable<PackLeaderboardEntry["statistics"]> }) {
-  const value = entry.statistics?.[name]
+  const rawValue = Number(entry.statistics?.[name] ?? 0)
+  const value = Number.isFinite(rawValue) ? rawValue : 0
   return (
     <span
       className={cn(
@@ -223,7 +224,7 @@ function StatisticValue({ entry, name }: { entry: PackLeaderboardEntry; name: ke
         value === 0 && "opacity-45",
       )}
     >
-      {value === undefined || value === null ? "" : formatScore(value)}
+      {formatScore(value)}
     </span>
   )
 }
@@ -279,17 +280,21 @@ function ScoreMods({ entry }: { entry: PackLeaderboardEntry }) {
     .filter((acronym) => acronym && acronym.toUpperCase() !== "CL")
     .map((acronym) => acronym.toUpperCase()) ?? []
   return (
-    <span className="flex min-w-0 items-center justify-center gap-0.5 overflow-hidden text-[9px] font-semibold">
+    <span
+      className="flex min-w-0 items-center justify-center gap-px overflow-hidden text-[8px] font-semibold lg:gap-0.5 lg:text-[9px]"
+      title={mods.join(" + ")}
+    >
       {entry.is_lazer ? (
-        <span className="shrink-0 rounded bg-fuchsia-500/15 px-1 py-0.5 text-[8px] font-bold uppercase leading-none text-fuchsia-500 lg:text-[9px]">
+        <span className="shrink-0 rounded bg-fuchsia-500/15 px-1 py-0.5 text-[7px] font-bold uppercase leading-none text-fuchsia-500 lg:text-[9px]">
           <span className="lg:hidden">L</span>
           <span className="hidden lg:inline">Lazer</span>
         </span>
       ) : null}
-      {mods.map((mod) => (
+      {mods.map((mod, index) => (
         <span
           className={cn(
-            "flex h-6 min-w-9 shrink-0 items-center justify-center px-2 font-bold leading-none [clip-path:polygon(12%_0,88%_0,100%_50%,88%_100%,12%_100%,0_50%)]",
+            "flex h-5 min-w-5 shrink-0 items-center justify-center px-1 font-bold leading-none [clip-path:polygon(12%_0,88%_0,100%_50%,88%_100%,12%_100%,0_50%)] lg:h-6 lg:min-w-9 lg:px-2",
+            index > 0 && "hidden lg:flex",
             mod === "NF"
               ? "bg-[#f06d68] text-[#67252b]"
               : "bg-[#8468f4] text-[#2d176f]",
@@ -300,6 +305,11 @@ function ScoreMods({ entry }: { entry: PackLeaderboardEntry }) {
           {mod}
         </span>
       ))}
+      {mods.length > 1 ? (
+        <span className="shrink-0 text-[8px] font-bold leading-none text-muted-foreground lg:hidden">
+          +{mods.length - 1}
+        </span>
+      ) : null}
     </span>
   )
 }
@@ -310,7 +320,7 @@ function ScoreDate({ abbreviated = false, className = "", entry }: { abbreviated
   if (!date) return null
   const locale = i18n.resolvedLanguage?.startsWith("zh") ? "zh-CN" : "en-GB"
   return (
-    <span className={`whitespace-nowrap text-xs font-medium text-muted-foreground ${className}`}>
+    <span className={`whitespace-nowrap text-[10px] font-medium text-muted-foreground lg:text-xs ${className}`}>
       {formatDate(date, locale, abbreviated)}
     </span>
   )

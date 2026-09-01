@@ -5,8 +5,13 @@ import type {
   AnalyticsOverviewResponse,
   AnalyticsPagesResponse,
   AnalyticsStatsRange,
+  DashboardBusinessAnalyticsResponse,
   DashboardUserGrowthResponse,
 } from "../model/types"
+
+export async function getDashboardBusinessAnalytics(hours = 24): Promise<DashboardBusinessAnalyticsResponse> {
+  return await http.get("/dashboard/business", { params: { hours } })
+}
 
 export async function getAnalyticsAudience(params: AnalyticsStatsRange): Promise<AnalyticsAudienceResponse> {
   return await http.get("/analytics/stats/audience", { params: { appId: params.appId } })

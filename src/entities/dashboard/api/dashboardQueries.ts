@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAnalyticsAudience, getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardUserGrowth } from "./dashboardApi"
+import { getAnalyticsAudience, getAnalyticsDaily, getAnalyticsOverview, getAnalyticsPages, getDashboardBusinessAnalytics, getDashboardUserGrowth } from "./dashboardApi"
 import type { AnalyticsStatsRange } from "../model/types"
 
 export const dashboardQueryKeys = {
@@ -7,7 +7,17 @@ export const dashboardQueryKeys = {
   analyticsDaily: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "daily", params] as const,
   analyticsOverview: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "overview", params] as const,
   analyticsPages: (params: AnalyticsStatsRange) => ["dashboard", "analytics", "pages", params] as const,
+  businessAnalytics: (hours: number) => ["dashboard", "business", hours] as const,
   userGrowth: (days: number) => ["dashboard", "users", "growth", days] as const,
+}
+
+export function useDashboardBusinessAnalyticsQuery(hours = 24) {
+  return useQuery({
+    queryFn: () => getDashboardBusinessAnalytics(hours),
+    queryKey: dashboardQueryKeys.businessAnalytics(hours),
+    retry: false,
+    staleTime: 60_000,
+  })
 }
 
 export function useAnalyticsAudienceQuery(params: AnalyticsStatsRange) {
