@@ -1,11 +1,11 @@
-# 4Key Jack House
-<br />
 <p align="center">
     <a href="https://www.jackhouse.xyz/">
         <img src="src/assets/pic/jackHouseLight.png" alt="Logo" width="320" height="80">
     </a>
 </p>
 <div align="center">
+    <strong>4Key Jack House</strong>
+    <br />
     一个为叠键玩家打造的社区
     <br />
     <br />
@@ -33,13 +33,14 @@
 ## 许可证
 
 除非另有说明，由 yks1 编写的源代码和文档采用
-[MIT License](LICENSE) 开放。
+[GNU Affero General Public License v3.0 only](LICENSE) 开放。
 
-Jack House 名称、Logo、视觉识别及原创媒体素材不属于 MIT 授权范围。
+Jack House 名称、Logo、视觉识别及原创媒体素材不属于 AGPL-3.0-only 授权范围。
 协议适用范围及保留权利详见 [NOTICE.md](NOTICE.md)。
 
 ## 引用及相关项目
 
 - [uzxn/acc](https://github.com/uzxn/acc)：段位预设数据及 ACC 计算
 - [LeoBlackMT/osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser)：谱面分析工具组件
+- [2419445078-hash/mania-preview-browser-extension](https://github.com/2419445078-hash/mania-preview-browser-extension)：Mania 谱面预览
 - [1skyyks1/osu-mappack-creator-v2](https://github.com/1skyyks1/osu-mappack-creator-v2)：合包工具

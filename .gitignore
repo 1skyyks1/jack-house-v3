@@ -30,6 +30,7 @@ lerna-debug.log*
 .trae-cn/
 .aiden/
 .agents/
+skills-lock.json
 
 # Editor and OS files
 .vscode/*

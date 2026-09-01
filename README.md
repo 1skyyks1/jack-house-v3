@@ -1,11 +1,11 @@
-# 4Key Jack House
-<br />
 <p align="center">
     <a href="https://www.jackhouse.xyz/">
         <img src="src/assets/pic/jackHouseLight.png" alt="Logo" width="320" height="80">
     </a>
 </p>
 <div align="center">
+    <strong>4Key Jack House</strong>
+    <br />
     A community built for jack players
     <br />
     <br />
@@ -37,14 +37,15 @@ events, tournaments, tools, and the admin panel.
 ## License
 
 Unless otherwise stated, source code and documentation written by yks1 are
-made available under the [MIT License](LICENSE).
+made available under the [GNU Affero General Public License v3.0 only](LICENSE).
 
 The Jack House name, logos, visual identity, and original media assets are
-outside the scope of the MIT License. See [NOTICE.md](NOTICE.md) for the exact
+outside the scope of the AGPL-3.0-only license. See [NOTICE.md](NOTICE.md) for the exact
 license scope and reserved rights.
 
 ## References and related projects
 
 - [uzxn/acc](https://github.com/uzxn/acc): dan preset and ACC calculation
 - [LeoBlackMT/osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser): beatmap analysis tool components
+- [2419445078-hash/mania-preview-browser-extension](https://github.com/2419445078-hash/mania-preview-browser-extension): mania beatmap preview
 - [1skyyks1/osu-mappack-creator-v2](https://github.com/1skyyks1/osu-mappack-creator-v2): map pack creator
